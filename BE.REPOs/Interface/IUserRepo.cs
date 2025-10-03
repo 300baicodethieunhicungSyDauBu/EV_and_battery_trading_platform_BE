@@ -9,6 +9,11 @@ namespace BE.REPOs.Interface
 {
     public interface IUserRepo
     {
-        public User GetAccountByEmailAndPassword(string email, string password);
+        User GetAccountByEmailAndPassword(string email, string password);
+        User Register(User user);
+        List<User> GetAllUsers();
+        User GetUserById(int userId);
+        User UpdateUser(User user);
+        bool DeleteUser(int userId);
     }
 }

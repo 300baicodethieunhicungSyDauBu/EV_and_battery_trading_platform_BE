@@ -15,5 +15,30 @@ namespace BE.REPOs.Implementation
         {
             return UserDAO.Instance.GetAccountByEmailAndPassword(email, password);
         }
+
+        public User Register(User user)
+        {
+            return UserDAO.Instance.Register(user);
+        }
+
+        public List<User> GetAllUsers()
+        {
+            return UserDAO.Instance.GetAllUsers();
+        }
+
+        public User GetUserById(int userId)
+        {
+            return UserDAO.Instance.GetUserById(userId);
+        }
+
+        public User UpdateUser(User user)
+        {
+            return UserDAO.Instance.UpdateUser(user);
+        }
+
+        public bool DeleteUser(int userId)
+        {
+            return UserDAO.Instance.DeleteUser(userId);
+        }
     }
 }

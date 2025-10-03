@@ -8,7 +8,6 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add JWT Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -27,7 +26,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Add Authorization Policies
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy =>
@@ -37,12 +35,10 @@ builder.Services.AddAuthorization(options =>
         policy.RequireClaim(ClaimTypes.Role, "2"));
 });
 
-// Configure Swagger to include JWT Authentication
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "EV And Battery Trading Platform", Version = "v1" });
 
-    // Add JWT Bearer Authentication to Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = @"JWT Authorization header using the Bearer scheme. 
@@ -73,16 +69,21 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
-// Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
 //DI - Dependency Injection
 builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IFavoriteRepo, FavoriteRepo>();
+builder.Services.AddScoped<IProductRepo, ProductRepo>();
+builder.Services.AddScoped<IPaymentRepo, PaymentRepo>();
+builder.Services.AddScoped<IOrderRepo, OrderRepo>();
+
+
+
 
 
 var app = builder.Build();
@@ -95,8 +96,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-// Important: Authentication middleware must come before Authorization
 
 app.UseAuthentication();
 
