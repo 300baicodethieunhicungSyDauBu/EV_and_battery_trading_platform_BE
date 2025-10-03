@@ -1,0 +1,228 @@
+using BE.API.DTOs.Request;
+using BE.API.DTOs.Response;
+using BE.BOs.Models;
+using BE.REPOs.Interface;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace BE.API.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class FeeSettingController : ControllerBase
+    {
+        private readonly IFeeSettings _feeSettingsRepo;
+
+        public FeeSettingController(IFeeSettings feeSettingsRepo)
+        {
+            _feeSettingsRepo = feeSettingsRepo;
+        }
+
+        [HttpGet]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult<IEnumerable<FeeSettingResponse>> GetAllFeeSettings()
+        {
+            try
+            {
+                var feeSettings = _feeSettingsRepo.GetAllFeeSettings();
+                var response = feeSettings.Select(fee => new FeeSettingResponse
+                {
+                    FeeId = fee.FeeId,
+                    FeeType = fee.FeeType,
+                    FeeValue = fee.FeeValue,
+                    IsActive = fee.IsActive ?? false,
+                    CreatedDate = fee.CreatedDate
+                }).ToList();
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("{id}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult<FeeSettingResponse> GetFeeSettingById(int id)
+        {
+            try
+            {
+                var feeSetting = _feeSettingsRepo.GetFeeSettingById(id);
+                if (feeSetting == null)
+                {
+                    return NotFound("Fee setting not found");
+                }
+
+                var response = new FeeSettingResponse
+                {
+                    FeeId = feeSetting.FeeId,
+                    FeeType = feeSetting.FeeType,
+                    FeeValue = feeSetting.FeeValue,
+                    IsActive = feeSetting.IsActive ?? false,
+                    CreatedDate = feeSetting.CreatedDate
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("active")]
+        public ActionResult<IEnumerable<FeeSettingResponse>> GetActiveFeeSettings()
+        {
+            try
+            {
+                var feeSettings = _feeSettingsRepo.GetActiveFeeSettings();
+                var response = feeSettings.Select(fee => new FeeSettingResponse
+                {
+                    FeeId = fee.FeeId,
+                    FeeType = fee.FeeType,
+                    FeeValue = fee.FeeValue,
+                    IsActive = fee.IsActive ?? false,
+                    CreatedDate = fee.CreatedDate
+                }).ToList();
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("type/{feeType}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult<IEnumerable<FeeSettingResponse>> GetFeeSettingsByType(string feeType)
+        {
+            try
+            {
+                var feeSettings = _feeSettingsRepo.GetFeeSettingsByType(feeType);
+                var response = feeSettings.Select(fee => new FeeSettingResponse
+                {
+                    FeeId = fee.FeeId,
+                    FeeType = fee.FeeType,
+                    FeeValue = fee.FeeValue,
+                    IsActive = fee.IsActive ?? false,
+                    CreatedDate = fee.CreatedDate
+                }).ToList();
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult<FeeSettingResponse> CreateFeeSetting([FromBody] FeeSettingRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(request.FeeType))
+                {
+                    return BadRequest("Fee type is required");
+                }
+
+                if (request.FeeValue < 0)
+                {
+                    return BadRequest("Fee value must be non-negative");
+                }
+
+                var feeSetting = new FeeSetting
+                {
+                    FeeType = request.FeeType,
+                    FeeValue = request.FeeValue,
+                    IsActive = request.IsActive
+                };
+
+                var createdFeeSetting = _feeSettingsRepo.CreateFeeSetting(feeSetting);
+
+                var response = new FeeSettingResponse
+                {
+                    FeeId = createdFeeSetting.FeeId,
+                    FeeType = createdFeeSetting.FeeType,
+                    FeeValue = createdFeeSetting.FeeValue,
+                    IsActive = createdFeeSetting.IsActive ?? false,
+                    CreatedDate = createdFeeSetting.CreatedDate
+                };
+
+                return CreatedAtAction(nameof(GetFeeSettingById), new { id = createdFeeSetting.FeeId }, response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult<FeeSettingResponse> UpdateFeeSetting(int id, [FromBody] FeeSettingRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(request.FeeType))
+                {
+                    return BadRequest("Fee type is required");
+                }
+
+                if (request.FeeValue < 0)
+                {
+                    return BadRequest("Fee value must be non-negative");
+                }
+
+                var existingFeeSetting = _feeSettingsRepo.GetFeeSettingById(id);
+                if (existingFeeSetting == null)
+                {
+                    return NotFound("Fee setting not found");
+                }
+
+                existingFeeSetting.FeeType = request.FeeType;
+                existingFeeSetting.FeeValue = request.FeeValue;
+                existingFeeSetting.IsActive = request.IsActive;
+
+                var updatedFeeSetting = _feeSettingsRepo.UpdateFeeSetting(existingFeeSetting);
+
+                var response = new FeeSettingResponse
+                {
+                    FeeId = updatedFeeSetting.FeeId,
+                    FeeType = updatedFeeSetting.FeeType,
+                    FeeValue = updatedFeeSetting.FeeValue,
+                    IsActive = updatedFeeSetting.IsActive ?? false,
+                    CreatedDate = updatedFeeSetting.CreatedDate
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult DeleteFeeSetting(int id)
+        {
+            try
+            {
+                var result = _feeSettingsRepo.DeleteFeeSetting(id);
+                if (!result)
+                {
+                    return NotFound("Fee setting not found");
+                }
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+    }
+}
