@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|solutionrelative:be.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.api\\controllers\\productimagecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|solutionrelative:be.api\\controllers\\productimagecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -25,10 +29,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\interface\\iproductimagerepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\interface\\iproductimagerepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|solutionrelative:be.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.api\\controllers\\ordercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -206,11 +206,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 10,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "ProductImageController.cs",
               "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\Controllers\\ProductImageController.cs",
               "RelativeDocumentMoniker": "BE.API\\Controllers\\ProductImageController.cs",
@@ -224,19 +224,6 @@
             {
               "$type": "Document",
               "DocumentIndex": 4,
-              "Title": "ProductImageDAO.cs",
-              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\ProductImageDAO.cs",
-              "RelativeDocumentMoniker": "BE.DAOs\\ProductImageDAO.cs",
-              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\ProductImageDAO.cs",
-              "RelativeToolTip": "BE.DAOs\\ProductImageDAO.cs",
-              "ViewState": "AgIAACAAAAAAAAAAAAAmwEwAAAAFAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:37:16.813Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
               "Title": "ProductImageRepo.cs",
               "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\ProductImageRepo.cs",
               "RelativeDocumentMoniker": "BE.REPOs\\Implementation\\ProductImageRepo.cs",
@@ -244,12 +231,11 @@
               "RelativeToolTip": "BE.REPOs\\Implementation\\ProductImageRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAACoAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:37:07.143Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:37:07.143Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "IProductImageRepo.cs",
               "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IProductImageRepo.cs",
               "RelativeDocumentMoniker": "BE.REPOs\\Interface\\IProductImageRepo.cs",
@@ -257,8 +243,7 @@
               "RelativeToolTip": "BE.REPOs\\Interface\\IProductImageRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:36:55.729Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:36:55.729Z"
             },
             {
               "$type": "Document",
@@ -270,8 +255,7 @@
               "RelativeToolTip": "BE.API\\Controllers\\OrderController.cs",
               "ViewState": "AgIAAAEAAAAAAAAAAAAAAPkAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:32:36.74Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:32:36.74Z"
             },
             {
               "$type": "Document",
@@ -283,8 +267,7 @@
               "RelativeToolTip": "BE.DAOs\\OrderDAO.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAFoAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:32:15.641Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:32:15.641Z"
             },
             {
               "$type": "Document",
@@ -296,8 +279,7 @@
               "RelativeToolTip": "BE.REPOs\\Implementation\\OrderRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAACoAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:32:02.013Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:32:02.013Z"
             },
             {
               "$type": "Document",
@@ -309,8 +291,7 @@
               "RelativeToolTip": "BE.REPOs\\Interface\\IOrderRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:31:44.447Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:31:44.447Z"
             },
             {
               "$type": "Document",
@@ -322,12 +303,11 @@
               "RelativeToolTip": "BE.API\\Controllers\\PaymentController.cs",
               "ViewState": "AgIAAMIAAAAAAAAAAAAuwBUAAAAKAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:24:08.118Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:24:08.118Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "ProductImageRequest.cs",
               "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\DTOs\\Request\\ProductImageRequest.cs",
               "RelativeDocumentMoniker": "BE.API\\DTOs\\Request\\ProductImageRequest.cs",
@@ -335,12 +315,11 @@
               "RelativeToolTip": "BE.API\\DTOs\\Request\\ProductImageRequest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T01:46:11.763Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T01:46:11.763Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "ProductImageResponse.cs",
               "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\DTOs\\Response\\ProductImageResponse.cs",
               "RelativeDocumentMoniker": "BE.API\\DTOs\\Response\\ProductImageResponse.cs",
@@ -348,8 +327,32 @@
               "RelativeToolTip": "BE.API\\DTOs\\Response\\ProductImageResponse.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T01:48:03.534Z",
+              "WhenOpened": "2025-10-03T01:48:03.534Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\Program.cs",
+              "RelativeDocumentMoniker": "BE.API\\Program.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\Program.cs",
+              "RelativeToolTip": "BE.API\\Program.cs",
+              "ViewState": "AgIAADkAAAAAAAAAAAAowF4AAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-01T18:06:12.728Z",
               "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "ProductImageDAO.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\ProductImageDAO.cs",
+              "RelativeDocumentMoniker": "BE.DAOs\\ProductImageDAO.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\ProductImageDAO.cs",
+              "RelativeToolTip": "BE.DAOs\\ProductImageDAO.cs",
+              "ViewState": "AgIAACAAAAAAAAAAAAAmwEwAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-03T02:37:16.813Z"
             },
             {
               "$type": "Document",
@@ -361,8 +364,7 @@
               "RelativeToolTip": "BE.REPOs\\Implementation\\PaymentRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAACoAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:23:25.663Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:23:25.663Z"
             },
             {
               "$type": "Document",
@@ -374,8 +376,7 @@
               "RelativeToolTip": "BE.DAOs\\PaymentDAO.cs",
               "ViewState": "AgIAAAYAAAAAAAAAAAAwwCMAAAAVAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:23:41.903Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:23:41.903Z"
             },
             {
               "$type": "Document",
@@ -387,8 +388,7 @@
               "RelativeToolTip": "BE.REPOs\\Interface\\IPaymentRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:23:07.129Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:23:07.129Z"
             },
             {
               "$type": "Document",
@@ -400,8 +400,7 @@
               "RelativeToolTip": "BE.DAOs\\FavoriteDAO.cs",
               "ViewState": "AgIAACYAAAAAAAAAAAAwwEkAAAA+AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:04:42.072Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:04:42.072Z"
             },
             {
               "$type": "Document",
@@ -413,8 +412,7 @@
               "RelativeToolTip": "BE.REPOs\\Implementation\\FavoriteRepo.cs",
               "ViewState": "AgIAAAMAAAAAAAAAAAAAACoAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:04:20.609Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:04:20.609Z"
             },
             {
               "$type": "Document",
@@ -426,8 +424,7 @@
               "RelativeToolTip": "BE.REPOs\\Interface\\IFavoriteRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAUAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:04:01.424Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:04:01.424Z"
             },
             {
               "$type": "Document",
@@ -439,21 +436,7 @@
               "RelativeToolTip": "BE.API\\DTOs\\Response\\FavoriteResponse.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T01:57:00.008Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\Program.cs",
-              "RelativeDocumentMoniker": "BE.API\\Program.cs",
-              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\Program.cs",
-              "RelativeToolTip": "BE.API\\Program.cs",
-              "ViewState": "AgIAADwAAAAAAAAAAAAAAFMAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-01T18:06:12.728Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T01:57:00.008Z"
             },
             {
               "$type": "Document",
@@ -465,8 +448,7 @@
               "RelativeToolTip": "BE.API\\Controllers\\FavoriteController.cs",
               "ViewState": "AgIAAGoAAAAAAAAAAAAcwI4AAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:08:23.822Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:08:23.822Z"
             },
             {
               "$type": "Document",
@@ -478,8 +460,7 @@
               "RelativeToolTip": "BE.API\\DTOs\\Request\\FavoriteRequest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAArAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T01:56:36.715Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T01:56:36.715Z"
             },
             {
               "$type": "Document",
@@ -491,8 +472,7 @@
               "RelativeToolTip": "BE.REPOs\\Interface\\IUserRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAkAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-01T18:26:20.456Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-01T18:26:20.456Z"
             },
             {
               "$type": "Document",
@@ -504,8 +484,7 @@
               "RelativeToolTip": "BE.API\\DTOs\\Request\\PaymentRequest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAqwAIAAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T01:52:22.823Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T01:52:22.823Z"
             },
             {
               "$type": "Document",
@@ -517,8 +496,7 @@
               "RelativeToolTip": "BE.REPOs\\Interface\\IProductRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAA6AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:12:49.764Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:12:49.764Z"
             },
             {
               "$type": "Document",
@@ -530,8 +508,7 @@
               "RelativeToolTip": "BE.REPOs\\Implementation\\ProductRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAACoAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:12:58.154Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:12:58.154Z"
             },
             {
               "$type": "Document",
@@ -543,8 +520,7 @@
               "RelativeToolTip": "BE.API\\DTOs\\Response\\OrderResponse.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABwAAAA0AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T01:56:05.175Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T01:56:05.175Z"
             },
             {
               "$type": "Document",
@@ -556,8 +532,7 @@
               "RelativeToolTip": "BE.API\\DTOs\\Request\\OrderRequest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T01:54:32.306Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T01:54:32.306Z"
             },
             {
               "$type": "Document",
@@ -569,8 +544,7 @@
               "RelativeToolTip": "BE.DAOs\\ProductDAO.cs",
               "ViewState": "AgIAACQAAAAAAAAAAAAwwDEAAAAjAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:13:07.651Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:13:07.651Z"
             },
             {
               "$type": "Document",
@@ -582,8 +556,7 @@
               "RelativeToolTip": "BE.API\\Controllers\\ProductController.cs",
               "ViewState": "AgIAAMwAAAAAAAAAAAAmwMcAAAAKAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T02:13:19.899Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T02:13:19.899Z"
             },
             {
               "$type": "Document",
@@ -595,8 +568,7 @@
               "RelativeToolTip": "BE.API\\DTOs\\Response\\PaymentResponse.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAyAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T01:52:47.358Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T01:52:47.358Z"
             },
             {
               "$type": "Document",
@@ -608,8 +580,7 @@
               "RelativeToolTip": "BE.API\\DTOs\\Response\\ProductResponse.cs",
               "ViewState": "AgIAAAIAAAAAAAAAAAAxwAQAAAAqAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T01:51:46.712Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T01:51:46.712Z"
             },
             {
               "$type": "Document",
@@ -621,8 +592,7 @@
               "RelativeToolTip": "BE.API\\DTOs\\Request\\ProductRequest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAACMAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T01:50:14.958Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T01:50:14.958Z"
             },
             {
               "$type": "Document",
@@ -634,8 +604,7 @@
               "RelativeToolTip": "BE.API\\DTOs\\Response\\UserResponse.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAqwAIAAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T01:22:02.702Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T01:22:02.702Z"
             },
             {
               "$type": "Document",
@@ -647,8 +616,7 @@
               "RelativeToolTip": "BE.API\\DTOs\\Request\\UserRequest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAqwAIAAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T01:20:35.093Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T01:20:35.093Z"
             },
             {
               "$type": "Document",
@@ -660,8 +628,7 @@
               "RelativeToolTip": "BE.API\\DTOs\\Request\\RegisterRequest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAqwAYAAAAeAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T00:43:53.677Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T00:43:53.677Z"
             },
             {
               "$type": "Document",
@@ -673,8 +640,7 @@
               "RelativeToolTip": "BE.API\\Properties\\launchSettings.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAuAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-10-01T19:34:10.107Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-01T19:34:10.107Z"
             },
             {
               "$type": "Document",
@@ -686,8 +652,7 @@
               "RelativeToolTip": "BE.BOs\\Models\\User.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-01T19:15:41.027Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-01T19:15:41.027Z"
             },
             {
               "$type": "Document",
@@ -699,8 +664,7 @@
               "RelativeToolTip": "BE.API\\DTOs\\Response\\LoginResponse.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAtAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-01T19:00:55.084Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-01T19:00:55.084Z"
             },
             {
               "$type": "Document",
@@ -712,8 +676,7 @@
               "RelativeToolTip": "BE.API\\DTOs\\Request\\LoginRequest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-01T19:00:09.128Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-01T19:00:09.128Z"
             },
             {
               "$type": "Document",
@@ -725,8 +688,7 @@
               "RelativeToolTip": "BE.REPOs\\Implementation\\UserRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-01T18:27:08.209Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-01T18:27:08.209Z"
             },
             {
               "$type": "Document",
@@ -738,8 +700,7 @@
               "RelativeToolTip": "BE.API\\Controllers\\UserController.cs",
               "ViewState": "AgIAAI0AAAAAAAAAAAD4v7cAAAASAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-01T18:28:13.176Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-01T18:28:13.176Z"
             },
             {
               "$type": "Document",
@@ -751,8 +712,7 @@
               "RelativeToolTip": "BE.DAOs\\UserDAO.cs",
               "ViewState": "AgIAADgAAAAAAAAAAAAmwEsAAAA5AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-01T18:23:41.861Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-01T18:23:41.861Z"
             },
             {
               "$type": "Document",
@@ -764,8 +724,7 @@
               "RelativeToolTip": "BE.BOs\\Models\\UserRole.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-01T19:18:15.87Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-01T19:18:15.87Z"
             },
             {
               "$type": "Document",
@@ -777,8 +736,7 @@
               "RelativeToolTip": "BE.BOs\\Migrations\\20251001182104_InitialCreate.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-01T18:21:04.688Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-01T18:21:04.688Z"
             },
             {
               "$type": "Document",
@@ -790,8 +748,7 @@
               "RelativeToolTip": "BE.BOs\\BE.BOs.csproj",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2025-10-01T18:04:19.03Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-01T18:04:19.03Z"
             },
             {
               "$type": "Document",
@@ -803,8 +760,7 @@
               "RelativeToolTip": "BE.API\\appsettings.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAA9AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-10-01T17:40:10.763Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-01T17:40:10.763Z"
             },
             {
               "$type": "Document",
@@ -827,8 +783,7 @@
               "RelativeToolTip": "BE.API\\BE.API.csproj",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2025-10-01T18:04:04.642Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-01T18:04:04.642Z"
             },
             {
               "$type": "Document",
@@ -840,8 +795,7 @@
               "RelativeToolTip": "BE.BOs\\Models\\EvandBatteryTradingPlatformContext.cs",
               "ViewState": "AgIAAB4AAAAAAAAAAAAuwCoAAAA8AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-01T18:16:44.358Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-01T18:16:44.358Z"
             }
           ]
         }
