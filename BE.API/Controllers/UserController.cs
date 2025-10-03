@@ -10,7 +10,9 @@ using System.Text;
 
 namespace BE.API.Controllers
 {
-    public class UserController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class UserController : ControllerBase
     {
         private readonly IUserRepo _userRepo;
 
@@ -19,11 +21,11 @@ namespace BE.API.Controllers
             _userRepo = userRepo;
         }
 
-        [HttpPost("api/login")]
+        [HttpPost("login")]
         public ActionResult<LoginResponse> Login([FromBody] LoginRequest request)
         {
             var user = _userRepo.GetAccountByEmailAndPassword(request.Email, request.Password);
-            if (user == null)
+            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 return Unauthorized("Invalid email or password.");
             }
@@ -37,7 +39,6 @@ namespace BE.API.Controllers
                 Token = token,
                 AccountId = user.UserId.ToString()
             });
-            return Ok(user);
         }
 
         private string GenerateJwtToken(User user)
@@ -70,5 +71,142 @@ namespace BE.API.Controllers
 
         }
 
+        [HttpPost("register")]
+        public ActionResult<User> Register([FromBody] RegisterRequest request)
+        {
+            try
+            {
+                // Validate request
+                if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+                {
+                    return BadRequest("Email and password are required");
+                }
+
+                // Create new user from request
+                var user = new User
+                {
+                    Email = request.Email,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                    FullName = request.FullName,
+                    Phone = request.Phone,
+                    RoleId = 2 // Assuming 2 is for regular users
+                };
+
+                // Register user
+                var registeredUser = _userRepo.Register(user);
+
+                return Ok(registeredUser);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet]
+        public ActionResult<IEnumerable<UserResponse>> GetAllUsers()
+        {
+            try
+            {
+                var users = _userRepo.GetAllUsers();
+                var response = users.Select(user => new UserResponse
+                {
+                    UserId = user.UserId,
+                    Role = user.Role?.RoleName ?? "Unknown",
+                    Email = user.Email,
+                    FullName = user.FullName,
+                    Phone = user.Phone,
+                    Avatar = user.Avatar,
+                    AccountStatus = user.AccountStatus,
+                    CreatedDate = user.CreatedDate
+                }).ToList();
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("{id}")]
+        public ActionResult<User> GetUser(int id)
+        {
+            try
+            {
+                var user = _userRepo.GetUserById(id);
+                if (user == null)
+                {
+                    return NotFound();
+                }
+                var response = new UserResponse
+                {
+                    UserId = user.UserId,
+                    Role = user.Role?.RoleName ?? "Unknown",
+                    Email = user.Email,
+                    FullName = user.FullName,
+                    Phone = user.Phone,
+                    Avatar = user.Avatar,
+                    AccountStatus = user.AccountStatus,
+                    CreatedDate = user.CreatedDate
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpPut("{id}")]
+        public ActionResult<UserResponse> UpdateUser(int id, [FromBody] UserRequest request)
+        {
+            try
+            {
+                var existingUser = _userRepo.GetUserById(id);
+                if (existingUser == null)
+                {
+                    return NotFound();
+                }
+
+                existingUser.FullName = request.FullName;
+                existingUser.Phone = request.Phone;
+                existingUser.Avatar = request.Avatar;
+
+                var updatedUser = _userRepo.UpdateUser(existingUser);
+
+                var response = new
+                {
+                    FullName = updatedUser.FullName,
+                    Phone = updatedUser.Phone,
+                    Avatar = updatedUser.Avatar
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public ActionResult DeleteUser(int id)
+        {
+            try
+            {
+                var result = _userRepo.DeleteUser(id);
+                if (!result)
+                {
+                    return NotFound();
+                }
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
     }
 }
