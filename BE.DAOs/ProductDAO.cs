@@ -1,0 +1,82 @@
+﻿using BE.BOs.Models;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace BE.DAOs
+{
+    public class ProductDAO
+    {
+        private static ProductDAO instance;
+        private static EvandBatteryTradingPlatformContext dbcontext;
+
+        private ProductDAO()
+        {
+            dbcontext = new EvandBatteryTradingPlatformContext();
+        }
+
+        public static ProductDAO Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = new ProductDAO();
+                }
+                return instance;
+            }
+        }
+
+        public List<Product> GetAllProducts()
+        {
+            return dbcontext.Products
+                .Include(p => p.Seller)
+                .ToList();
+        }
+
+        public Product GetProductById(int id)
+        {
+            return dbcontext.Products
+                .Include(p => p.Seller)
+                .FirstOrDefault(p => p.ProductId == id);
+        }
+
+        public Product CreateProduct(Product product)
+        {
+            product.CreatedDate = DateTime.Now;
+            product.Status = "Draft";
+            product.VerificationStatus = "NotRequested";
+            dbcontext.Products.Add(product);
+            dbcontext.SaveChanges();
+            return product;
+        }
+
+        public Product UpdateProduct(Product product)
+        {
+            dbcontext.Products.Update(product);
+            dbcontext.SaveChanges();
+            return product;
+        }
+
+        public bool DeleteProduct(int id)
+        {
+            var product = dbcontext.Products.Find(id);
+            if (product == null) return false;
+
+            product.Status = "Deleted";
+            dbcontext.SaveChanges();
+            return true;
+        }
+
+        public List<Product> GetProductsBySellerId(int sellerId)
+        {
+            return dbcontext.Products
+                .Include(p => p.Seller)
+                .Where(p => p.SellerId == sellerId)
+                .ToList();
+        }
+    }
+}
