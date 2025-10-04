@@ -106,7 +106,7 @@ namespace BE.API.Controllers
             {
                 var product = new Product
                 {
-                    SellerId = int.Parse(User.FindFirst("UserId")?.Value ?? "0"),
+                    SellerId = request.SellerId ?? (int.TryParse(User.FindFirst("UserId")?.Value, out int userId) ? userId : null),
                     ProductType = request.ProductType,
                     Title = request.Title,
                     Description = request.Description,
@@ -157,7 +157,7 @@ namespace BE.API.Controllers
                 }
 
                 // Verify ownership
-                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                var userId = int.TryParse(User.FindFirst("UserId")?.Value, out int parsedUserId) ? parsedUserId : 0;
                 if (existingProduct.SellerId != userId)
                 {
                     return Forbid();
@@ -209,7 +209,7 @@ namespace BE.API.Controllers
                 }
 
                 // Verify ownership
-                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                var userId = int.TryParse(User.FindFirst("UserId")?.Value, out int parsedUserId) ? parsedUserId : 0;
                 if (product.SellerId != userId)
                 {
                     return Forbid();
