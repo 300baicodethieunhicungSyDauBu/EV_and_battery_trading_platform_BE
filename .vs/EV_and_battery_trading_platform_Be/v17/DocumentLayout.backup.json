@@ -104,7 +104,7 @@
               "RelativeDocumentMoniker": "BE.BOs\\Migrations\\20251006161904_AddLicensePlateToProduct.cs",
               "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.BOs\\Migrations\\20251006161904_AddLicensePlateToProduct.cs",
               "RelativeToolTip": "BE.BOs\\Migrations\\20251006161904_AddLicensePlateToProduct.cs",
-              "ViewState": "AgIAAAgAAAAAAAAAAAAAwBMAAAAaAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-10-06T16:20:18.247Z",
               "EditorCaption": ""
@@ -119,7 +119,8 @@
               "RelativeToolTip": "BE.BOs\\Migrations\\EvandBatteryTradingPlatformContextModelSnapshot.cs",
               "ViewState": "AgIAAJcAAAAAAAAAAAAQwAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-06T16:20:08.866Z"
+              "WhenOpened": "2025-10-06T16:20:08.866Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -131,7 +132,8 @@
               "RelativeToolTip": "BE.API\\Controllers\\NotificationController.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-05T18:26:59.389Z"
+              "WhenOpened": "2025-10-05T18:26:59.389Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
