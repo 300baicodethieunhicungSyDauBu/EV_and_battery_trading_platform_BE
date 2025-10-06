@@ -1,4 +1,4 @@
-﻿using BE.BOs.Models;
+using BE.BOs.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -86,3 +86,4 @@ namespace BE.DAOs
         }
     }
 }
+

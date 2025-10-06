@@ -2,6 +2,9 @@
 using BE.API.DTOs.Response;
 using BE.BOs.Models;
 using BE.REPOs.Interface;
+using BE.REPOs.Service;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -15,10 +18,14 @@ namespace BE.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserRepo _userRepo;
+        private readonly IConfiguration _configuration;
+        private readonly CloudinaryService _cloudinary;
 
-        public UserController(IUserRepo userRepo)
+        public UserController(IUserRepo userRepo, IConfiguration configuration, CloudinaryService cloudinaryService)
         {
             _userRepo = userRepo;
+            _configuration = configuration;
+            _cloudinary = cloudinaryService;
         }
 
         [HttpPost("login")]
@@ -35,7 +42,7 @@ namespace BE.API.Controllers
             var token = GenerateJwtToken(user);
             return Ok(new LoginResponse
             {
-                Role = user.RoleId.ToString(),
+                Role = user.RoleId?.ToString() ?? "Member",
                 Token = token,
                 AccountId = user.UserId.ToString()
             });
@@ -48,7 +55,7 @@ namespace BE.API.Controllers
     .AddJsonFile("appsettings.json", true, true).Build();
 
             var claims = new List<Claim> {
-            new Claim(ClaimTypes.Name,user.FullName),
+            new Claim(ClaimTypes.Name,user.FullName ?? "Unknown"),
             new Claim(ClaimTypes.Email,user.Email),
             new Claim("UserId",user.UserId.ToString())
             };
@@ -57,7 +64,7 @@ namespace BE.API.Controllers
             {
                 claims.Add(new Claim(ClaimTypes.Role, user.RoleId.Value.ToString()));
             }
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"] ?? "default-secret-key"));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var preparedToken = new JwtSecurityToken(
@@ -72,30 +79,44 @@ namespace BE.API.Controllers
         }
 
         [HttpPost("register")]
-        public ActionResult<User> Register([FromBody] RegisterRequest request)
+        public async Task<ActionResult<User>> Register([FromForm] RegisterRequest request)
         {
             try
             {
-                // Validate request
                 if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
                 {
                     return BadRequest("Email and password are required");
                 }
 
-                // Create new user from request
+                // ✅ Upload avatar nếu có
+                string? avatarUrl = null;
+                if (request.Avatar != null)
+                {
+                    avatarUrl = await _cloudinary.UploadImageAsync(request.Avatar);
+                }
+
+                // ✅ Tạo user mới
                 var user = new User
                 {
                     Email = request.Email,
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                     FullName = request.FullName,
                     Phone = request.Phone,
-                    RoleId = 2 // Assuming 2 is for regular users
+                    Avatar = avatarUrl,
+                    RoleId = 2 // member mặc định
                 };
 
-                // Register user
                 var registeredUser = _userRepo.Register(user);
 
-                return Ok(registeredUser);
+                return Ok(new
+                {
+                    registeredUser.UserId,
+                    registeredUser.Email,
+                    registeredUser.FullName,
+                    registeredUser.Phone,
+                    registeredUser.Avatar,
+                    registeredUser.RoleId
+                });
             }
             catch (Exception ex)
             {

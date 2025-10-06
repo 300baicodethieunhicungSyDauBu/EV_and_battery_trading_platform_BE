@@ -3,7 +3,7 @@
     public class ProductImageRequest
     {
         public int? ProductId { get; set; }
-
-        public string ImageData { get; set; } = null!;
+        public IFormFile ImageFile { get; set; } = null!;
     }
+
 }

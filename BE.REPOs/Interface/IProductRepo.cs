@@ -15,5 +15,10 @@ namespace BE.REPOs.Interface
         Product UpdateProduct(Product product);
         bool DeleteProduct(int id);
         List<Product> GetProductsBySellerId(int sellerId);
+        List<Product> GetDraftProducts();
+        Product ApproveProduct(int id);
+        List<Product> GetActiveProducts();
+        List<Product> GetProductsByLicensePlate(string licensePlate);
+        Product GetProductByExactLicensePlate(string licensePlate);
     }
 }

@@ -1,4 +1,4 @@
-﻿using BE.BOs.Models;
+using BE.BOs.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -10,8 +10,8 @@ namespace BE.DAOs
 {
     public class ProductDAO
     {
-        private static ProductDAO instance;
-        private static EvandBatteryTradingPlatformContext dbcontext;
+        private static ProductDAO? instance;
+        private static EvandBatteryTradingPlatformContext? dbcontext;
 
         private ProductDAO()
         {
@@ -32,15 +32,17 @@ namespace BE.DAOs
 
         public List<Product> GetAllProducts()
         {
-            return dbcontext.Products
+            return dbcontext?.Products
                 .Include(p => p.Seller)
-                .ToList();
+                .Include(p => p.ProductImages)
+                .ToList() ?? new List<Product>();
         }
 
-        public Product GetProductById(int id)
+        public Product? GetProductById(int id)
         {
             return dbcontext.Products
                 .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
                 .FirstOrDefault(p => p.ProductId == id);
         }
 
@@ -75,8 +77,55 @@ namespace BE.DAOs
         {
             return dbcontext.Products
                 .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
                 .Where(p => p.SellerId == sellerId)
                 .ToList();
         }
+
+        public List<Product> GetDraftProducts()
+        {
+            return dbcontext.Products
+                .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
+                .Where(p => p.Status == "Draft")
+                .ToList();
+        }
+
+        public Product? ApproveProduct(int id)
+        {
+            var product = dbcontext.Products.FirstOrDefault(p => p.ProductId == id);
+            if (product == null) return null;
+
+            product.Status = "Active";
+            dbcontext.SaveChanges();
+            return product;
+        }
+
+        public List<Product> GetAciveProducts()
+        {
+            return dbcontext.Products
+                .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
+                .Where(p => p.Status == "Active")
+                .ToList();
+        }
+
+        public List<Product> GetProductsByLicensePlate(string licensePlate)
+        {
+            return dbcontext.Products
+                .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
+                .Where(p => p.LicensePlate != null && p.LicensePlate.Contains(licensePlate))
+                .ToList();
+        }
+
+        public Product? GetProductByExactLicensePlate(string licensePlate)
+        {
+            return dbcontext.Products
+                .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
+                .FirstOrDefault(p => p.LicensePlate == licensePlate);
+        }
     }
 }
+

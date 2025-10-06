@@ -34,5 +34,7 @@
 
         public int? CycleCount { get; set; }
 
+        public string? LicensePlate { get; set; }
+
     }
 }

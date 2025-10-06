@@ -40,5 +40,29 @@ namespace BE.REPOs.Implementation
         {
             return ProductDAO.Instance.GetProductsBySellerId(sellerId);
         }
+
+        public List<Product> GetDraftProducts()
+        {
+            return ProductDAO.Instance.GetDraftProducts();
+        }
+
+        public Product ApproveProduct(int id)
+        {
+            return ProductDAO.Instance.ApproveProduct(id);
+        }
+        public List<Product> GetActiveProducts()
+        {
+            return ProductDAO.Instance.GetAciveProducts();
+        }
+
+        public List<Product> GetProductsByLicensePlate(string licensePlate)
+        {
+            return ProductDAO.Instance.GetProductsByLicensePlate(licensePlate);
+        }
+
+        public Product GetProductByExactLicensePlate(string licensePlate)
+        {
+            return ProductDAO.Instance.GetProductByExactLicensePlate(licensePlate);
+        }
     }
 }

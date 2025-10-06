@@ -1,4 +1,4 @@
-﻿using BE.BOs.Models;
+using BE.BOs.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -10,8 +10,8 @@ namespace BE.DAOs
 {
     public class OrderDAO
     {
-        private static OrderDAO instance;
-        private static EvandBatteryTradingPlatformContext dbcontext;
+        private static OrderDAO? instance;
+        private static EvandBatteryTradingPlatformContext? dbcontext;
 
         private OrderDAO()
         {
@@ -40,7 +40,7 @@ namespace BE.DAOs
                 .ToList();
         }
 
-        public Order GetOrderById(int id)
+        public Order? GetOrderById(int id)
         {
             return dbcontext.Orders
                 .Include(o => o.Buyer)
@@ -90,3 +90,4 @@ namespace BE.DAOs
         }
     }
 }
+

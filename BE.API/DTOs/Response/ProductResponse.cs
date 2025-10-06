@@ -35,11 +35,14 @@
 
         public int? CycleCount { get; set; }
 
+        public string? LicensePlate { get; set; }
+
         public string? Status { get; set; }
 
         public string? VerificationStatus { get; set; }
 
         public DateTime? CreatedDate { get; set; }
 
+        public List<string> ImageUrls { get; set; } = new();
     }
 }
