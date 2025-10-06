@@ -10,6 +10,6 @@
 
         public string? Phone { get; set; }
 
-        public string? Avatar { get; set; }
+        public IFormFile? Avatar { get; set; }
     }
 }

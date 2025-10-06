@@ -34,6 +34,7 @@ namespace BE.DAOs
         {
             return dbcontext.Products
                 .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
                 .ToList();
         }
 
@@ -41,6 +42,7 @@ namespace BE.DAOs
         {
             return dbcontext.Products
                 .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
                 .FirstOrDefault(p => p.ProductId == id);
         }
 
@@ -75,6 +77,7 @@ namespace BE.DAOs
         {
             return dbcontext.Products
                 .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
                 .Where(p => p.SellerId == sellerId)
                 .ToList();
         }
@@ -83,6 +86,7 @@ namespace BE.DAOs
         {
             return dbcontext.Products
                 .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
                 .Where(p => p.Status == "Draft")
                 .ToList();
         }
@@ -101,6 +105,7 @@ namespace BE.DAOs
         {
             return dbcontext.Products
                 .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
                 .Where(p => p.Status == "Active")
                 .ToList();
         }
