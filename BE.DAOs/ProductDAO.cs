@@ -78,5 +78,31 @@ namespace BE.DAOs
                 .Where(p => p.SellerId == sellerId)
                 .ToList();
         }
+
+        public List<Product> GetDraftProducts()
+        {
+            return dbcontext.Products
+                .Include(p => p.Seller)
+                .Where(p => p.Status == "Draft")
+                .ToList();
+        }
+
+        public Product ApproveProduct(int id)
+        {
+            var product = dbcontext.Products.FirstOrDefault(p => p.ProductId == id);
+            if (product == null) return null;
+
+            product.Status = "Active";
+            dbcontext.SaveChanges();
+            return product;
+        }
+
+        public List<Product> GetAciveProducts()
+        {
+            return dbcontext.Products
+                .Include(p => p.Seller)
+                .Where(p => p.Status == "Active")
+                .ToList();
+        }
     }
 }

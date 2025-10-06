@@ -1,5 +1,6 @@
 using BE.REPOs.Implementation;
 using BE.REPOs.Interface;
+using BE.REPOs.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -82,13 +83,13 @@ builder.Services.AddScoped<IProductRepo, ProductRepo>();
 builder.Services.AddScoped<IPaymentRepo, PaymentRepo>();
 builder.Services.AddScoped<IOrderRepo, OrderRepo>();
 builder.Services.AddScoped<IProductImageRepo, ProductImageRepo>();
-
-// New repositories for additional entities
 builder.Services.AddScoped<IUserRoleRepo, UserRoleRepo>();
 builder.Services.AddScoped<IReviewsRepo, ReviewsRepo>();
 builder.Services.AddScoped<IReportedListingsRepo, ReportedListingsRepo>();
 builder.Services.AddScoped<IFeeSettings, FeeSettingsRepo>();
 builder.Services.AddScoped<INotificationsRepo, NotificationsRepo>();
+builder.Services.AddScoped<CloudinaryService>();
+
 
 
 builder.Services.AddCors(options =>

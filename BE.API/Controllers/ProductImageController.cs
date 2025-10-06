@@ -2,6 +2,7 @@
 using BE.API.DTOs.Response;
 using BE.BOs.Models;
 using BE.REPOs.Interface;
+using BE.REPOs.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,11 +15,13 @@ namespace BE.API.Controllers
     {
         private readonly IProductImageRepo _productImageRepo;
         private readonly IProductRepo _productRepo;
+        private readonly CloudinaryService _cloudinaryService;
 
-        public ProductImageController(IProductImageRepo productImageRepo, IProductRepo productRepo)
+        public ProductImageController(IProductImageRepo productImageRepo, IProductRepo productRepo, CloudinaryService cloudinaryService)
         {
             _productImageRepo = productImageRepo;
             _productRepo = productRepo;
+            _cloudinaryService = cloudinaryService;
         }
 
         [HttpGet("product/{productId}")]
@@ -72,7 +75,7 @@ namespace BE.API.Controllers
 
         [HttpPost]
         [Authorize(Policy = "MemberOnly")]
-        public ActionResult<ProductImageResponse> CreateProductImage([FromBody] ProductImageRequest request)
+        public async Task<ActionResult<ProductImageResponse>> CreateProductImage([FromForm] ProductImageRequest request)
         {
             try
             {
@@ -89,10 +92,13 @@ namespace BE.API.Controllers
                     return Forbid();
                 }
 
+                // Upload to Cloudinary
+                string imageUrl = await _cloudinaryService.UploadImageAsync(request.ImageFile);
+
                 var productImage = new ProductImage
                 {
                     ProductId = request.ProductId,
-                    ImageData = request.ImageData,
+                    ImageData = imageUrl, // Store the Cloudinary URL
                     CreatedDate = DateTime.Now
                 };
 
@@ -114,45 +120,97 @@ namespace BE.API.Controllers
             }
         }
 
-        [HttpPut("{id}")]
+        [HttpPost("multiple")]
         [Authorize(Policy = "MemberOnly")]
-        public ActionResult<ProductImageResponse> UpdateProductImage(int id, [FromBody] ProductImageRequest request)
+        public async Task<ActionResult<List<ProductImageResponse>>> CreateMultipleProductImages(
+        [FromForm] int productId,
+        [FromForm] List<IFormFile> images)
         {
             try
             {
-                var existingImage = _productImageRepo.GetProductImageById(id);
-                if (existingImage == null)
+                var product = _productRepo.GetProductById(productId);
+                if (product == null)
                 {
-                    return NotFound();
+                    return NotFound("Product not found");
                 }
 
-                // Verify product ownership
-                var product = _productRepo.GetProductById(existingImage.ProductId ?? 0);
                 var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-                if (product?.SellerId != userId && !User.IsInRole("1"))
+                if (product.SellerId != userId && !User.IsInRole("1"))
                 {
                     return Forbid();
                 }
 
-                existingImage.ImageData = request.ImageData;
+                var responses = new List<ProductImageResponse>();
 
-                var updatedImage = _productImageRepo.UpdateProductImage(existingImage);
-
-                var response = new ProductImageResponse
+                foreach (var image in images)
                 {
-                    ImageId = updatedImage.ImageId,
-                    ProductId = updatedImage.ProductId,
-                    ImageData = updatedImage.ImageData,
-                    CreatedDate = updatedImage.CreatedDate
-                };
+                    string imageUrl = await _cloudinaryService.UploadImageAsync(image);
 
-                return Ok(response);
+                    var productImage = new ProductImage
+                    {
+                        ProductId = productId,
+                        ImageData = imageUrl,
+                        CreatedDate = DateTime.Now
+                    };
+
+                    var createdImage = _productImageRepo.CreateProductImage(productImage);
+
+                    responses.Add(new ProductImageResponse
+                    {
+                        ImageId = createdImage.ImageId,
+                        ProductId = createdImage.ProductId,
+                        ImageData = createdImage.ImageData,
+                        CreatedDate = createdImage.CreatedDate
+                    });
+                }
+
+                return Ok(responses);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
+
+        //[HttpPut("{id}")]
+        //[Authorize(Policy = "MemberOnly")]
+        //public ActionResult<ProductImageResponse> UpdateProductImage(int id, [FromBody] ProductImageRequest request)
+        //{
+        //    try
+        //    {
+        //        var existingImage = _productImageRepo.GetProductImageById(id);
+        //        if (existingImage == null)
+        //        {
+        //            return NotFound();
+        //        }
+
+        //        // Verify product ownership
+        //        var product = _productRepo.GetProductById(existingImage.ProductId ?? 0);
+        //        var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+        //        if (product?.SellerId != userId && !User.IsInRole("1"))
+        //        {
+        //            return Forbid();
+        //        }
+
+        //        existingImage.ImageData = request.ImageData;
+
+        //        var updatedImage = _productImageRepo.UpdateProductImage(existingImage);
+
+        //        var response = new ProductImageResponse
+        //        {
+        //            ImageId = updatedImage.ImageId,
+        //            ProductId = updatedImage.ProductId,
+        //            ImageData = updatedImage.ImageData,
+        //            CreatedDate = updatedImage.CreatedDate
+        //        };
+
+        //        return Ok(response);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, "Internal server error: " + ex.Message);
+        //    }
+        //}
 
         [HttpDelete("{id}")]
         [Authorize(Policy = "MemberOnly")]
