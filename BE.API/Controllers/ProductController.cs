@@ -1,4 +1,5 @@
 ﻿using BE.API.DTOs.Request;
+using BE.API.DTOs.Response;
 using BE.BOs.Models;
 using BE.REPOs.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -23,28 +24,29 @@ namespace BE.API.Controllers
             try
             {
                 var products = _productRepo.GetAllProducts();
-                var response = products.Select(p => new
+                var response = products.Select(p => new ProductResponse
                 {
-                    p.ProductId,
-                    p.ProductType,
-                    p.Title,
-                    p.Description,
-                    p.Price,
-                    p.Brand,
-                    p.Model,
-                    p.Condition,
-                    p.VehicleType,
-                    p.ManufactureYear,
-                    p.Mileage,
-                    p.BatteryHealth,
-                    p.BatteryType,
-                    p.Capacity,
-                    p.Voltage,
-                    p.CycleCount,
-                    p.Status,
-                    p.VerificationStatus,
-                    p.CreatedDate,
-                    SellerName = p.Seller?.FullName
+                    ProductId = p.ProductId,
+                    SellerId = p.SellerId,
+                    ProductType = p.ProductType,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Price = p.Price,
+                    Brand = p.Brand,
+                    Model = p.Model,
+                    Condition = p.Condition,
+                    VehicleType = p.VehicleType,
+                    ManufactureYear = p.ManufactureYear,
+                    Mileage = p.Mileage,
+                    BatteryHealth = p.BatteryHealth,
+                    BatteryType = p.BatteryType,
+                    Capacity = p.Capacity,
+                    Voltage = p.Voltage,
+                    CycleCount = p.CycleCount,
+                    Status = p.Status,
+                    VerificationStatus = p.VerificationStatus,
+                    CreatedDate = p.CreatedDate,
+                    ImageUrls = p.ProductImages.Select(img => img.ImageData).ToList() // ✅ map hình ảnh
                 }).ToList();
 
                 return Ok(response);
@@ -62,32 +64,31 @@ namespace BE.API.Controllers
             {
                 var product = _productRepo.GetProductById(id);
                 if (product == null)
-                {
                     return NotFound();
-                }
 
-                var response = new
+                var response = new ProductResponse
                 {
-                    product.ProductId,
-                    product.ProductType,
-                    product.Title,
-                    product.Description,
-                    product.Price,
-                    product.Brand,
-                    product.Model,
-                    product.Condition,
-                    product.VehicleType,
-                    product.ManufactureYear,
-                    product.Mileage,
-                    product.BatteryHealth,
-                    product.BatteryType,
-                    product.Capacity,
-                    product.Voltage,
-                    product.CycleCount,
-                    product.Status,
-                    product.VerificationStatus,
-                    product.CreatedDate,
-                    SellerName = product.Seller?.FullName
+                    ProductId = product.ProductId,
+                    SellerId = product.SellerId,
+                    ProductType = product.ProductType,
+                    Title = product.Title,
+                    Description = product.Description,
+                    Price = product.Price,
+                    Brand = product.Brand,
+                    Model = product.Model,
+                    Condition = product.Condition,
+                    VehicleType = product.VehicleType,
+                    ManufactureYear = product.ManufactureYear,
+                    Mileage = product.Mileage,
+                    BatteryHealth = product.BatteryHealth,
+                    BatteryType = product.BatteryType,
+                    Capacity = product.Capacity,
+                    Voltage = product.Voltage,
+                    CycleCount = product.CycleCount,
+                    Status = product.Status,
+                    VerificationStatus = product.VerificationStatus,
+                    CreatedDate = product.CreatedDate,
+                    ImageUrls = product.ProductImages.Select(img => img.ImageData).ToList() // ✅
                 };
 
                 return Ok(response);
@@ -225,11 +226,13 @@ namespace BE.API.Controllers
         }
 
         [HttpGet("seller/{sellerId}")]
+        [Authorize(Policy = "MemberOnly")]
         public ActionResult GetProductsBySeller(int sellerId)
         {
             try
             {
                 var products = _productRepo.GetProductsBySellerId(sellerId);
+
                 var response = products.Select(p => new
                 {
                     p.ProductId,
@@ -237,7 +240,8 @@ namespace BE.API.Controllers
                     p.Price,
                     p.Status,
                     p.CreatedDate,
-                    SellerName = p.Seller?.FullName
+                    SellerName = p.Seller?.FullName,
+                    ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
                 }).ToList();
 
                 return Ok(response);
@@ -249,12 +253,13 @@ namespace BE.API.Controllers
         }
 
         [HttpGet("drafts")]
-        //[Authorize(Roles = "Admin")] // nếu bạn dùng role-based auth
+        [Authorize(Policy = "AdminOnly")] // ✅ Có thể tùy bạn, hoặc để mở nếu cần
         public ActionResult GetDraftProducts()
         {
             try
             {
                 var drafts = _productRepo.GetDraftProducts();
+
                 var response = drafts.Select(p => new
                 {
                     p.ProductId,
@@ -262,7 +267,8 @@ namespace BE.API.Controllers
                     p.Price,
                     p.Status,
                     p.CreatedDate,
-                    SellerName = p.Seller?.FullName
+                    SellerName = p.Seller?.FullName,
+                    ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
                 }).ToList();
 
                 return Ok(response);
@@ -306,23 +312,37 @@ namespace BE.API.Controllers
         }
 
         [HttpGet("active")]
+        [AllowAnonymous] // Khách hàng có thể xem không cần login
         public ActionResult GetActiveProducts()
         {
             try
             {
-                var actives = _productRepo.GetActiveProducts();
-                var response = actives.Select(p => new
+                var products = _productRepo.GetActiveProducts();
+
+                var response = products.Select(p => new ProductResponse
                 {
-                    p.ProductId,
-                    p.Title,
-                    p.Price,
-                    p.Brand,
-                    p.Model,
-                    p.VehicleType,
-                    p.BatteryType,
-                    p.CreatedDate,
-                    SellerName = p.Seller?.FullName
-                });
+                    ProductId = p.ProductId,
+                    SellerId = p.SellerId,
+                    ProductType = p.ProductType,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Price = p.Price,
+                    Brand = p.Brand,
+                    Model = p.Model,
+                    Condition = p.Condition,
+                    VehicleType = p.VehicleType,
+                    ManufactureYear = p.ManufactureYear,
+                    Mileage = p.Mileage,
+                    BatteryHealth = p.BatteryHealth,
+                    BatteryType = p.BatteryType,
+                    Capacity = p.Capacity,
+                    Voltage = p.Voltage,
+                    CycleCount = p.CycleCount,
+                    Status = p.Status,
+                    VerificationStatus = p.VerificationStatus,
+                    CreatedDate = p.CreatedDate,
+                    ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+                }).ToList();
 
                 return Ok(response);
             }
