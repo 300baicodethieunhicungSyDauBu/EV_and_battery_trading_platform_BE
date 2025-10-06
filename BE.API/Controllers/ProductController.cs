@@ -247,5 +247,89 @@ namespace BE.API.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
+
+        [HttpGet("drafts")]
+        //[Authorize(Roles = "Admin")] // nếu bạn dùng role-based auth
+        public ActionResult GetDraftProducts()
+        {
+            try
+            {
+                var drafts = _productRepo.GetDraftProducts();
+                var response = drafts.Select(p => new
+                {
+                    p.ProductId,
+                    p.Title,
+                    p.Price,
+                    p.Status,
+                    p.CreatedDate,
+                    SellerName = p.Seller?.FullName
+                }).ToList();
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpPut("approve/{id}")]
+        //[Authorize(Roles = "Admin")]
+        public ActionResult ApproveProduct(int id)
+        {
+            try
+            {
+                var product = _productRepo.GetProductById(id);
+                if (product == null)
+                {
+                    return NotFound("Product not found.");
+                }
+
+                var approved = _productRepo.ApproveProduct(id);
+                if (approved == null)
+                {
+                    return StatusCode(500, "Failed to approve product.");
+                }
+
+                return Ok(new
+                {
+                    approved.ProductId,
+                    approved.Title,
+                    approved.Status,
+                    Message = "Product approved successfully."
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("active")]
+        public ActionResult GetActiveProducts()
+        {
+            try
+            {
+                var actives = _productRepo.GetActiveProducts();
+                var response = actives.Select(p => new
+                {
+                    p.ProductId,
+                    p.Title,
+                    p.Price,
+                    p.Brand,
+                    p.Model,
+                    p.VehicleType,
+                    p.BatteryType,
+                    p.CreatedDate,
+                    SellerName = p.Seller?.FullName
+                });
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
     }
 }
