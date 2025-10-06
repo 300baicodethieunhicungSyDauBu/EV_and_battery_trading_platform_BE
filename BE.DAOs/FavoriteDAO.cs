@@ -1,4 +1,4 @@
-﻿using BE.BOs.Models;
+using BE.BOs.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -10,8 +10,8 @@ namespace BE.DAOs
 {
     public class FavoriteDAO
     {
-        private static FavoriteDAO instance;
-        private static EvandBatteryTradingPlatformContext dbcontext;
+        private static FavoriteDAO? instance;
+        private static EvandBatteryTradingPlatformContext? dbcontext;
 
         private FavoriteDAO()
         {
@@ -38,7 +38,7 @@ namespace BE.DAOs
                 .ToList();
         }
 
-        public Favorite GetFavoriteById(int id)
+        public Favorite? GetFavoriteById(int id)
         {
             return dbcontext.Favorites
                 .Include(f => f.Product)
@@ -81,3 +81,4 @@ namespace BE.DAOs
         }
     }
 }
+

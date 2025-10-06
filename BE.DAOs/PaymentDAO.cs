@@ -1,4 +1,4 @@
-﻿using BE.BOs.Models;
+using BE.BOs.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -10,8 +10,8 @@ namespace BE.DAOs
 {
     public class PaymentDAO
     {
-        private static PaymentDAO instance;
-        private static EvandBatteryTradingPlatformContext dbcontext;
+        private static PaymentDAO? instance;
+        private static EvandBatteryTradingPlatformContext? dbcontext;
 
         private PaymentDAO()
         {
@@ -38,7 +38,7 @@ namespace BE.DAOs
                 .ToList();
         }
 
-        public Payment GetPaymentById(int id)
+        public Payment? GetPaymentById(int id)
         {
             return dbcontext.Payments
                 .Include(p => p.Order)
@@ -81,3 +81,4 @@ namespace BE.DAOs
         }
     }
 }
+

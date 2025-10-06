@@ -1,4 +1,4 @@
-﻿using BE.BOs.Models;
+using BE.BOs.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -10,8 +10,8 @@ namespace BE.DAOs
 {
     public class UserDAO
     {
-        private static UserDAO instance;
-        private static EvandBatteryTradingPlatformContext dbcontext;
+        private static UserDAO? instance;
+        private static EvandBatteryTradingPlatformContext? dbcontext;
         private UserDAO()
         {
             dbcontext = new EvandBatteryTradingPlatformContext();
@@ -53,7 +53,7 @@ namespace BE.DAOs
             return dbcontext.Users.Include(u => u.Role).ToList();
         }
 
-        public User GetUserById(int userId)
+        public User? GetUserById(int userId)
         {
             return dbcontext.Users.Include(u => u.Role).FirstOrDefault(u => u.UserId == userId);
         }
@@ -114,3 +114,4 @@ namespace BE.DAOs
         }
     }
 }
+

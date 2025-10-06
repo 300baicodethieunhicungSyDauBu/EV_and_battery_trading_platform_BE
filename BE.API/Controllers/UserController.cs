@@ -42,7 +42,7 @@ namespace BE.API.Controllers
             var token = GenerateJwtToken(user);
             return Ok(new LoginResponse
             {
-                Role = user.RoleId.ToString(),
+                Role = user.RoleId?.ToString() ?? "Member",
                 Token = token,
                 AccountId = user.UserId.ToString()
             });
@@ -55,7 +55,7 @@ namespace BE.API.Controllers
     .AddJsonFile("appsettings.json", true, true).Build();
 
             var claims = new List<Claim> {
-            new Claim(ClaimTypes.Name,user.FullName),
+            new Claim(ClaimTypes.Name,user.FullName ?? "Unknown"),
             new Claim(ClaimTypes.Email,user.Email),
             new Claim("UserId",user.UserId.ToString())
             };
@@ -64,7 +64,7 @@ namespace BE.API.Controllers
             {
                 claims.Add(new Claim(ClaimTypes.Role, user.RoleId.Value.ToString()));
             }
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"] ?? "default-secret-key"));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var preparedToken = new JwtSecurityToken(

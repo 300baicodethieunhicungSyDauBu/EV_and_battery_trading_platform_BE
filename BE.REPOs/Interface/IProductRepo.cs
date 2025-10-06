@@ -18,5 +18,7 @@ namespace BE.REPOs.Interface
         List<Product> GetDraftProducts();
         Product ApproveProduct(int id);
         List<Product> GetActiveProducts();
+        List<Product> GetProductsByLicensePlate(string licensePlate);
+        Product GetProductByExactLicensePlate(string licensePlate);
     }
 }
