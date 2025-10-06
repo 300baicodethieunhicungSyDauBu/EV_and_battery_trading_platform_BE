@@ -81,6 +81,14 @@ builder.Services.AddScoped<IFavoriteRepo, FavoriteRepo>();
 builder.Services.AddScoped<IProductRepo, ProductRepo>();
 builder.Services.AddScoped<IPaymentRepo, PaymentRepo>();
 builder.Services.AddScoped<IOrderRepo, OrderRepo>();
+builder.Services.AddScoped<IProductImageRepo, ProductImageRepo>();
+
+// New repositories for additional entities
+builder.Services.AddScoped<IUserRoleRepo, UserRoleRepo>();
+builder.Services.AddScoped<IReviewsRepo, ReviewsRepo>();
+builder.Services.AddScoped<IReportedListingsRepo, ReportedListingsRepo>();
+builder.Services.AddScoped<IFeeSettings, FeeSettingsRepo>();
+builder.Services.AddScoped<INotificationsRepo, NotificationsRepo>();
 
 
 builder.Services.AddCors(options =>
