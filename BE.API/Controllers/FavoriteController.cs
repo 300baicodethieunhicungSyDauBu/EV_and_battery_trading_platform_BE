@@ -2,12 +2,14 @@
 using BE.API.DTOs.Response;
 using BE.BOs.Models;
 using BE.REPOs.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BE.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class FavoriteController : ControllerBase
     {
         private readonly IFavoriteRepo _favoriteRepo;
@@ -18,6 +20,7 @@ namespace BE.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "AdminOnly")]
         public ActionResult<IEnumerable<FavoriteResponse>> GetAllFavorites()
         {
             try
@@ -71,6 +74,7 @@ namespace BE.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "MemberOnly")]
         public ActionResult CreateFavorite([FromBody] FavoriteRequest request)
         {
             try
@@ -99,7 +103,49 @@ namespace BE.API.Controllers
             }
         }
 
+        [HttpPut("{id}")]
+        [Authorize(Policy = "MemberOnly")]
+        public ActionResult UpdateFavorite(int id, [FromBody] FavoriteRequest request)
+        {
+            try
+            {
+                var existingFavorite = _favoriteRepo.GetFavoriteById(id);
+                if (existingFavorite == null)
+                {
+                    return NotFound("Favorite not found");
+                }
+
+                // Verify ownership
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                if (existingFavorite.UserId != userId)
+                {
+                    return Forbid("You can only update your own favorites");
+                }
+
+                existingFavorite.UserId = request.UserId;
+                existingFavorite.ProductId = request.ProductId;
+
+                var updatedFavorite = _favoriteRepo.UpdateFavorite(existingFavorite);
+
+                var response = new
+                {
+                    updatedFavorite.FavoriteId,
+                    updatedFavorite.UserId,
+                    updatedFavorite.ProductId,
+                    updatedFavorite.CreatedDate,
+                    Message = "Favorite updated successfully"
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
         [HttpDelete("{id}")]
+        [Authorize(Policy = "MemberOnly")]
         public ActionResult DeleteFavorite(int id)
         {
             try
@@ -118,10 +164,20 @@ namespace BE.API.Controllers
         }
 
         [HttpGet("user/{userId}")]
+        [Authorize(Policy = "MemberOnly")]
         public ActionResult GetFavoritesByUserId(int userId)
         {
             try
             {
+                // Verify user can only access their own favorites (unless admin)
+                var currentUserId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                var isAdmin = User.IsInRole("1");
+                
+                if (!isAdmin && currentUserId != userId)
+                {
+                    return Forbid("You can only access your own favorites");
+                }
+
                 var favorites = _favoriteRepo.GetFavoritesByUserId(userId);
                 var response = favorites.Select(f => new
                 {

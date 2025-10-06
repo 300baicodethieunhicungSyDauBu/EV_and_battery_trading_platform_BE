@@ -1,4 +1,4 @@
-﻿using BE.BOs.Models;
+using BE.BOs.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace BE.DAOs
@@ -113,3 +113,4 @@ namespace BE.DAOs
         }
     }
 }
+

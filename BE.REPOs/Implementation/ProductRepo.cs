@@ -54,5 +54,15 @@ namespace BE.REPOs.Implementation
         {
             return ProductDAO.Instance.GetAciveProducts();
         }
+
+        public List<Product> GetProductsByLicensePlate(string licensePlate)
+        {
+            return ProductDAO.Instance.GetProductsByLicensePlate(licensePlate);
+        }
+
+        public Product GetProductByExactLicensePlate(string licensePlate)
+        {
+            return ProductDAO.Instance.GetProductByExactLicensePlate(licensePlate);
+        }
     }
 }

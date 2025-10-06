@@ -43,6 +43,7 @@ namespace BE.API.Controllers
                     Capacity = p.Capacity,
                     Voltage = p.Voltage,
                     CycleCount = p.CycleCount,
+                    LicensePlate = p.LicensePlate,
                     Status = p.Status,
                     VerificationStatus = p.VerificationStatus,
                     CreatedDate = p.CreatedDate,
@@ -85,6 +86,7 @@ namespace BE.API.Controllers
                     Capacity = product.Capacity,
                     Voltage = product.Voltage,
                     CycleCount = product.CycleCount,
+                    LicensePlate = product.LicensePlate,
                     Status = product.Status,
                     VerificationStatus = product.VerificationStatus,
                     CreatedDate = product.CreatedDate,
@@ -105,9 +107,20 @@ namespace BE.API.Controllers
         {
             try
             {
+                // Validate license plate format for vehicles
+                if (!string.IsNullOrEmpty(request.LicensePlate) && 
+                    (request.ProductType?.ToLower().Contains("vehicle") == true || 
+                     request.ProductType?.ToLower().Contains("xe") == true))
+                {
+                    if (!IsValidLicensePlate(request.LicensePlate))
+                    {
+                        return BadRequest("Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
+                    }
+                }
+
                 var product = new Product
                 {
-                    SellerId = int.Parse(User.FindFirst("UserId")?.Value ?? "0"),
+                    SellerId = int.TryParse(User.FindFirst("UserId")?.Value, out var userId) ? userId : 0,
                     ProductType = request.ProductType,
                     Title = request.Title,
                     Description = request.Description,
@@ -122,7 +135,8 @@ namespace BE.API.Controllers
                     BatteryType = request.BatteryType,
                     Capacity = request.Capacity,
                     Voltage = request.Voltage,
-                    CycleCount = request.CycleCount
+                    CycleCount = request.CycleCount,
+                    LicensePlate = request.LicensePlate
                 };
 
                 var createdProduct = _productRepo.CreateProduct(product);
@@ -151,6 +165,17 @@ namespace BE.API.Controllers
         {
             try
             {
+                // Validate license plate format for vehicles
+                if (!string.IsNullOrEmpty(request.LicensePlate) && 
+                    (request.ProductType?.ToLower().Contains("vehicle") == true || 
+                     request.ProductType?.ToLower().Contains("xe") == true))
+                {
+                    if (!IsValidLicensePlate(request.LicensePlate))
+                    {
+                        return BadRequest("Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
+                    }
+                }
+
                 var existingProduct = _productRepo.GetProductById(id);
                 if (existingProduct == null)
                 {
@@ -178,6 +203,7 @@ namespace BE.API.Controllers
                 existingProduct.Capacity = request.Capacity;
                 existingProduct.Voltage = request.Voltage;
                 existingProduct.CycleCount = request.CycleCount;
+                existingProduct.LicensePlate = request.LicensePlate;
 
                 var updatedProduct = _productRepo.UpdateProduct(existingProduct);
 
@@ -311,6 +337,94 @@ namespace BE.API.Controllers
             }
         }
 
+        [HttpGet("search/license-plate/{licensePlate}")]
+        [AllowAnonymous]
+        public ActionResult GetProductsByLicensePlate(string licensePlate)
+        {
+            try
+            {
+                var products = _productRepo.GetProductsByLicensePlate(licensePlate);
+
+                var response = products.Select(p => new ProductResponse
+                {
+                    ProductId = p.ProductId,
+                    SellerId = p.SellerId,
+                    ProductType = p.ProductType,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Price = p.Price,
+                    Brand = p.Brand,
+                    Model = p.Model,
+                    Condition = p.Condition,
+                    VehicleType = p.VehicleType,
+                    ManufactureYear = p.ManufactureYear,
+                    Mileage = p.Mileage,
+                    BatteryHealth = p.BatteryHealth,
+                    BatteryType = p.BatteryType,
+                    Capacity = p.Capacity,
+                    Voltage = p.Voltage,
+                    CycleCount = p.CycleCount,
+                    LicensePlate = p.LicensePlate,
+                    Status = p.Status,
+                    VerificationStatus = p.VerificationStatus,
+                    CreatedDate = p.CreatedDate,
+                    ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+                }).ToList();
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("license-plate/{licensePlate}")]
+        [AllowAnonymous]
+        public ActionResult GetProductByExactLicensePlate(string licensePlate)
+        {
+            try
+            {
+                var product = _productRepo.GetProductByExactLicensePlate(licensePlate);
+                if (product == null)
+                {
+                    return NotFound("Product with this license plate not found");
+                }
+
+                var response = new ProductResponse
+                {
+                    ProductId = product.ProductId,
+                    SellerId = product.SellerId,
+                    ProductType = product.ProductType,
+                    Title = product.Title,
+                    Description = product.Description,
+                    Price = product.Price,
+                    Brand = product.Brand,
+                    Model = product.Model,
+                    Condition = product.Condition,
+                    VehicleType = product.VehicleType,
+                    ManufactureYear = product.ManufactureYear,
+                    Mileage = product.Mileage,
+                    BatteryHealth = product.BatteryHealth,
+                    BatteryType = product.BatteryType,
+                    Capacity = product.Capacity,
+                    Voltage = product.Voltage,
+                    CycleCount = product.CycleCount,
+                    LicensePlate = product.LicensePlate,
+                    Status = product.Status,
+                    VerificationStatus = product.VerificationStatus,
+                    CreatedDate = product.CreatedDate,
+                    ImageUrls = product.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
         [HttpGet("active")]
         [AllowAnonymous] // Khách hàng có thể xem không cần login
         public ActionResult GetActiveProducts()
@@ -338,6 +452,7 @@ namespace BE.API.Controllers
                     Capacity = p.Capacity,
                     Voltage = p.Voltage,
                     CycleCount = p.CycleCount,
+                    LicensePlate = p.LicensePlate,
                     Status = p.Status,
                     VerificationStatus = p.VerificationStatus,
                     CreatedDate = p.CreatedDate,
@@ -350,6 +465,17 @@ namespace BE.API.Controllers
             {
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
+        }
+
+        private bool IsValidLicensePlate(string licensePlate)
+        {
+            if (string.IsNullOrEmpty(licensePlate))
+                return false;
+
+            // Vietnamese license plate format: XX-Y.ZZZZ or XXY-ZZZZ
+            // Examples: 30A-12345, 51G-12345, 29B-1234, 43C-12345
+            var pattern = @"^[0-9]{2}[A-Z]{1,2}-[0-9]{4,5}$";
+            return System.Text.RegularExpressions.Regex.IsMatch(licensePlate.ToUpper(), pattern);
         }
     }
 }

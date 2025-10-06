@@ -1,4 +1,4 @@
-﻿using BE.BOs.Models;
+using BE.BOs.Models;
 
 namespace BE.DAOs
 {
@@ -89,3 +89,4 @@ namespace BE.DAOs
         }
     }
 }
+

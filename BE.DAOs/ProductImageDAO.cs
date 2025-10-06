@@ -1,4 +1,4 @@
-﻿using BE.BOs.Models;
+using BE.BOs.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -10,8 +10,8 @@ namespace BE.DAOs
 {
     public class ProductImageDAO
     {
-        private static ProductImageDAO instance;
-        private static EvandBatteryTradingPlatformContext dbcontext;
+        private static ProductImageDAO? instance;
+        private static EvandBatteryTradingPlatformContext? dbcontext;
 
         private ProductImageDAO()
         {
@@ -44,7 +44,7 @@ namespace BE.DAOs
                 .ToList();
         }
 
-        public ProductImage GetProductImageById(int id)
+        public ProductImage? GetProductImageById(int id)
         {
             return dbcontext.ProductImages
                 .Include(pi => pi.Product)
@@ -76,3 +76,4 @@ namespace BE.DAOs
         }
     }
 }
+

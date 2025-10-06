@@ -39,15 +39,17 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
     public virtual DbSet<UserRole> UserRoles { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer(GetConnectionString());
+    {
+        // Connection string will be configured in Program.cs
+        // This method is kept for compatibility but should not be used
+    }
 
     private string GetConnectionString()
     {
         IConfiguration configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", true, true).Build();
-        return configuration["ConnectionStrings:DefaultConnectionString"];
+        return configuration["ConnectionStrings:DefaultConnectionString"] ?? string.Empty;
     }
 
 
@@ -196,6 +198,10 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
             entity.Property(e => e.VehicleType)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.LicensePlate)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnType("varchar(20)");
             entity.Property(e => e.VerificationStatus)
                 .HasMaxLength(20)
                 .IsUnicode(false)
