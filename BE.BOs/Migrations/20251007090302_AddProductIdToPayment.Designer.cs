@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BE.BOs.Migrations
 {
     [DbContext(typeof(EvandBatteryTradingPlatformContext))]
-    [Migration("20251001182104_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251007090302_AddProductIdToPayment")]
+    partial class AddProductIdToPayment
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -231,6 +231,9 @@ namespace BE.BOs.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(20)");
 
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Status")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
@@ -288,6 +291,11 @@ namespace BE.BOs.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
+
+                    b.Property<string>("LicensePlate")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
 
                     b.Property<int?>("ManufactureYear")
                         .HasColumnType("int");

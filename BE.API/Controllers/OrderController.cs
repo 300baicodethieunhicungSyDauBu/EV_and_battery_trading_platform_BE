@@ -19,7 +19,7 @@ namespace BE.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Policy = "AdminOnly")]
+        //[Authorize(Policy = "AdminOnly")]
         public ActionResult GetAllOrders()
         {
             try
