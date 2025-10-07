@@ -1,90 +1,158 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\",
+  "WorkspaceRootPath": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.bos\\migrations\\20251006161904_addlicenseplatetoproduct.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|solutionrelative:be.bos\\migrations\\20251006161904_addlicenseplatetoproduct.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.bos\\migrations\\20251001182104_initialcreate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|solutionrelative:be.bos\\migrations\\20251001182104_initialcreate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.bos\\migrations\\evandbatterytradingplatformcontextmodelsnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|solutionrelative:be.bos\\migrations\\evandbatterytradingplatformcontextmodelsnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.api\\controllers\\paymentcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|solutionrelative:be.api\\controllers\\paymentcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.api\\controllers\\notificationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|solutionrelative:be.api\\controllers\\notificationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.daos\\paymentdao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|solutionrelative:be.daos\\paymentdao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.api\\controllers\\ordercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.bos\\models\\evandbatterytradingplatformcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|solutionrelative:be.bos\\models\\evandbatterytradingplatformcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.api\\dtos\\request\\paymentrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|solutionrelative:be.api\\dtos\\request\\paymentrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.api\\controllers\\ordercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|solutionrelative:be.api\\controllers\\ordercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.repos\\interface\\iuserrolerepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.bos\\models\\payment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|solutionrelative:be.bos\\models\\payment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.bos\\be.bos.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|solutionrelative:be.bos\\be.bos.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|solutionrelative:be.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.bos\\models\\order.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|solutionrelative:be.bos\\models\\order.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.api\\dtos\\request\\productrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|solutionrelative:be.api\\dtos\\request\\productrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.bos\\models\\product.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|solutionrelative:be.bos\\models\\product.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.api\\dtos\\response\\orderresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|solutionrelative:be.api\\dtos\\response\\orderresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\service\\vnpayservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\service\\vnpayservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\libs\\vnpaylibrary.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\libs\\vnpaylibrary.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|solutionrelative:be.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.bos\\vnpaymodels\\paymentinformationmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|solutionrelative:be.bos\\vnpaymodels\\paymentinformationmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.bos\\vnpaymodels\\paymentresponsemodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|solutionrelative:be.bos\\vnpaymodels\\paymentresponsemodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.api\\controllers\\notificationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2B52582C-F1CA-412B-A5BD-57DC19760A12}|BE.API\\BE.API.csproj|solutionrelative:be.api\\controllers\\notificationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\interface\\iuserrolerepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\interface\\iuserrolerepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.repos\\implementation\\userrolerepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\implementation\\userrolerepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\implementation\\userrolerepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.daos\\userroledao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.daos\\userroledao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|solutionrelative:be.daos\\userroledao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.repos\\implementation\\reviewsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\implementation\\reviewsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\implementation\\reviewsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.daos\\reviewsdao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.daos\\reviewsdao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|solutionrelative:be.daos\\reviewsdao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.daos\\reportedlistingsdao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.daos\\reportedlistingsdao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|solutionrelative:be.daos\\reportedlistingsdao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.repos\\implementation\\favoriterepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\implementation\\favoriterepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\implementation\\favoriterepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.repos\\interface\\ifeesettings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\interface\\ifeesettings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\interface\\ifeesettings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.repos\\interface\\inotificationsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\interface\\inotificationsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\interface\\inotificationsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.repos\\interface\\ireportedlistingsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\interface\\ireportedlistingsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\interface\\ireportedlistingsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.repos\\interface\\ireviewsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\interface\\ireviewsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\interface\\ireviewsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.repos\\implementation\\reportedlistingsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\implementation\\reportedlistingsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\implementation\\reportedlistingsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.repos\\implementation\\notificationsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\implementation\\notificationsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\implementation\\notificationsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.repos\\implementation\\feesettingsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\implementation\\feesettingsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\implementation\\feesettingsrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.repos\\interface\\iuserrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.repos\\interface\\iuserrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C2569383-06BC-4FF4-943A-BB998A473DC3}|BE.REPOs\\BE.REPOs.csproj|solutionrelative:be.repos\\interface\\iuserrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.daos\\feesettingsdao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.daos\\feesettingsdao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|solutionrelative:be.daos\\feesettingsdao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|d:\\fa25_swp391\\topic2\\ev_and_battery_trading_platform_be\\be.daos\\notificationsdao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.daos\\notificationsdao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{50CBDFD2-148E-43F3-A064-A8B8C6054116}|BE.DAOs\\BE.DAOs.csproj|solutionrelative:be.daos\\notificationsdao.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.bos\\migrations\\20251007090302_addproductidtopayment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|solutionrelative:be.bos\\migrations\\20251007090302_addproductidtopayment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|c:\\users\\alexandersydaubu\\onedrive\\desktop\\swp391\\ev_and_battery_trading_platform_be\\be.bos\\migrations\\20251007090647_addforeignkey_product_payment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5F7BD68C-B67C-4A6B-A5F2-2825E0AC65B1}|BE.BOs\\BE.BOs.csproj|solutionrelative:be.bos\\migrations\\20251007090647_addforeignkey_product_payment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -99,35 +167,240 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "20251006161904_AddLicensePlateToProduct.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.BOs\\Migrations\\20251006161904_AddLicensePlateToProduct.cs",
-              "RelativeDocumentMoniker": "BE.BOs\\Migrations\\20251006161904_AddLicensePlateToProduct.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.BOs\\Migrations\\20251006161904_AddLicensePlateToProduct.cs",
-              "RelativeToolTip": "BE.BOs\\Migrations\\20251006161904_AddLicensePlateToProduct.cs",
-              "ViewState": "AgIAAAgAAAAAAAAAAAAAwBMAAAAaAAAAAAAAAA==",
+              "Title": "20251001182104_InitialCreate.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\Migrations\\20251001182104_InitialCreate.cs",
+              "RelativeDocumentMoniker": "BE.BOs\\Migrations\\20251001182104_InitialCreate.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\Migrations\\20251001182104_InitialCreate.cs",
+              "RelativeToolTip": "BE.BOs\\Migrations\\20251001182104_InitialCreate.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-06T16:20:18.247Z",
+              "WhenOpened": "2025-10-07T09:54:52.81Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "EvandBatteryTradingPlatformContextModelSnapshot.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.BOs\\Migrations\\EvandBatteryTradingPlatformContextModelSnapshot.cs",
-              "RelativeDocumentMoniker": "BE.BOs\\Migrations\\EvandBatteryTradingPlatformContextModelSnapshot.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.BOs\\Migrations\\EvandBatteryTradingPlatformContextModelSnapshot.cs",
-              "RelativeToolTip": "BE.BOs\\Migrations\\EvandBatteryTradingPlatformContextModelSnapshot.cs",
-              "ViewState": "AgIAAJcAAAAAAAAAAAAQwAAAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 2,
+              "Title": "PaymentDAO.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\PaymentDAO.cs",
+              "RelativeDocumentMoniker": "BE.DAOs\\PaymentDAO.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\PaymentDAO.cs",
+              "RelativeToolTip": "BE.DAOs\\PaymentDAO.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAQwDEAAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-06T16:20:08.866Z"
+              "WhenOpened": "2025-10-07T09:33:31.599Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 36,
+              "Title": "20251007090302_AddProductIdToPayment.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\Migrations\\20251007090302_AddProductIdToPayment.cs",
+              "RelativeDocumentMoniker": "BE.BOs\\Migrations\\20251007090302_AddProductIdToPayment.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\Migrations\\20251007090302_AddProductIdToPayment.cs",
+              "RelativeToolTip": "BE.BOs\\Migrations\\20251007090302_AddProductIdToPayment.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACIAAAAiAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-07T09:03:02.859Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Payment.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\Models\\Payment.cs",
+              "RelativeDocumentMoniker": "BE.BOs\\Models\\Payment.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\Models\\Payment.cs",
+              "RelativeToolTip": "BE.BOs\\Models\\Payment.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-07T08:41:50.659Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "ProductRequest.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\DTOs\\Request\\ProductRequest.cs",
+              "RelativeDocumentMoniker": "BE.API\\DTOs\\Request\\ProductRequest.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\DTOs\\Request\\ProductRequest.cs",
+              "RelativeToolTip": "BE.API\\DTOs\\Request\\ProductRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-07T08:45:05.289Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Order.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\Models\\Order.cs",
+              "RelativeDocumentMoniker": "BE.BOs\\Models\\Order.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\Models\\Order.cs",
+              "RelativeToolTip": "BE.BOs\\Models\\Order.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-07T08:42:42.055Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "OrderResponse.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\DTOs\\Response\\OrderResponse.cs",
+              "RelativeDocumentMoniker": "BE.API\\DTOs\\Response\\OrderResponse.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\DTOs\\Response\\OrderResponse.cs",
+              "RelativeToolTip": "BE.API\\DTOs\\Response\\OrderResponse.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-07T08:41:41.994Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "PaymentController.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\Controllers\\PaymentController.cs",
+              "RelativeDocumentMoniker": "BE.API\\Controllers\\PaymentController.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\Controllers\\PaymentController.cs",
+              "RelativeToolTip": "BE.API\\Controllers\\PaymentController.cs",
+              "ViewState": "AgIAAA0AAAAAAAAAAAAgwC0AAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-06T20:37:09.529Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\Program.cs",
+              "RelativeDocumentMoniker": "BE.API\\Program.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\Program.cs",
+              "RelativeToolTip": "BE.API\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAfAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-06T20:36:48.217Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "VnPayService.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Service\\VnPayService.cs",
+              "RelativeDocumentMoniker": "BE.REPOs\\Service\\VnPayService.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Service\\VnPayService.cs",
+              "RelativeToolTip": "BE.REPOs\\Service\\VnPayService.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAAAcwC8AAAA3AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-06T20:32:53.431Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\appsettings.json",
+              "RelativeDocumentMoniker": "BE.API\\appsettings.json",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\appsettings.json",
+              "RelativeToolTip": "BE.API\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAAOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-10-06T20:31:30.641Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "BE.BOs.csproj",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\BE.BOs.csproj",
+              "RelativeDocumentMoniker": "BE.BOs\\BE.BOs.csproj",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\BE.BOs.csproj",
+              "RelativeToolTip": "BE.BOs\\BE.BOs.csproj",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAABwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-10-06T20:23:42.196Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "OrderController.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\Controllers\\OrderController.cs",
+              "RelativeDocumentMoniker": "BE.API\\Controllers\\OrderController.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\Controllers\\OrderController.cs",
+              "RelativeToolTip": "BE.API\\Controllers\\OrderController.cs",
+              "ViewState": "AgIAAC0AAAAAAAAAAAAowBUAAAArAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-05T18:26:58.716Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "EvandBatteryTradingPlatformContext.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\Models\\EvandBatteryTradingPlatformContext.cs",
+              "RelativeDocumentMoniker": "BE.BOs\\Models\\EvandBatteryTradingPlatformContext.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\Models\\EvandBatteryTradingPlatformContext.cs",
+              "RelativeToolTip": "BE.BOs\\Models\\EvandBatteryTradingPlatformContext.cs",
+              "ViewState": "AgIAAHEAAAAAAAAAAAAAAIkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-06T20:14:14.558Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "PaymentRequest.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\DTOs\\Request\\PaymentRequest.cs",
+              "RelativeDocumentMoniker": "BE.API\\DTOs\\Request\\PaymentRequest.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\DTOs\\Request\\PaymentRequest.cs",
+              "RelativeToolTip": "BE.API\\DTOs\\Request\\PaymentRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-07T09:05:07.718Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 37,
+              "Title": "20251007090647_AddForeignKey_Product_Payment.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\Migrations\\20251007090647_AddForeignKey_Product_Payment.cs",
+              "RelativeDocumentMoniker": "BE.BOs\\Migrations\\20251007090647_AddForeignKey_Product_Payment.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\Migrations\\20251007090647_AddForeignKey_Product_Payment.cs",
+              "RelativeToolTip": "BE.BOs\\Migrations\\20251007090647_AddForeignKey_Product_Payment.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-07T09:06:47.396Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "VnPayLibrary.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Libs\\VnPayLibrary.cs",
+              "RelativeDocumentMoniker": "BE.REPOs\\Libs\\VnPayLibrary.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Libs\\VnPayLibrary.cs",
+              "RelativeToolTip": "BE.REPOs\\Libs\\VnPayLibrary.cs",
+              "ViewState": "AgIAAGkAAAAAAAAAAAAgwJAAAAARAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-07T07:49:51.609Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "PaymentInformationModel.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\VnPayModels\\PaymentInformationModel.cs",
+              "RelativeDocumentMoniker": "BE.BOs\\VnPayModels\\PaymentInformationModel.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\VnPayModels\\PaymentInformationModel.cs",
+              "RelativeToolTip": "BE.BOs\\VnPayModels\\PaymentInformationModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAqwAsAAAAWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-07T07:54:06.946Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "Product.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\Models\\Product.cs",
+              "RelativeDocumentMoniker": "BE.BOs\\Models\\Product.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\Models\\Product.cs",
+              "RelativeToolTip": "BE.BOs\\Models\\Product.cs",
+              "ViewState": "AgIAABIAAAAAAAAAAAAwwDsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-06T20:07:52.992Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
               "Title": "NotificationController.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.API\\Controllers\\NotificationController.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\Controllers\\NotificationController.cs",
               "RelativeDocumentMoniker": "BE.API\\Controllers\\NotificationController.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.API\\Controllers\\NotificationController.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.API\\Controllers\\NotificationController.cs",
               "RelativeToolTip": "BE.API\\Controllers\\NotificationController.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -135,23 +408,23 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "OrderController.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.API\\Controllers\\OrderController.cs",
-              "RelativeDocumentMoniker": "BE.API\\Controllers\\OrderController.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.API\\Controllers\\OrderController.cs",
-              "RelativeToolTip": "BE.API\\Controllers\\OrderController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 17,
+              "Title": "PaymentResponseModel.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\VnPayModels\\PaymentResponseModel.cs",
+              "RelativeDocumentMoniker": "BE.BOs\\VnPayModels\\PaymentResponseModel.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.BOs\\VnPayModels\\PaymentResponseModel.cs",
+              "RelativeToolTip": "BE.BOs\\VnPayModels\\PaymentResponseModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-05T18:26:58.716Z"
+              "WhenOpened": "2025-10-07T07:54:27.682Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 22,
               "Title": "ReviewsRepo.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\ReviewsRepo.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\ReviewsRepo.cs",
               "RelativeDocumentMoniker": "BE.REPOs\\Implementation\\ReviewsRepo.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\ReviewsRepo.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\ReviewsRepo.cs",
               "RelativeToolTip": "BE.REPOs\\Implementation\\ReviewsRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -159,11 +432,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 29,
               "Title": "IReviewsRepo.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IReviewsRepo.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IReviewsRepo.cs",
               "RelativeDocumentMoniker": "BE.REPOs\\Interface\\IReviewsRepo.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IReviewsRepo.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IReviewsRepo.cs",
               "RelativeToolTip": "BE.REPOs\\Interface\\IReviewsRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -171,11 +444,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 27,
               "Title": "INotificationsRepo.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\INotificationsRepo.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\INotificationsRepo.cs",
               "RelativeDocumentMoniker": "BE.REPOs\\Interface\\INotificationsRepo.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\INotificationsRepo.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\INotificationsRepo.cs",
               "RelativeToolTip": "BE.REPOs\\Interface\\INotificationsRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -183,11 +456,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 26,
               "Title": "IFeeSettings.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IFeeSettings.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IFeeSettings.cs",
               "RelativeDocumentMoniker": "BE.REPOs\\Interface\\IFeeSettings.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IFeeSettings.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IFeeSettings.cs",
               "RelativeToolTip": "BE.REPOs\\Interface\\IFeeSettings.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -195,11 +468,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 25,
               "Title": "FavoriteRepo.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\FavoriteRepo.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\FavoriteRepo.cs",
               "RelativeDocumentMoniker": "BE.REPOs\\Implementation\\FavoriteRepo.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\FavoriteRepo.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\FavoriteRepo.cs",
               "RelativeToolTip": "BE.REPOs\\Implementation\\FavoriteRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -207,11 +480,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 23,
               "Title": "ReviewsDAO.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.DAOs\\ReviewsDAO.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\ReviewsDAO.cs",
               "RelativeDocumentMoniker": "BE.DAOs\\ReviewsDAO.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.DAOs\\ReviewsDAO.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\ReviewsDAO.cs",
               "RelativeToolTip": "BE.DAOs\\ReviewsDAO.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -219,11 +492,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 24,
               "Title": "ReportedListingsDAO.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.DAOs\\ReportedListingsDAO.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\ReportedListingsDAO.cs",
               "RelativeDocumentMoniker": "BE.DAOs\\ReportedListingsDAO.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.DAOs\\ReportedListingsDAO.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\ReportedListingsDAO.cs",
               "RelativeToolTip": "BE.DAOs\\ReportedListingsDAO.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -231,11 +504,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 20,
               "Title": "UserRoleRepo.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\UserRoleRepo.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\UserRoleRepo.cs",
               "RelativeDocumentMoniker": "BE.REPOs\\Implementation\\UserRoleRepo.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\UserRoleRepo.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\UserRoleRepo.cs",
               "RelativeToolTip": "BE.REPOs\\Implementation\\UserRoleRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -243,11 +516,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 19,
               "Title": "IUserRoleRepo.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IUserRoleRepo.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IUserRoleRepo.cs",
               "RelativeDocumentMoniker": "BE.REPOs\\Interface\\IUserRoleRepo.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IUserRoleRepo.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IUserRoleRepo.cs",
               "RelativeToolTip": "BE.REPOs\\Interface\\IUserRoleRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -255,11 +528,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 21,
               "Title": "UserRoleDAO.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.DAOs\\UserRoleDAO.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\UserRoleDAO.cs",
               "RelativeDocumentMoniker": "BE.DAOs\\UserRoleDAO.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.DAOs\\UserRoleDAO.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\UserRoleDAO.cs",
               "RelativeToolTip": "BE.DAOs\\UserRoleDAO.cs",
               "ViewState": "AgIAACYAAAAAAAAAAAAgwAEAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -267,11 +540,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 28,
               "Title": "IReportedListingsRepo.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IReportedListingsRepo.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IReportedListingsRepo.cs",
               "RelativeDocumentMoniker": "BE.REPOs\\Interface\\IReportedListingsRepo.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IReportedListingsRepo.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IReportedListingsRepo.cs",
               "RelativeToolTip": "BE.REPOs\\Interface\\IReportedListingsRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -279,11 +552,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 30,
               "Title": "ReportedListingsRepo.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\ReportedListingsRepo.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\ReportedListingsRepo.cs",
               "RelativeDocumentMoniker": "BE.REPOs\\Implementation\\ReportedListingsRepo.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\ReportedListingsRepo.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\ReportedListingsRepo.cs",
               "RelativeToolTip": "BE.REPOs\\Implementation\\ReportedListingsRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -291,11 +564,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 31,
               "Title": "NotificationsRepo.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\NotificationsRepo.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\NotificationsRepo.cs",
               "RelativeDocumentMoniker": "BE.REPOs\\Implementation\\NotificationsRepo.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\NotificationsRepo.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\NotificationsRepo.cs",
               "RelativeToolTip": "BE.REPOs\\Implementation\\NotificationsRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -303,11 +576,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
+              "DocumentIndex": 32,
               "Title": "FeeSettingsRepo.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\FeeSettingsRepo.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\FeeSettingsRepo.cs",
               "RelativeDocumentMoniker": "BE.REPOs\\Implementation\\FeeSettingsRepo.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\FeeSettingsRepo.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Implementation\\FeeSettingsRepo.cs",
               "RelativeToolTip": "BE.REPOs\\Implementation\\FeeSettingsRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -315,11 +588,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 33,
               "Title": "IUserRepo.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IUserRepo.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IUserRepo.cs",
               "RelativeDocumentMoniker": "BE.REPOs\\Interface\\IUserRepo.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IUserRepo.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.REPOs\\Interface\\IUserRepo.cs",
               "RelativeToolTip": "BE.REPOs\\Interface\\IUserRepo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -327,11 +600,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 20,
+              "DocumentIndex": 35,
               "Title": "NotificationsDAO.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.DAOs\\NotificationsDAO.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\NotificationsDAO.cs",
               "RelativeDocumentMoniker": "BE.DAOs\\NotificationsDAO.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.DAOs\\NotificationsDAO.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\NotificationsDAO.cs",
               "RelativeToolTip": "BE.DAOs\\NotificationsDAO.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -339,11 +612,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 34,
               "Title": "FeeSettingsDAO.cs",
-              "DocumentMoniker": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.DAOs\\FeeSettingsDAO.cs",
+              "DocumentMoniker": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\FeeSettingsDAO.cs",
               "RelativeDocumentMoniker": "BE.DAOs\\FeeSettingsDAO.cs",
-              "ToolTip": "D:\\FA25_SWP391\\Topic2\\EV_and_battery_trading_platform_BE\\BE.DAOs\\FeeSettingsDAO.cs",
+              "ToolTip": "C:\\Users\\AlexanderSydaubu\\OneDrive\\Desktop\\SWP391\\EV_and_battery_trading_platform_BE\\BE.DAOs\\FeeSettingsDAO.cs",
               "RelativeToolTip": "BE.DAOs\\FeeSettingsDAO.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAFsAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",

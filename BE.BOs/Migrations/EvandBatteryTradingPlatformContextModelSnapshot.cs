@@ -228,6 +228,9 @@ namespace BE.BOs.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(20)");
 
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Status")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
@@ -241,6 +244,8 @@ namespace BE.BOs.Migrations
                     b.HasIndex("OrderId");
 
                     b.HasIndex("PayerId");
+
+                    b.HasIndex("ProductId");
 
                     b.ToTable("Payments");
                 });
@@ -287,7 +292,9 @@ namespace BE.BOs.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("LicensePlate")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
 
                     b.Property<int?>("ManufactureYear")
                         .HasColumnType("int");
@@ -613,9 +620,15 @@ namespace BE.BOs.Migrations
                         .HasForeignKey("PayerId")
                         .HasConstraintName("FK__Payments__PayerI__6754599E");
 
+                    b.HasOne("BE.BOs.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId");
+
                     b.Navigation("Order");
 
                     b.Navigation("Payer");
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("BE.BOs.Models.Product", b =>

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BE.BOs.Migrations
 {
     [DbContext(typeof(EvandBatteryTradingPlatformContext))]
-    [Migration("20251007095446_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251007090302_AddProductIdToPayment")]
+    partial class AddProductIdToPayment
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -247,8 +247,6 @@ namespace BE.BOs.Migrations
                     b.HasIndex("OrderId");
 
                     b.HasIndex("PayerId");
-
-                    b.HasIndex("ProductId");
 
                     b.ToTable("Payments");
                 });
@@ -623,15 +621,9 @@ namespace BE.BOs.Migrations
                         .HasForeignKey("PayerId")
                         .HasConstraintName("FK__Payments__PayerI__6754599E");
 
-                    b.HasOne("BE.BOs.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId");
-
                     b.Navigation("Order");
 
                     b.Navigation("Payer");
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("BE.BOs.Models.Product", b =>

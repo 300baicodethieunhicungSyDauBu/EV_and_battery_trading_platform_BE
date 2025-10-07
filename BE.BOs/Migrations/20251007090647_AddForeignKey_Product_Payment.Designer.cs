@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BE.BOs.Migrations
 {
     [DbContext(typeof(EvandBatteryTradingPlatformContext))]
-    [Migration("20251007095446_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251007090647_AddForeignKey_Product_Payment")]
+    partial class AddForeignKey_Product_Payment
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

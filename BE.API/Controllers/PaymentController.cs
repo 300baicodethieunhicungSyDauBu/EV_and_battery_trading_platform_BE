@@ -1,6 +1,9 @@
 ﻿using BE.API.DTOs.Request;
 using BE.BOs.Models;
+using BE.BOs.VnPayModels;
+using BE.REPOs.Implementation;
 using BE.REPOs.Interface;
+using BE.REPOs.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,212 +15,161 @@ namespace BE.API.Controllers
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentRepo _paymentRepo;
+        private readonly IOrderRepo _orderRepo;
+        private readonly IProductRepo _productRepo;
+        private readonly IVnPayService _vnpayService;
 
-        public PaymentController(IPaymentRepo paymentRepo)
+        public PaymentController(IPaymentRepo paymentRepo, IOrderRepo orderRepo,IProductRepo productRepo, IVnPayService vnpayService)
         {
             _paymentRepo = paymentRepo;
-        }
-
-        [HttpGet]
-        //[Authorize(Policy = "AdminOnly")]
-        public ActionResult GetAllPayments()
-        {
-            try
-            {
-                var payments = _paymentRepo.GetAllPayments();
-                var response = payments.Select(p => new
-                {
-                    p.PaymentId,
-                    p.OrderId,
-                    p.PayerId,
-                    p.PaymentType,
-                    p.Amount,
-                    p.PaymentMethod,
-                    p.Status,
-                    p.CreatedDate,
-                    PayerName = p.Payer?.FullName,
-                    OrderDetails = new
-                    {
-                        p.Order?.OrderId,
-                        p.Order?.TotalAmount,
-                        p.Order?.Status
-                    }
-                }).ToList();
-
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
-        }
-
-        [HttpGet("{id}")]
-        public ActionResult GetPaymentById(int id)
-        {
-            try
-            {
-                var payment = _paymentRepo.GetPaymentById(id);
-                if (payment == null)
-                {
-                    return NotFound();
-                }
-
-                // Verify if user has access to this payment
-                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-                if (payment.PayerId != userId && !User.IsInRole("1")) // Not owner and not admin
-                {
-                    return Forbid();
-                }
-
-                var response = new
-                {
-                    payment.PaymentId,
-                    payment.OrderId,
-                    payment.PayerId,
-                    payment.PaymentType,
-                    payment.Amount,
-                    payment.PaymentMethod,
-                    payment.Status,
-                    payment.CreatedDate,
-                    PayerName = payment.Payer?.FullName,
-                    OrderDetails = new
-                    {
-                        payment.Order?.OrderId,
-                        payment.Order?.TotalAmount,
-                        payment.Order?.Status
-                    }
-                };
-
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
+            _orderRepo = orderRepo;
+            _productRepo = productRepo;
+            _vnpayService = vnpayService;
         }
 
         [HttpPost]
-        //[Authorize(Policy = "MemberOnly")]
-        public ActionResult CreatePayment([FromBody] PaymentRequest request)
+        [Authorize(Policy = "MemberOnly")]
+        public IActionResult CreatePayment([FromBody] PaymentRequest request)
         {
             try
             {
                 var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
 
+                // Nếu client gửi 0 thì coi như null
+                var orderId = request.OrderId > 0 ? request.OrderId : null;
+                var productId = request.ProductId > 0 ? request.ProductId : null;
+
+                // Xác định loại thanh toán
+                string paymentType;
+                if (orderId != null && productId == null)
+                    paymentType = "Deposit"; // hoặc "FinalPayment" tùy luồng
+                else if (productId != null && orderId == null)
+                    paymentType = "Verification";
+                else
+                    return BadRequest("Either OrderId or ProductId must be provided, not both.");
+
+                // Tạo bản ghi thanh toán
                 var payment = new Payment
                 {
-                    OrderId = request.OrderId,
+                    OrderId = orderId,
+                    ProductId = productId,
                     PayerId = userId,
-                    PaymentType = request.PaymentType,
+                    PaymentType = paymentType,
                     Amount = request.Amount,
-                    PaymentMethod = request.PaymentMethod
+                    PaymentMethod = "VNPay",
+                    Status = "Pending",
+                    CreatedDate = DateTime.Now
                 };
 
                 var createdPayment = _paymentRepo.CreatePayment(payment);
 
-                var response = new
+                var paymentInfo = new PaymentInformationModel
                 {
-                    createdPayment.PaymentId,
-                    createdPayment.OrderId,
-                    createdPayment.Amount,
-                    createdPayment.PaymentMethod,
-                    createdPayment.Status,
-                    createdPayment.CreatedDate
+                    OrderType = "other",
+                    Amount = createdPayment.Amount,
+                    OrderDescription = $"Thanh toán {paymentType.ToLower()} - ID: {createdPayment.PaymentId}",
+                    Name = createdPayment.PaymentId.ToString()
                 };
 
-                return Ok(response);
+                var paymentUrl = _vnpayService.CreatePaymentUrl(paymentInfo, HttpContext);
+
+                return Ok(new
+                {
+                    PaymentId = createdPayment.PaymentId,
+                    PaymentUrl = paymentUrl
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 
-        [HttpPut("{id}")]
-        //[Authorize(Policy = "AdminOnly")]
-        public ActionResult UpdatePaymentStatus(int id, [FromBody] PaymentRequest request)
+        [HttpGet("vnpay-return")]
+        [AllowAnonymous]
+        public IActionResult VnPayReturn([FromQuery] Dictionary<string, string> queryParams)
         {
             try
             {
-                var payment = _paymentRepo.GetPaymentById(id);
+                if (!queryParams.ContainsKey("vnp_TxnRef") || !queryParams.ContainsKey("vnp_SecureHash"))
+                    return BadRequest("Invalid VNPay callback.");
+
+                // 1️⃣ Validate chữ ký
+                var isValidSignature = _vnpayService.ValidateSignature(queryParams);
+                if (!isValidSignature)
+                    return BadRequest("Invalid signature");
+
+                // 2️⃣ Lấy PaymentId từ callback
+                long paymentIdLong = long.Parse(queryParams["vnp_TxnRef"]);
+                var payment = _paymentRepo.GetPaymentById((int)paymentIdLong);
                 if (payment == null)
+                    return NotFound("Payment not found");
+
+                // 3️⃣ Lấy response code từ VNPay
+                string responseCode = queryParams.ContainsKey("vnp_ResponseCode")
+                    ? queryParams["vnp_ResponseCode"]
+                    : "";
+
+                if (responseCode != "00")
                 {
-                    return NotFound();
+                    payment.Status = "Failed";
+                    _paymentRepo.UpdatePayment(payment);
+                    return Ok(new { message = "Payment failed", paymentId = payment.PaymentId });
                 }
 
-                payment.Status = request.Status;
-                var updatedPayment = _paymentRepo.UpdatePayment(payment);
+                // 4️⃣ Nếu thành công
+                payment.Status = "Success";
+                _paymentRepo.UpdatePayment(payment);
 
-                var response = new
+                // 5️⃣ Xử lý nghiệp vụ theo loại thanh toán
+                if (payment.PaymentType == "Deposit")
                 {
-                    updatedPayment.PaymentId,
-                    updatedPayment.Status,
-                    UpdatedDate = DateTime.Now
-                };
-
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
-        }
-
-        [HttpGet("order/{orderId}")]
-        public ActionResult GetPaymentsByOrder(int orderId)
-        {
-            try
-            {
-                var payments = _paymentRepo.GetPaymentsByOrderId(orderId);
-                var response = payments.Select(p => new
+                    var order = _orderRepo.GetOrderById(payment.OrderId.Value);
+                    if (order != null)
+                    {
+                        order.DepositStatus = "Paid";
+                        order.Status = "Deposited";
+                        _orderRepo.UpdateOrder(order);
+                    }
+                }
+                else if (payment.PaymentType == "FinalPayment")
                 {
-                    p.PaymentId,
-                    p.PaymentType,
-                    p.Amount,
-                    p.PaymentMethod,
-                    p.Status,
-                    p.CreatedDate
-                }).ToList();
-
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
-        }
-
-        [HttpGet("user/{payerId}")]
-        public ActionResult GetPaymentsByPayer(int payerId)
-        {
-            try
-            {
-                // Verify if user has access
-                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-                if (payerId != userId && !User.IsInRole("1")) // Not owner and not admin
+                    var order = _orderRepo.GetOrderById(payment.OrderId.Value);
+                    if (order != null)
+                    {
+                        order.FinalPaymentStatus = "Paid";
+                        order.Status = "Completed";
+                        order.CompletedDate = DateTime.Now;
+                        _orderRepo.UpdateOrder(order);
+                    }
+                }
+                else if (payment.PaymentType == "Verification")
                 {
-                    return Forbid();
+                    if (payment.ProductId != null)
+                    {
+                        var product = _productRepo.GetProductById(payment.ProductId.Value);
+                        if (product != null)
+                        {
+                            product.VerificationStatus = "Requested";
+                            _productRepo.UpdateProduct(product);
+                        }
+                    }
                 }
 
-                var payments = _paymentRepo.GetPaymentsByPayerId(payerId);
-                var response = payments.Select(p => new
+                // 6️⃣ Trả về kết quả
+                return Ok(new
                 {
-                    p.PaymentId,
-                    p.OrderId,
-                    p.PaymentType,
-                    p.Amount,
-                    p.PaymentMethod,
-                    p.Status,
-                    p.CreatedDate
-                }).ToList();
-
-                return Ok(response);
+                    message = "Payment success",
+                    paymentId = payment.PaymentId,
+                    type = payment.PaymentType,
+                    status = payment.Status
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                return StatusCode(500, "Error processing VNPay return: " + ex.Message);
             }
         }
+
     }
 }
