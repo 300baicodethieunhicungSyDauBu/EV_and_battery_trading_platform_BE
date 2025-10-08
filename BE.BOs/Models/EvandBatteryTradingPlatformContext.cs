@@ -39,10 +39,7 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
     public virtual DbSet<UserRole> UserRoles { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        // Connection string will be configured in Program.cs
-        // This method is kept for compatibility but should not be used
-    }
+        => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {

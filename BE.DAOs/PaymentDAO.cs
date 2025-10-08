@@ -51,6 +51,12 @@ namespace BE.DAOs
             payment.CreatedDate = DateTime.Now;
             payment.Status = "Pending";
             dbcontext.Payments.Add(payment);
+            Console.WriteLine($"[DEBUG] Creating Payment:");
+            Console.WriteLine($"  OrderId: {payment.OrderId}");
+            Console.WriteLine($"  ProductId: {payment.ProductId}");
+            Console.WriteLine($"  PayerId: {payment.PayerId}");
+            Console.WriteLine($"  Amount: {payment.Amount}");
+            Console.WriteLine($"  Status: {payment.Status}");
             dbcontext.SaveChanges();
             return payment;
         }

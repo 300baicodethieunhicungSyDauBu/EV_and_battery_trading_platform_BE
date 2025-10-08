@@ -89,6 +89,7 @@ builder.Services.AddScoped<IReportedListingsRepo, ReportedListingsRepo>();
 builder.Services.AddScoped<IFeeSettings, FeeSettingsRepo>();
 builder.Services.AddScoped<INotificationsRepo, NotificationsRepo>();
 builder.Services.AddScoped<CloudinaryService>();
+builder.Services.AddScoped<IVnPayService, VnPayService>();
 
 
 
