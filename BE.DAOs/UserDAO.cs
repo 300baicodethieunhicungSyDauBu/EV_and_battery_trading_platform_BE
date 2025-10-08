@@ -58,6 +58,11 @@ namespace BE.DAOs
             return dbcontext.Users.Include(u => u.Role).FirstOrDefault(u => u.UserId == userId);
         }
 
+        public User? GetUserByEmail(string email)
+        {
+            return dbcontext.Users.Include(u => u.Role).FirstOrDefault(u => u.Email == email);
+        }
+
         // Update User
         public User UpdateUser(User updatedUser)
         {
@@ -110,6 +115,60 @@ namespace BE.DAOs
             catch (Exception ex)
             {
                 throw new Exception("Error deleting user: " + ex.Message);
+            }
+        }
+
+        // Forgot Password Methods
+        public bool UpdateResetPasswordToken(string email, string token, DateTime expiry)
+        {
+            try
+            {
+                var user = dbcontext.Users.FirstOrDefault(u => u.Email == email);
+                if (user == null)
+                {
+                    return false;
+                }
+
+                user.ResetPasswordToken = token;
+                user.ResetPasswordTokenExpiry = expiry;
+                
+                dbcontext.Users.Update(user);
+                dbcontext.SaveChanges();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error updating reset password token: " + ex.Message);
+            }
+        }
+
+        public User? GetUserByResetToken(string token)
+        {
+            return dbcontext.Users.FirstOrDefault(u => u.ResetPasswordToken == token && 
+                                                      u.ResetPasswordTokenExpiry > DateTime.Now);
+        }
+
+        public bool ResetPassword(string token, string newPassword)
+        {
+            try
+            {
+                var user = GetUserByResetToken(token);
+                if (user == null)
+                {
+                    return false;
+                }
+
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+                user.ResetPasswordToken = null;
+                user.ResetPasswordTokenExpiry = null;
+
+                dbcontext.Users.Update(user);
+                dbcontext.SaveChanges();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error resetting password: " + ex.Message);
             }
         }
     }

@@ -5,6 +5,7 @@ using BE.REPOs.Interface;
 using BE.REPOs.Service;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -227,6 +228,140 @@ namespace BE.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        public ActionResult<ForgotPasswordResponse> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            try
+            {
+                // Validate email
+                if (string.IsNullOrEmpty(request.Email))
+                {
+                    return BadRequest(new ForgotPasswordResponse
+                    {
+                        Success = false,
+                        Message = "Email is required"
+                    });
+                }
+
+                // Check if user exists
+                var user = _userRepo.GetUserByEmail(request.Email);
+                if (user == null)
+                {
+                    // For security, don't reveal if email exists or not
+                    return Ok(new ForgotPasswordResponse
+                    {
+                        Success = true,
+                        Message = "If the email exists, a password reset link has been sent"
+                    });
+                }
+
+                // Generate reset token
+                var resetToken = Guid.NewGuid().ToString();
+                var tokenExpiry = DateTime.Now.AddHours(1); // Token expires in 1 hour
+
+                // Update user with reset token
+                var success = _userRepo.UpdateResetPasswordToken(request.Email, resetToken, tokenExpiry);
+                if (!success)
+                {
+                    return StatusCode(500, new ForgotPasswordResponse
+                    {
+                        Success = false,
+                        Message = "Failed to generate reset token"
+                    });
+                }
+
+                // TODO: Send email with reset link
+                // For now, return token in development mode
+                var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+                
+                return Ok(new ForgotPasswordResponse
+                {
+                    Success = true,
+                    Message = "Password reset link has been sent to your email",
+                    ResetToken = isDevelopment ? resetToken : null // Only show token in development
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ForgotPasswordResponse
+                {
+                    Success = false,
+                    Message = "Internal server error: " + ex.Message
+                });
+            }
+        }
+
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public ActionResult<ResetPasswordResponse> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            try
+            {
+                // Validate input
+                if (string.IsNullOrEmpty(request.Token))
+                {
+                    return BadRequest(new ResetPasswordResponse
+                    {
+                        Success = false,
+                        Message = "Reset token is required"
+                    });
+                }
+
+                if (string.IsNullOrEmpty(request.NewPassword))
+                {
+                    return BadRequest(new ResetPasswordResponse
+                    {
+                        Success = false,
+                        Message = "New password is required"
+                    });
+                }
+
+                if (request.NewPassword != request.ConfirmPassword)
+                {
+                    return BadRequest(new ResetPasswordResponse
+                    {
+                        Success = false,
+                        Message = "Passwords do not match"
+                    });
+                }
+
+                if (request.NewPassword.Length < 6)
+                {
+                    return BadRequest(new ResetPasswordResponse
+                    {
+                        Success = false,
+                        Message = "Password must be at least 6 characters long"
+                    });
+                }
+
+                // Verify token and reset password
+                var success = _userRepo.ResetPassword(request.Token, request.NewPassword);
+                if (!success)
+                {
+                    return BadRequest(new ResetPasswordResponse
+                    {
+                        Success = false,
+                        Message = "Invalid or expired reset token"
+                    });
+                }
+
+                return Ok(new ResetPasswordResponse
+                {
+                    Success = true,
+                    Message = "Password has been reset successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ResetPasswordResponse
+                {
+                    Success = false,
+                    Message = "Internal server error: " + ex.Message
+                });
             }
         }
     }

@@ -15,5 +15,11 @@ namespace BE.REPOs.Interface
         User GetUserById(int userId);
         User UpdateUser(User user);
         bool DeleteUser(int userId);
+        
+        // Forgot Password Methods
+        User? GetUserByEmail(string email);
+        bool UpdateResetPasswordToken(string email, string token, DateTime expiry);
+        User? GetUserByResetToken(string token);
+        bool ResetPassword(string token, string newPassword);
     }
 }

@@ -23,6 +23,10 @@ public partial class User
 
     public DateTime? CreatedDate { get; set; }
 
+    public string? ResetPasswordToken { get; set; }
+
+    public DateTime? ResetPasswordTokenExpiry { get; set; }
+
     public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
 
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
