@@ -21,12 +21,14 @@ namespace BE.API.Controllers
         private readonly IUserRepo _userRepo;
         private readonly IConfiguration _configuration;
         private readonly CloudinaryService _cloudinary;
+        private readonly IEmailService _emailService;
 
-        public UserController(IUserRepo userRepo, IConfiguration configuration, CloudinaryService cloudinaryService)
+        public UserController(IUserRepo userRepo, IConfiguration configuration, CloudinaryService cloudinaryService, IEmailService emailService)
         {
             _userRepo = userRepo;
             _configuration = configuration;
             _cloudinary = cloudinaryService;
+            _emailService = emailService;
         }
 
         [HttpPost("login")]
@@ -233,7 +235,7 @@ namespace BE.API.Controllers
 
         [HttpPost("forgot-password")]
         [AllowAnonymous]
-        public ActionResult<ForgotPasswordResponse> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        public async Task<ActionResult<ForgotPasswordResponse>> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
             try
             {
@@ -274,8 +276,19 @@ namespace BE.API.Controllers
                     });
                 }
 
-                // TODO: Send email with reset link
-                // For now, return token in development mode
+                // Send email with reset link
+                try
+                {
+                    await _emailService.SendPasswordResetEmailAsync(request.Email, resetToken);
+                }
+                catch (Exception emailEx)
+                {
+                    // Log email error but don't fail the request
+                    // In production, you might want to queue the email for retry
+                    Console.WriteLine($"Failed to send email: {emailEx.Message}");
+                }
+
+                // For development mode, also return token in response
                 var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
                 
                 return Ok(new ForgotPasswordResponse
