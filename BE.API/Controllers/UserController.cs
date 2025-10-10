@@ -279,13 +279,24 @@ namespace BE.API.Controllers
                 // Send email with reset link
                 try
                 {
+                    // Send real email
                     await _emailService.SendPasswordResetEmailAsync(request.Email, resetToken);
+                    
+                    // Debug info for development
+                    Console.WriteLine($"📧 Real Email sent to: {request.Email}");
+                    Console.WriteLine($"🔑 Reset Token: {resetToken}");
+                    Console.WriteLine($"🔗 Reset Link: http://localhost:3000/reset-password?token={resetToken}");
                 }
                 catch (Exception emailEx)
                 {
-                    // Log email error but don't fail the request
-                    // In production, you might want to queue the email for retry
+                    // Log email error and return error response for development
                     Console.WriteLine($"Failed to send email: {emailEx.Message}");
+                    Console.WriteLine($"Full exception: {emailEx}");
+                    return StatusCode(500, new ForgotPasswordResponse
+                    {
+                        Success = false,
+                        Message = $"Failed to send email: {emailEx.Message}"
+                    });
                 }
 
                 // For development mode, also return token in response
