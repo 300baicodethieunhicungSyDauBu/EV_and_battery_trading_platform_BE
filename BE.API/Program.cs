@@ -13,7 +13,8 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
+})
+.AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -25,6 +26,18 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["JWT:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:SecretKey"] ?? "default-secret-key"))
     };
+})
+.AddGoogle(options =>
+{
+    options.ClientId = builder.Configuration["OAuth:Google:ClientId"] ?? "";
+    options.ClientSecret = builder.Configuration["OAuth:Google:ClientSecret"] ?? "";
+    options.CallbackPath = "/api/User/google-callback";
+})
+.AddFacebook(options =>
+{
+    options.AppId = builder.Configuration["OAuth:Facebook:AppId"] ?? "";
+    options.AppSecret = builder.Configuration["OAuth:Facebook:AppSecret"] ?? "";
+    options.CallbackPath = "/api/User/facebook-callback";
 });
 
 builder.Services.AddAuthorization(options =>
@@ -91,6 +104,7 @@ builder.Services.AddScoped<INotificationsRepo, NotificationsRepo>();
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IOTPService, OTPService>();
 
 
 

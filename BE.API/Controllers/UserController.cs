@@ -5,6 +5,9 @@ using BE.REPOs.Interface;
 using BE.REPOs.Service;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -22,13 +25,15 @@ namespace BE.API.Controllers
         private readonly IConfiguration _configuration;
         private readonly CloudinaryService _cloudinary;
         private readonly IEmailService _emailService;
+        private readonly IOTPService _otpService;
 
-        public UserController(IUserRepo userRepo, IConfiguration configuration, CloudinaryService cloudinaryService, IEmailService emailService)
+        public UserController(IUserRepo userRepo, IConfiguration configuration, CloudinaryService cloudinaryService, IEmailService emailService, IOTPService otpService)
         {
             _userRepo = userRepo;
             _configuration = configuration;
             _cloudinary = cloudinaryService;
             _emailService = emailService;
+            _otpService = otpService;
         }
 
         [HttpPost("login")]
@@ -261,31 +266,31 @@ namespace BE.API.Controllers
                     });
                 }
 
-                // Generate reset token
-                var resetToken = Guid.NewGuid().ToString();
-                var tokenExpiry = DateTime.Now.AddHours(1); // Token expires in 1 hour
+                // Generate OTP
+                var otp = _otpService.GenerateOTP();
+                var otpExpiry = DateTime.Now.AddMinutes(10); // OTP expires in 10 minutes
 
-                // Update user with reset token
-                var success = _userRepo.UpdateResetPasswordToken(request.Email, resetToken, tokenExpiry);
+                // Update user with OTP
+                var success = _userRepo.UpdateResetPasswordToken(request.Email, otp, otpExpiry);
                 if (!success)
                 {
                     return StatusCode(500, new ForgotPasswordResponse
                     {
                         Success = false,
-                        Message = "Failed to generate reset token"
+                        Message = "Failed to generate OTP"
                     });
                 }
 
-                // Send email with reset link
+                // Send email with OTP
                 try
                 {
                     // Send real email
-                    await _emailService.SendPasswordResetEmailAsync(request.Email, resetToken);
+                    await _emailService.SendPasswordResetEmailAsync(request.Email, otp);
                     
                     // Debug info for development
                     Console.WriteLine($"📧 Real Email sent to: {request.Email}");
-                    Console.WriteLine($"🔑 Reset Token: {resetToken}");
-                    Console.WriteLine($"🔗 Reset Link: http://localhost:3000/reset-password?token={resetToken}");
+                    Console.WriteLine($"🔑 OTP: {otp}");
+                    Console.WriteLine($"⏰ OTP expires in 10 minutes");
                 }
                 catch (Exception emailEx)
                 {
@@ -305,8 +310,8 @@ namespace BE.API.Controllers
                 return Ok(new ForgotPasswordResponse
                 {
                     Success = true,
-                    Message = "Password reset link has been sent to your email",
-                    ResetToken = isDevelopment ? resetToken : null // Only show token in development
+                    Message = "OTP has been sent to your email",
+                    ResetToken = isDevelopment ? otp : null // Only show OTP in development
                 });
             }
             catch (Exception ex)
@@ -331,7 +336,17 @@ namespace BE.API.Controllers
                     return BadRequest(new ResetPasswordResponse
                     {
                         Success = false,
-                        Message = "Reset token is required"
+                        Message = "OTP is required"
+                    });
+                }
+
+                // Validate OTP format (6 digits)
+                if (!_otpService.ValidateOTP(request.Token))
+                {
+                    return BadRequest(new ResetPasswordResponse
+                    {
+                        Success = false,
+                        Message = "Invalid OTP format. OTP must be 6 digits."
                     });
                 }
 
@@ -362,14 +377,14 @@ namespace BE.API.Controllers
                     });
                 }
 
-                // Verify token and reset password
+                // Verify OTP and reset password
                 var success = _userRepo.ResetPassword(request.Token, request.NewPassword);
                 if (!success)
                 {
                     return BadRequest(new ResetPasswordResponse
                     {
                         Success = false,
-                        Message = "Invalid or expired reset token"
+                        Message = "Invalid or expired OTP"
                     });
                 }
 
@@ -386,6 +401,130 @@ namespace BE.API.Controllers
                     Success = false,
                     Message = "Internal server error: " + ex.Message
                 });
+            }
+        }
+
+        // OAuth Login Endpoints
+        [HttpGet("google-login")]
+        [AllowAnonymous]
+        public IActionResult GoogleLogin()
+        {
+            var properties = new AuthenticationProperties
+            {
+                RedirectUri = "/api/User/google-callback"
+            };
+            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+        }
+
+        [HttpGet("facebook-login")]
+        [AllowAnonymous]
+        public IActionResult FacebookLogin()
+        {
+            var properties = new AuthenticationProperties
+            {
+                RedirectUri = "/api/User/facebook-callback"
+            };
+            return Challenge(properties, FacebookDefaults.AuthenticationScheme);
+        }
+
+        [HttpGet("google-callback")]
+        [AllowAnonymous]
+        public IActionResult GoogleCallback()
+        {
+            var result = HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme).Result;
+            if (!result.Succeeded)
+            {
+                return BadRequest("Google authentication failed");
+            }
+
+            var claims = result.Principal.Claims;
+            var email = claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
+            var name = claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
+            var googleId = claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+            var avatar = claims.FirstOrDefault(x => x.Type == "picture")?.Value;
+
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(googleId))
+            {
+                return BadRequest("Unable to retrieve user information from Google");
+            }
+
+            return ProcessOAuthLogin("Google", googleId, email, name ?? "Google User", avatar).Result;
+        }
+
+        [HttpGet("facebook-callback")]
+        [AllowAnonymous]
+        public IActionResult FacebookCallback()
+        {
+            var result = HttpContext.AuthenticateAsync(FacebookDefaults.AuthenticationScheme).Result;
+            if (!result.Succeeded)
+            {
+                return BadRequest("Facebook authentication failed");
+            }
+
+            var claims = result.Principal.Claims;
+            var email = claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
+            var name = claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
+            var facebookId = claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+            var avatar = claims.FirstOrDefault(x => x.Type == "picture")?.Value;
+
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(facebookId))
+            {
+                return BadRequest("Unable to retrieve user information from Facebook");
+            }
+
+            return ProcessOAuthLogin("Facebook", facebookId, email, name ?? "Facebook User", avatar).Result;
+        }
+
+        private Task<IActionResult> ProcessOAuthLogin(string provider, string oauthId, string email, string fullName, string? avatar)
+        {
+            try
+            {
+                // Check if user already exists with this OAuth account
+                var existingOAuthUser = _userRepo.GetUserByOAuth(provider, oauthId);
+                if (existingOAuthUser != null)
+                {
+                    var token = GenerateJwtToken(existingOAuthUser);
+                    return Task.FromResult<IActionResult>(Ok(new LoginResponse
+                    {
+                        Role = existingOAuthUser.RoleId?.ToString() ?? "Member",
+                        Token = token,
+                        AccountId = existingOAuthUser.UserId.ToString()
+                    }));
+                }
+
+                // Check if user exists with same email but different provider
+                var existingEmailUser = _userRepo.GetUserByEmail(email);
+                if (existingEmailUser != null)
+                {
+                    // Link OAuth account to existing user
+                    existingEmailUser.OAuthProvider = provider;
+                    existingEmailUser.OAuthId = oauthId;
+                    existingEmailUser.OAuthEmail = email;
+                    _userRepo.UpdateUser(existingEmailUser);
+
+                    var token = GenerateJwtToken(existingEmailUser);
+                    return Task.FromResult<IActionResult>(Ok(new LoginResponse
+                    {
+                        Role = existingEmailUser.RoleId?.ToString() ?? "Member",
+                        Token = token,
+                        AccountId = existingEmailUser.UserId.ToString()
+                    }));
+                }
+
+                // Create new user
+                var newUser = _userRepo.CreateOAuthUser(provider, oauthId, email, fullName, avatar);
+                var newToken = GenerateJwtToken(newUser);
+                
+                return Task.FromResult<IActionResult>(Ok(new LoginResponse
+                {
+                    Role = newUser.RoleId?.ToString() ?? "Member",
+                    Token = newToken,
+                    AccountId = newUser.UserId.ToString()
+                }));
+            }
+            catch (Exception ex)
+            {
+                return Task.FromResult<IActionResult>(StatusCode(500, new { message = "Internal server error: " + ex.Message }));
             }
         }
     }

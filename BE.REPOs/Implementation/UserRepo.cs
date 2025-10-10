@@ -61,5 +61,16 @@ namespace BE.REPOs.Implementation
         {
             return UserDAO.Instance.ResetPassword(token, newPassword);
         }
+
+        // OAuth Methods
+        public User? GetUserByOAuth(string provider, string oauthId)
+        {
+            return UserDAO.Instance.GetUserByOAuth(provider, oauthId);
+        }
+
+        public User CreateOAuthUser(string provider, string oauthId, string email, string fullName, string? avatar = null)
+        {
+            return UserDAO.Instance.CreateOAuthUser(provider, oauthId, email, fullName, avatar);
+        }
     }
 }
