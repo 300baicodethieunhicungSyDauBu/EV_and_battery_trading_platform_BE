@@ -306,7 +306,7 @@ namespace BE.API.Controllers
         }
 
         [HttpPut("approve/{id}")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminOnly")]
         public ActionResult ApproveProduct(int id)
         {
             try
@@ -328,7 +328,42 @@ namespace BE.API.Controllers
                     approved.ProductId,
                     approved.Title,
                     approved.Status,
+                    approved.VerificationStatus,
                     Message = "Product approved successfully."
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpPut("reject/{id}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult RejectProduct(int id, [FromBody] RejectProductRequest? request = null)
+        {
+            try
+            {
+                var product = _productRepo.GetProductById(id);
+                if (product == null)
+                {
+                    return NotFound("Product not found.");
+                }
+
+                var rejected = _productRepo.RejectProduct(id, request?.RejectionReason);
+                if (rejected == null)
+                {
+                    return StatusCode(500, "Failed to reject product.");
+                }
+
+                return Ok(new
+                {
+                    rejected.ProductId,
+                    rejected.Title,
+                    rejected.Status,
+                    rejected.VerificationStatus,
+                    rejected.RejectionReason,
+                    Message = "Product rejected successfully."
                 });
             }
             catch (Exception ex)
@@ -460,6 +495,210 @@ namespace BE.API.Controllers
                 }).ToList();
 
                 return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("vehicles")]
+        [AllowAnonymous]
+        public ActionResult GetVehicles()
+        {
+            try
+            {
+                var vehicles = _productRepo.GetProductsByType("vehicle");
+
+                var response = vehicles.Select(p => new VehicleResponse
+                {
+                    ProductId = p.ProductId,
+                    SellerId = p.SellerId,
+                    ProductType = p.ProductType,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Price = p.Price,
+                    Brand = p.Brand,
+                    Model = p.Model,
+                    Condition = p.Condition,
+                    VehicleType = p.VehicleType,
+                    ManufactureYear = p.ManufactureYear,
+                    Mileage = p.Mileage,
+                    Transmission = p.Transmission,
+                    SeatCount = p.SeatCount,
+                    LicensePlate = p.LicensePlate,
+                    Status = p.Status,
+                    VerificationStatus = p.VerificationStatus,
+                    CreatedDate = p.CreatedDate,
+                    ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+                }).ToList();
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("batteries")]
+        [AllowAnonymous]
+        public ActionResult GetBatteries()
+        {
+            try
+            {
+                var batteries = _productRepo.GetProductsByType("battery");
+
+                var response = batteries.Select(p => new BatteryResponse
+                {
+                    ProductId = p.ProductId,
+                    SellerId = p.SellerId,
+                    ProductType = p.ProductType,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Price = p.Price,
+                    Brand = p.Brand,
+                    Model = p.Model,
+                    Condition = p.Condition,
+                    BatteryType = p.BatteryType,
+                    BatteryHealth = p.BatteryHealth,
+                    Capacity = p.Capacity,
+                    Voltage = p.Voltage,
+                    BMS = p.BMS,
+                    CellType = p.CellType,
+                    CycleCount = p.CycleCount,
+                    Status = p.Status,
+                    VerificationStatus = p.VerificationStatus,
+                    CreatedDate = p.CreatedDate,
+                    ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+                }).ToList();
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpPost("vehicles")]
+        [Authorize(Policy = "MemberOnly")]
+        public ActionResult CreateVehicle([FromBody] VehicleRequest request)
+        {
+            try
+            {
+                // Validate license plate format for vehicles
+                if (!string.IsNullOrEmpty(request.LicensePlate))
+                {
+                    if (!IsValidLicensePlate(request.LicensePlate))
+                    {
+                        return BadRequest("Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
+                    }
+                }
+
+                var product = new Product
+                {
+                    SellerId = int.TryParse(User.FindFirst("UserId")?.Value, out var userId) ? userId : 0,
+                    ProductType = "Vehicle",
+                    Title = request.Title,
+                    Description = request.Description,
+                    Price = request.Price,
+                    Brand = request.Brand,
+                    Model = request.Model,
+                    Condition = request.Condition,
+                    VehicleType = request.VehicleType,
+                    ManufactureYear = request.ManufactureYear,
+                    Mileage = request.Mileage,
+                    Transmission = request.Transmission,
+                    SeatCount = request.SeatCount,
+                    LicensePlate = request.LicensePlate
+                };
+
+                var createdVehicle = _productRepo.CreateProduct(product);
+
+                var response = new VehicleResponse
+                {
+                    ProductId = createdVehicle.ProductId,
+                    SellerId = createdVehicle.SellerId,
+                    ProductType = createdVehicle.ProductType,
+                    Title = createdVehicle.Title,
+                    Description = createdVehicle.Description,
+                    Price = createdVehicle.Price,
+                    Brand = createdVehicle.Brand,
+                    Model = createdVehicle.Model,
+                    Condition = createdVehicle.Condition,
+                    VehicleType = createdVehicle.VehicleType,
+                    ManufactureYear = createdVehicle.ManufactureYear,
+                    Mileage = createdVehicle.Mileage,
+                    Transmission = createdVehicle.Transmission,
+                    SeatCount = createdVehicle.SeatCount,
+                    LicensePlate = createdVehicle.LicensePlate,
+                    Status = createdVehicle.Status,
+                    VerificationStatus = createdVehicle.VerificationStatus,
+                    CreatedDate = createdVehicle.CreatedDate,
+                    ImageUrls = new List<string>()
+                };
+
+                return CreatedAtAction(nameof(GetProductById), new { id = createdVehicle.ProductId }, response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpPost("batteries")]
+        [Authorize(Policy = "MemberOnly")]
+        public ActionResult CreateBattery([FromBody] BatteryRequest request)
+        {
+            try
+            {
+                var product = new Product
+                {
+                    SellerId = int.TryParse(User.FindFirst("UserId")?.Value, out var userId) ? userId : 0,
+                    ProductType = "Battery",
+                    Title = request.Title,
+                    Description = request.Description,
+                    Price = request.Price,
+                    Brand = request.Brand,
+                    Model = request.Model,
+                    Condition = request.Condition,
+                    BatteryType = request.BatteryType,
+                    BatteryHealth = request.BatteryHealth,
+                    Capacity = request.Capacity,
+                    Voltage = request.Voltage,
+                    BMS = request.BMS,
+                    CellType = request.CellType,
+                    CycleCount = request.CycleCount
+                };
+
+                var createdBattery = _productRepo.CreateProduct(product);
+
+                var response = new BatteryResponse
+                {
+                    ProductId = createdBattery.ProductId,
+                    SellerId = createdBattery.SellerId,
+                    ProductType = createdBattery.ProductType,
+                    Title = createdBattery.Title,
+                    Description = createdBattery.Description,
+                    Price = createdBattery.Price,
+                    Brand = createdBattery.Brand,
+                    Model = createdBattery.Model,
+                    Condition = createdBattery.Condition,
+                    BatteryType = createdBattery.BatteryType,
+                    BatteryHealth = createdBattery.BatteryHealth,
+                    Capacity = createdBattery.Capacity,
+                    Voltage = createdBattery.Voltage,
+                    BMS = createdBattery.BMS,
+                    CellType = createdBattery.CellType,
+                    CycleCount = createdBattery.CycleCount,
+                    Status = createdBattery.Status,
+                    VerificationStatus = createdBattery.VerificationStatus,
+                    CreatedDate = createdBattery.CreatedDate,
+                    ImageUrls = new List<string>()
+                };
+
+                return CreatedAtAction(nameof(GetProductById), new { id = createdBattery.ProductId }, response);
             }
             catch (Exception ex)
             {

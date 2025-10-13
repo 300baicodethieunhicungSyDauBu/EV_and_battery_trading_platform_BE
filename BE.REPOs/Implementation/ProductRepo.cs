@@ -50,6 +50,12 @@ namespace BE.REPOs.Implementation
         {
             return ProductDAO.Instance.ApproveProduct(id);
         }
+
+        public Product RejectProduct(int id, string? rejectionReason = null)
+        {
+            return ProductDAO.Instance.RejectProduct(id, rejectionReason);
+        }
+
         public List<Product> GetActiveProducts()
         {
             return ProductDAO.Instance.GetAciveProducts();
@@ -63,6 +69,11 @@ namespace BE.REPOs.Implementation
         public Product GetProductByExactLicensePlate(string licensePlate)
         {
             return ProductDAO.Instance.GetProductByExactLicensePlate(licensePlate);
+        }
+
+        public List<Product> GetProductsByType(string productType)
+        {
+            return ProductDAO.Instance.GetProductsByType(productType);
         }
     }
 }

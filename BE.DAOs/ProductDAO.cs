@@ -97,6 +97,19 @@ namespace BE.DAOs
             if (product == null) return null;
 
             product.Status = "Active";
+            product.VerificationStatus = "Approved";
+            dbcontext.SaveChanges();
+            return product;
+        }
+
+        public Product? RejectProduct(int id, string? rejectionReason = null)
+        {
+            var product = dbcontext.Products.FirstOrDefault(p => p.ProductId == id);
+            if (product == null) return null;
+
+            product.Status = "Rejected";
+            product.VerificationStatus = "Rejected";
+            product.RejectionReason = rejectionReason;
             dbcontext.SaveChanges();
             return product;
         }
@@ -125,6 +138,15 @@ namespace BE.DAOs
                 .Include(p => p.Seller)
                 .Include(p => p.ProductImages)
                 .FirstOrDefault(p => p.LicensePlate == licensePlate);
+        }
+
+        public List<Product> GetProductsByType(string productType)
+        {
+            return dbcontext.Products
+                .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
+                .Where(p => p.ProductType != null && p.ProductType.ToLower().Contains(productType.ToLower()) && p.Status == "Active")
+                .ToList();
         }
     }
 }

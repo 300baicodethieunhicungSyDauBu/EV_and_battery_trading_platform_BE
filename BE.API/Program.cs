@@ -15,7 +15,7 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultSignInScheme = "Cookies";
+    //options.DefaultSignInScheme = "External";
 })
 .AddJwtBearer(options =>
 {
@@ -30,24 +30,30 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:SecretKey"] ?? "default-secret-key"))
     };
 })
-.AddCookie("Cookies", options =>
+.AddCookie("External", options =>
 {
-    options.Cookie.Name = "EVTrading.Auth";
+    options.Cookie.Name = "EVTrading.External";
     options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Allow HTTP for development
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
     options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.IsEssential = true;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
 })
 .AddGoogle(options =>
 {
     options.ClientId = builder.Configuration["OAuth:Google:ClientId"] ?? "";
     options.ClientSecret = builder.Configuration["OAuth:Google:ClientSecret"] ?? "";
     options.CallbackPath = "/api/User/google-callback";
+    options.SignInScheme = "External";
+    options.SaveTokens = false;
 })
 .AddFacebook(options =>
 {
     options.AppId = builder.Configuration["OAuth:Facebook:AppId"] ?? "";
     options.AppSecret = builder.Configuration["OAuth:Facebook:AppSecret"] ?? "";
     options.CallbackPath = "/api/User/facebook-callback";
+    options.SignInScheme = "External";
+    options.SaveTokens = false;
 });
 
 builder.Services.AddAuthorization(options =>

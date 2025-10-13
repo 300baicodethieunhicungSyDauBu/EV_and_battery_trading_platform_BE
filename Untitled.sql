@@ -229,6 +229,9 @@ ADD OAuthEmail VARCHAR(255) NULL,
     OAuthId VARCHAR(255) NULL,
     OAuthProvider VARCHAR(50) NULL;
 GO
+ALTER TABLE [dbo].[Products]
+    ADD [RejectionReason] NVARCHAR(500) NULL;
+GO
 
 -- =============================================
 -- 5. Seed Data

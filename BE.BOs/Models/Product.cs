@@ -53,6 +53,8 @@ public partial class Product
 
     public string? VerificationStatus { get; set; }
 
+    public string? RejectionReason { get; set; }
+
     public DateTime? CreatedDate { get; set; }
 
     public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
