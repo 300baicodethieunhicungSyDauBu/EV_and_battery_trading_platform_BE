@@ -17,8 +17,10 @@ namespace BE.REPOs.Interface
         List<Product> GetProductsBySellerId(int sellerId);
         List<Product> GetDraftProducts();
         Product ApproveProduct(int id);
+        Product RejectProduct(int id, string? rejectionReason = null);
         List<Product> GetActiveProducts();
         List<Product> GetProductsByLicensePlate(string licensePlate);
         Product GetProductByExactLicensePlate(string licensePlate);
+        List<Product> GetProductsByType(string productType);
     }
 }

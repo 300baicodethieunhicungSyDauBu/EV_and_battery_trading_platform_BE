@@ -232,6 +232,9 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasDefaultValue("NotRequested");
+            entity.Property(e => e.RejectionReason)
+                .HasMaxLength(500)
+                .IsUnicode(false);
             entity.Property(e => e.Voltage).HasColumnType("decimal(8, 2)");
             entity.Property(e => e.Transmission)
                 .HasMaxLength(50)

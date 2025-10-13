@@ -58,10 +58,6 @@ namespace BE.API.Controllers
 
         private string GenerateJwtToken(User user)
         {
-            IConfiguration configuration = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", true, true).Build();
-
             var claims = new List<Claim> {
             new Claim(ClaimTypes.Name,user.FullName ?? "Unknown"),
             new Claim(ClaimTypes.Email,user.Email),
@@ -72,18 +68,19 @@ namespace BE.API.Controllers
             {
                 claims.Add(new Claim(ClaimTypes.Role, user.RoleId.Value.ToString()));
             }
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"] ?? "default-secret-key"));
+            
+            var secretKey = _configuration["JWT:SecretKey"] ?? "default-secret-key";
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var preparedToken = new JwtSecurityToken(
-                            issuer: configuration["JWT:Issuer"],
-                            audience: configuration["JWT:Audience"],
+                            issuer: _configuration["JWT:Issuer"],
+                            audience: _configuration["JWT:Audience"],
                             claims: claims,
                             expires: DateTime.Now.AddMinutes(30),
                             signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(preparedToken);
-
         }
 
         [HttpPost("register")]
@@ -525,6 +522,173 @@ namespace BE.API.Controllers
             catch (Exception ex)
             {
                 return Task.FromResult<IActionResult>(StatusCode(500, new { message = "Internal server error: " + ex.Message }));
+            }
+        }
+
+        [HttpGet("oauth-error")]
+        [AllowAnonymous]
+        public ActionResult OAuthError([FromQuery] string? message)
+        {
+            return Ok(new
+            {
+                success = false,
+                message = message ?? "OAuth authentication failed",
+                timestamp = DateTime.Now
+            });
+        }
+
+        [HttpGet("test-oauth")]
+        [AllowAnonymous]
+        public ActionResult TestOAuth()
+        {
+            return Ok(new
+            {
+                message = "OAuth test endpoint",
+                googleLoginUrl = "/api/User/google-login",
+                facebookLoginUrl = "/api/User/facebook-login",
+                instructions = "Click on the URLs above to test OAuth login"
+            });
+        }
+
+        [HttpGet("test-jwt")]
+        [Authorize]
+        public ActionResult TestJWT()
+        {
+            var userId = User.FindFirst("UserId")?.Value;
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            var name = User.FindFirst(ClaimTypes.Name)?.Value;
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            return Ok(new
+            {
+                message = "JWT token is valid!",
+                userId = userId,
+                email = email,
+                name = name,
+                role = role,
+                timestamp = DateTime.Now
+            });
+        }
+
+        [HttpPost("test-admin-login")]
+        [AllowAnonymous]
+        public ActionResult TestAdminLogin()
+        {
+            try
+            {
+                var adminEmail = "admin@evtrading.com";
+                var adminPassword = "admin123";
+                
+                // Tìm admin trong database
+                var admin = _userRepo.GetUserByEmail(adminEmail);
+                if (admin == null)
+                {
+                    return NotFound(new
+                    {
+                        message = "Admin không tồn tại trong database",
+                        suggestion = "Chạy script CreateAdminFixed.sql hoặc gọi API create-initial-admin"
+                    });
+                }
+
+                // Test password verification
+                var passwordValid = BCrypt.Net.BCrypt.Verify(adminPassword, admin.PasswordHash);
+                
+                return Ok(new
+                {
+                    message = "Admin login test",
+                    admin = new
+                    {
+                        userId = admin.UserId,
+                        email = admin.Email,
+                        fullName = admin.FullName,
+                        roleId = admin.RoleId,
+                        accountStatus = admin.AccountStatus
+                    },
+                    passwordTest = new
+                    {
+                        plainPassword = adminPassword,
+                        hashedPassword = admin.PasswordHash,
+                        passwordValid = passwordValid,
+                        hashLength = admin.PasswordHash?.Length
+                    },
+                    recommendation = passwordValid ? 
+                        "Password verification OK - có thể đăng nhập" : 
+                        "Password verification FAILED - cần tạo lại admin"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi test admin login: " + ex.Message });
+            }
+        }
+
+        [HttpPost("create-initial-admin")]
+        [AllowAnonymous]
+        public ActionResult CreateInitialAdmin()
+        {
+            try
+            {
+                // Kiểm tra xem đã có admin nào chưa
+                var existingAdmins = _userRepo.GetAllUsers().Where(u => u.RoleId == 1).ToList();
+                if (existingAdmins.Any())
+                {
+                    return BadRequest(new
+                    {
+                        message = "Admin đã tồn tại trong hệ thống!",
+                        existingAdmins = existingAdmins.Select(a => new { a.UserId, a.Email, a.FullName }).ToList()
+                    });
+                }
+
+                // Tạo admin đầu tiên với password đã hash
+                var plainPassword = "admin123";
+                var hashedPassword = BCrypt.Net.BCrypt.HashPassword(plainPassword);
+                
+                var adminUser = new User
+                {
+                    Email = "admin@evtrading.com",
+                    PasswordHash = hashedPassword,
+                    FullName = "System Administrator",
+                    Phone = "0123456789",
+                    RoleId = 1, // Admin role
+                    AccountStatus = "Active",
+                    CreatedDate = DateTime.Now
+                };
+
+                var createdAdmin = _userRepo.Register(adminUser);
+
+                // Debug: In ra thông tin để kiểm tra
+                Console.WriteLine($"[DEBUG] Admin created:");
+                Console.WriteLine($"  Email: {createdAdmin.Email}");
+                Console.WriteLine($"  PasswordHash: {createdAdmin.PasswordHash}");
+                Console.WriteLine($"  RoleId: {createdAdmin.RoleId}");
+
+                return Ok(new
+                {
+                    message = "Admin đầu tiên đã được tạo thành công!",
+                    admin = new
+                    {
+                        userId = createdAdmin.UserId,
+                        email = createdAdmin.Email,
+                        fullName = createdAdmin.FullName,
+                        roleId = createdAdmin.RoleId,
+                        createdDate = createdAdmin.CreatedDate
+                    },
+                    loginInfo = new
+                    {
+                        email = "admin@evtrading.com",
+                        password = "admin123",
+                        note = "Vui lòng đổi password sau khi đăng nhập lần đầu!"
+                    },
+                    debug = new
+                    {
+                        hashedPassword = hashedPassword,
+                        verificationTest = BCrypt.Net.BCrypt.Verify(plainPassword, hashedPassword)
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi tạo admin: " + ex.Message });
             }
         }
     }
