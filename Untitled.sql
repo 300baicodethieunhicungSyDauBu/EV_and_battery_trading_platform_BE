@@ -1,6 +1,6 @@
-﻿CREATE DATABASE Topic2
-GO
-Use Topic2
+Create DATABASE EvAndBatteryTradingPlatform
+go
+USE EvAndBatteryTradingPlatform
 go
 CREATE TABLE [UserRoles] (
   [RoleId] int PRIMARY KEY IDENTITY(1, 1),
@@ -18,7 +18,9 @@ CREATE TABLE [Users] (
   [Phone] varchar(20),
   [Avatar] text,
   [AccountStatus] varchar(20) DEFAULT 'Active',
-  [CreatedDate] datetime2 DEFAULT (getdate())
+  [CreatedDate] datetime2 DEFAULT (getdate()),
+  [ResetPasswordToken] nvarchar(max),
+  [ResetPasswordTokenExpiry] datetime2
 )
 GO
 
@@ -35,13 +37,18 @@ CREATE TABLE [Products] (
   [VehicleType] varchar(50),
   [ManufactureYear] int,
   [Mileage] int,
-  [BatteryHealth] decimal(5,2),
+  [Transmission] varchar(50),
+  [SeatCount] int,
+  [LicensePlate] nvarchar(20),
   [BatteryType] varchar(50),
+  [BatteryHealth] decimal(5,2),
   [Capacity] decimal(10,2),
   [Voltage] decimal(8,2),
-  [CycleCount] int,
+  [BMS] varchar(100),
+  [CellType] varchar(50),
   [Status] varchar(20) DEFAULT 'Draft',
   [VerificationStatus] varchar(20) DEFAULT 'NotRequested',
+  [RejectionReason] text,
   [CreatedDate] datetime2 DEFAULT (getdate())
 )
 GO
@@ -49,6 +56,7 @@ GO
 CREATE TABLE [ProductImages] (
   [ImageId] int PRIMARY KEY IDENTITY(1, 1),
   [ProductId] int,
+  [Name] varchar(100),
   [ImageData] text NOT NULL,
   [CreatedDate] datetime2 DEFAULT (getdate())
 )
@@ -64,6 +72,7 @@ CREATE TABLE [Orders] (
   [Status] varchar(20) DEFAULT 'Pending',
   [DepositStatus] varchar(20) DEFAULT 'Pending',
   [FinalPaymentStatus] varchar(20) DEFAULT 'Pending',
+  [FinalPaymentDueDate] datetime2,
   [PayoutAmount] decimal(18,2),
   [PayoutStatus] varchar(20) DEFAULT 'Pending',
   [CreatedDate] datetime2 DEFAULT (getdate()),
@@ -78,8 +87,16 @@ CREATE TABLE [Payments] (
   [PaymentType] varchar(20),
   [Amount] decimal(18,2) NOT NULL,
   [PaymentMethod] varchar(50),
-  [Status] varchar(20) DEFAULT 'Pending',
-  [CreatedDate] datetime2 DEFAULT (getdate())
+  [PaymentStatus] varchar(20) DEFAULT 'Pending',
+  [CreatedDate] datetime2 DEFAULT (getdate()),
+  [TransactionNo] varchar(100),
+  [BankCode] varchar(50),
+  [BankTranNo] varchar(100),
+  [CardType] varchar(50),
+  [PayDate] datetime2,
+  [ResponseCode] varchar(10),
+  [TransactionStatus] varchar(10),
+  [SecureHash] varchar(512)
 )
 GO
 
@@ -132,7 +149,22 @@ CREATE TABLE [Notifications] (
 )
 GO
 
-CREATE UNIQUE INDEX [Favorites_index_0] ON [Favorites] ("UserId", "ProductId")
+CREATE TABLE [Chats] (
+  [ChatId] int PRIMARY KEY IDENTITY(1, 1),
+  [User1Id] int,
+  [User2Id] int,
+  [CreatedDate] datetime2 DEFAULT (getdate())
+)
+GO
+
+CREATE TABLE [Messages] (
+  [MessageId] int PRIMARY KEY IDENTITY(1, 1),
+  [ChatId] int,
+  [SenderId] int,
+  [Content] text NOT NULL,
+  [IsRead] bit DEFAULT (0),
+  [CreatedDate] datetime2 DEFAULT (getdate())
+)
 GO
 
 EXEC sp_addextendedproperty
@@ -185,18 +217,26 @@ GO
 
 EXEC sp_addextendedproperty
 @name = N'Column_Description',
-@value = '%',
+@value = 'Automatic, Manual',
 @level0type = N'Schema', @level0name = 'dbo',
 @level1type = N'Table',  @level1name = 'Products',
-@level2type = N'Column', @level2name = 'BatteryHealth';
+@level2type = N'Column', @level2name = 'Transmission';
 GO
 
 EXEC sp_addextendedproperty
 @name = N'Column_Description',
-@value = 'CarBattery, MotorcycleBattery',
+@value = 'CarBattery, MotorcycleBattery, BikeBattery',
 @level0type = N'Schema', @level0name = 'dbo',
 @level1type = N'Table',  @level1name = 'Products',
 @level2type = N'Column', @level2name = 'BatteryType';
+GO
+
+EXEC sp_addextendedproperty
+@name = N'Column_Description',
+@value = '%',
+@level0type = N'Schema', @level0name = 'dbo',
+@level1type = N'Table',  @level1name = 'Products',
+@level2type = N'Column', @level2name = 'BatteryHealth';
 GO
 
 EXEC sp_addextendedproperty
@@ -209,6 +249,22 @@ GO
 
 EXEC sp_addextendedproperty
 @name = N'Column_Description',
+@value = 'Tên hoặc loại hệ thống quản lý pin (Battery Management System)',
+@level0type = N'Schema', @level0name = 'dbo',
+@level1type = N'Table',  @level1name = 'Products',
+@level2type = N'Column', @level2name = 'BMS';
+GO
+
+EXEC sp_addextendedproperty
+@name = N'Column_Description',
+@value = 'Loại cell (ví dụ: 18650, 21700, LFP, NMC)',
+@level0type = N'Schema', @level0name = 'dbo',
+@level1type = N'Table',  @level1name = 'Products',
+@level2type = N'Column', @level2name = 'CellType';
+GO
+
+EXEC sp_addextendedproperty
+@name = N'Column_Description',
 @value = 'Draft, Active, Sold, Expired',
 @level0type = N'Schema', @level0name = 'dbo',
 @level1type = N'Table',  @level1name = 'Products',
@@ -217,10 +273,26 @@ GO
 
 EXEC sp_addextendedproperty
 @name = N'Column_Description',
-@value = 'NotRequested, Requested, Verified',
+@value = 'NotRequested, Requested, Verified, Rejected',
 @level0type = N'Schema', @level0name = 'dbo',
 @level1type = N'Table',  @level1name = 'Products',
 @level2type = N'Column', @level2name = 'VerificationStatus';
+GO
+
+EXEC sp_addextendedproperty
+@name = N'Column_Description',
+@value = 'Reason when verification is rejected',
+@level0type = N'Schema', @level0name = 'dbo',
+@level1type = N'Table',  @level1name = 'Products',
+@level2type = N'Column', @level2name = 'RejectionReason';
+GO
+
+EXEC sp_addextendedproperty
+@name = N'Column_Description',
+@value = 'Type of image: vehicle, registration, etc.',
+@level0type = N'Schema', @level0name = 'dbo',
+@level1type = N'Table',  @level1name = 'ProductImages',
+@level2type = N'Column', @level2name = 'Name';
 GO
 
 EXEC sp_addextendedproperty
@@ -257,6 +329,14 @@ GO
 
 EXEC sp_addextendedproperty
 @name = N'Column_Description',
+@value = 'Deadline for buyer to pay remaining balance',
+@level0type = N'Schema', @level0name = 'dbo',
+@level1type = N'Table',  @level1name = 'Orders',
+@level2type = N'Column', @level2name = 'FinalPaymentDueDate';
+GO
+
+EXEC sp_addextendedproperty
+@name = N'Column_Description',
 @value = 'Cash amount for seller after commission',
 @level0type = N'Schema', @level0name = 'dbo',
 @level1type = N'Table',  @level1name = 'Orders',
@@ -281,7 +361,7 @@ GO
 
 EXEC sp_addextendedproperty
 @name = N'Column_Description',
-@value = 'EWallet, Banking, CreditCard',
+@value = 'VNPAY, Banking, CreditCard',
 @level0type = N'Schema', @level0name = 'dbo',
 @level1type = N'Table',  @level1name = 'Payments',
 @level2type = N'Column', @level2name = 'PaymentMethod';
@@ -289,10 +369,10 @@ GO
 
 EXEC sp_addextendedproperty
 @name = N'Column_Description',
-@value = 'Pending, Success, Failed',
+@value = 'Pending, Success, Failed, Refunded',
 @level0type = N'Schema', @level0name = 'dbo',
 @level1type = N'Table',  @level1name = 'Payments',
-@level2type = N'Column', @level2name = 'Status';
+@level2type = N'Column', @level2name = 'PaymentStatus';
 GO
 
 EXEC sp_addextendedproperty
@@ -301,22 +381,6 @@ EXEC sp_addextendedproperty
 @level0type = N'Schema', @level0name = 'dbo',
 @level1type = N'Table',  @level1name = 'FeeSettings',
 @level2type = N'Column', @level2name = 'FeeType';
-GO
-
-EXEC sp_addextendedproperty
-@name = N'Column_Description',
-@value = 'Person giving review',
-@level0type = N'Schema', @level0name = 'dbo',
-@level1type = N'Table',  @level1name = 'Reviews',
-@level2type = N'Column', @level2name = 'ReviewerId';
-GO
-
-EXEC sp_addextendedproperty
-@name = N'Column_Description',
-@value = 'Person being reviewed',
-@level0type = N'Schema', @level0name = 'dbo',
-@level1type = N'Table',  @level1name = 'Reviews',
-@level2type = N'Column', @level2name = 'RevieweeId';
 GO
 
 EXEC sp_addextendedproperty
@@ -399,21 +463,74 @@ GO
 ALTER TABLE [Notifications] ADD FOREIGN KEY ([UserId]) REFERENCES [Users] ([UserId])
 GO
 
--- Khi rollback (Down)  
-ALTER TABLE [Products] DROP COLUMN LicensePlate;
+ALTER TABLE [Chats] ADD FOREIGN KEY ([User1Id]) REFERENCES [Users] ([UserId])
+GO
 
-ALTER TABLE [Products]
-ADD LicensePlate NVARCHAR(20);
+ALTER TABLE [Chats] ADD FOREIGN KEY ([User2Id]) REFERENCES [Users] ([UserId])
+GO
 
-select * from Products
+ALTER TABLE [Messages] ADD FOREIGN KEY ([ChatId]) REFERENCES [Chats] ([ChatId])
+GO
 
--- Thêm field ResetPasswordToken
-ALTER TABLE Users 
-ADD ResetPasswordToken nvarchar(max) NULL;
+ALTER TABLE [Messages] ADD FOREIGN KEY ([SenderId]) REFERENCES [Users] ([UserId])
+GO
 
--- Thêm field ResetPasswordTokenExpiry  
-ALTER TABLE Users 
-ADD ResetPasswordTokenExpiry datetime2 NULL;
+ALTER TABLE Users
+ADD OAuthEmail VARCHAR(255) NULL,
+    OAuthId VARCHAR(255) NULL,
+    OAuthProvider VARCHAR(50) NULL;
 
--- Kiểm tra kết quả
-SELECT * FROM Users;
+ALTER TABLE [Products] 
+ADD [CycleCount] INT NULL;
+GO
+
+go
+INSERT INTO [UserRoles] ([RoleName]) VALUES
+('Admin'),
+('Member');
+go
+INSERT INTO [Users] ([RoleId], [Email], [PasswordHash], [FullName], [Phone], [AccountStatus])
+VALUES
+(1, 'ptdtan43@gmail.com', 'admin123', N'System Administrator', '0902835570', 'Active'),
+(2, 'tan@evtrade.com', 'member123', N'Phạm Từ Duy Tân', '0900000002', 'Active'),
+(2, 'vinh@evtrade.com', 'member123', N'Nguyễn Vinh', '0900000003', 'Active');
+go
+INSERT INTO [Products] 
+([SellerId], [ProductType], [Title], [Description], [Price], [Brand], [Model], [Condition], [VehicleType], [ManufactureYear], [Mileage], [Transmission], [SeatCount], [LicensePlate], [Status])
+VALUES
+(2, 'Vehicle', N'VinFast VF e34', N'Used electric car in good condition', 450000000, 'VinFast', 'VF e34', 'Good', 'Car', 2022, 15000, 'Automatic', 5, N'51H-123.45', 'Active'),
+
+SELECT * FROM Products
+
+go
+
+INSERT INTO Products (
+    SellerId, ProductType, Title, Description, Price, Brand, Model, Condition, 
+    VehicleType, ManufactureYear, Mileage, Transmission, SeatCount, LicensePlate,
+    BatteryHealth, BatteryType, Capacity, Voltage, BMS, CellType, CycleCount, Status
+)
+VALUES (
+    2, 'Vehicle', 
+    N'VinFast VF e34 2022 - Sedan điện cao cấp', 
+    N'Xe VinFast VF e34 đời 2022, đã qua sử dụng, pin còn 85%, chạy 300km, nội thất cao cấp.', 
+    450000000, 'VinFast', 'VF e34', 'Good', 
+    'Car', 2022, 15000, 'Automatic', 5, N'51H-123.45', 
+    85.5, 'CarBattery', 42.0, 400.0, 'VinFast BMS v2.0', 'LFP', 450, 'Active'
+);
+
+go
+
+INSERT INTO Products (
+    SellerId, ProductType, Title, Description, Price, Brand, Model, Condition,
+    BatteryHealth, BatteryType, Capacity, Voltage, BMS, CellType, CycleCount, Status
+)
+VALUES (
+    3, 'Battery',
+    N'Pin xe máy điện Yamaha E01 - Dung lượng cao',
+    N'Pin Yamaha E01 đã dùng 8 tháng, còn 92% dung lượng, kèm dây sạc và hộp bảo quản.',
+    8500000, 'Yamaha', 'E01 Battery Pack', 'Excellent',
+    92.0, 'MotorcycleBattery', 2.3, 48.0, 'Yamaha Smart BMS', 'NMC', 180, 'Active'
+);
+
+
+select * from Products where ProductType = 'Vehicle'

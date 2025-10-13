@@ -19,7 +19,7 @@ namespace BE.REPOs.Service
             _logger = logger;
         }
 
-        public async Task SendPasswordResetEmailAsync(string email, string resetToken)
+        public async Task SendPasswordResetEmailAsync(string email, string otp)
         {
             try
             {
@@ -28,13 +28,10 @@ namespace BE.REPOs.Service
                 message.To.Add(new MailboxAddress("", email));
                 message.Subject = "Reset Your Password - EV & Battery Trading Platform";
 
-                // Tạo reset link
-                var resetLink = $"{_configuration["Email:BaseUrl"]}/reset-password?token={resetToken}";
-
-                // Tạo email body
+                // Tạo email body với OTP
                 var bodyBuilder = new BodyBuilder
                 {
-                    HtmlBody = GetPasswordResetEmailTemplate(resetLink, resetToken)
+                    HtmlBody = GetPasswordResetEmailTemplate(otp)
                 };
 
                 message.Body = bodyBuilder.ToMessageBody();
@@ -95,7 +92,7 @@ namespace BE.REPOs.Service
             }
         }
 
-        private string GetPasswordResetEmailTemplate(string resetLink, string resetToken)
+        private string GetPasswordResetEmailTemplate(string otp)
         {
             return $@"
 <!DOCTYPE html>
@@ -188,26 +185,23 @@ namespace BE.REPOs.Service
         <div class='content'>
             <p>Hello,</p>
             <p>We received a request to reset your password for your EV & Battery Trading Platform account.</p>
-            <p>Click the button below to reset your password:</p>
+            <p>Please use the following OTP (One-Time Password) to reset your password:</p>
             
-            <div style='text-align: center;'>
-                <a href='{resetLink}' class='button'>Reset My Password</a>
+            <div style='text-align: center; margin: 30px 0;'>
+                <div style='background: #f8f9fa; border: 2px solid #007bff; border-radius: 10px; padding: 20px; display: inline-block; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #007bff;'>
+                    {otp}
+                </div>
             </div>
             
             <div class='warning'>
                 <strong>⚠️ Important:</strong>
                 <ul>
-                    <li>This link will expire in 1 hour</li>
+                    <li>This OTP will expire in 10 minutes</li>
                     <li>If you didn't request this, please ignore this email</li>
-                    <li>For security, never share this link with anyone</li>
+                    <li>For security, never share this OTP with anyone</li>
+                    <li>Enter this OTP in the password reset form</li>
                 </ul>
             </div>
-            
-            <p>If the button doesn't work, copy and paste this link into your browser:</p>
-            <div class='token-box'>{resetLink}</div>
-            
-            <p>Or use this token manually:</p>
-            <div class='token-box'>{resetToken}</div>
         </div>
         
         <div class='footer'>

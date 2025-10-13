@@ -6,14 +6,18 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
+using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
+    options.DefaultSignInScheme = "Cookies";
+})
+.AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -25,6 +29,25 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["JWT:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:SecretKey"] ?? "default-secret-key"))
     };
+})
+.AddCookie("Cookies", options =>
+{
+    options.Cookie.Name = "EVTrading.Auth";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Allow HTTP for development
+    options.Cookie.SameSite = SameSiteMode.Lax;
+})
+.AddGoogle(options =>
+{
+    options.ClientId = builder.Configuration["OAuth:Google:ClientId"] ?? "";
+    options.ClientSecret = builder.Configuration["OAuth:Google:ClientSecret"] ?? "";
+    options.CallbackPath = "/api/User/google-callback";
+})
+.AddFacebook(options =>
+{
+    options.AppId = builder.Configuration["OAuth:Facebook:AppId"] ?? "";
+    options.AppSecret = builder.Configuration["OAuth:Facebook:AppSecret"] ?? "";
+    options.CallbackPath = "/api/User/facebook-callback";
 });
 
 builder.Services.AddAuthorization(options =>
@@ -77,6 +100,7 @@ builder.Services.AddSwaggerGen();
 
 
 //DI - Dependency Injection
+builder.Services.AddDbContext<BE.BOs.Models.EvandBatteryTradingPlatformContext>();
 builder.Services.AddScoped<IUserRepo, UserRepo>();
 builder.Services.AddScoped<IFavoriteRepo, FavoriteRepo>();
 builder.Services.AddScoped<IProductRepo, ProductRepo>();
@@ -91,6 +115,11 @@ builder.Services.AddScoped<INotificationsRepo, NotificationsRepo>();
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IOTPService, OTPService>();
+builder.Services.AddScoped<BE.DAOs.ChatDAO>();
+builder.Services.AddScoped<BE.DAOs.MessageDAO>();
+builder.Services.AddScoped<IChatRepo, ChatRepo>();
+builder.Services.AddScoped<IMessageRepo, MessageRepo>();
 
 
 
