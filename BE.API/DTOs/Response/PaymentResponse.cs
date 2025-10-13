@@ -17,5 +17,21 @@
         public string? Status { get; set; }
 
         public DateTime? CreatedDate { get; set; }
+
+        public string? TransactionNo { get; set; }
+
+        public string? BankCode { get; set; }
+
+        public string? BankTranNo { get; set; }
+
+        public string? CardType { get; set; }
+
+        public DateTime? PayDate { get; set; }
+
+        public string? ResponseCode { get; set; }
+
+        public string? TransactionStatus { get; set; }
+
+        public string? SecureHash { get; set; }
     }
 }

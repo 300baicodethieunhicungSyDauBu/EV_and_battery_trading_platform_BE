@@ -24,6 +24,10 @@
 
         public int? Mileage { get; set; }
 
+        public string? Transmission { get; set; }
+
+        public int? SeatCount { get; set; }
+
         public decimal? BatteryHealth { get; set; }
 
         public string? BatteryType { get; set; }
@@ -31,6 +35,10 @@
         public decimal? Capacity { get; set; }
 
         public decimal? Voltage { get; set; }
+
+        public string? BMS { get; set; }
+
+        public string? CellType { get; set; }
 
         public int? CycleCount { get; set; }
 

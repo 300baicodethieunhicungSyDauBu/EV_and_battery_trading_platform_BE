@@ -9,6 +9,8 @@ public partial class ProductImage
 
     public int? ProductId { get; set; }
 
+    public string? Name { get; set; }
+
     public string ImageData { get; set; } = null!;
 
     public DateTime? CreatedDate { get; set; }

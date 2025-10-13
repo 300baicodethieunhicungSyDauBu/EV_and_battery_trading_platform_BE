@@ -22,6 +22,22 @@ public partial class Payment
 
     public DateTime? CreatedDate { get; set; }
 
+    public string? TransactionNo { get; set; }
+
+    public string? BankCode { get; set; }
+
+    public string? BankTranNo { get; set; }
+
+    public string? CardType { get; set; }
+
+    public DateTime? PayDate { get; set; }
+
+    public string? ResponseCode { get; set; }
+
+    public string? TransactionStatus { get; set; }
+
+    public string? SecureHash { get; set; }
+
     public virtual Order? Order { get; set; }
     public virtual Product? Product { get; set; }
 
