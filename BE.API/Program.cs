@@ -6,13 +6,16 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
+using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme = "Cookies";
 })
 .AddJwtBearer(options =>
 {
@@ -26,6 +29,13 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["JWT:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:SecretKey"] ?? "default-secret-key"))
     };
+})
+.AddCookie("Cookies", options =>
+{
+    options.Cookie.Name = "EVTrading.Auth";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Allow HTTP for development
+    options.Cookie.SameSite = SameSiteMode.Lax;
 })
 .AddGoogle(options =>
 {
