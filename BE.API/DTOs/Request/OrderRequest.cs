@@ -18,6 +18,8 @@
 
         public string? FinalPaymentStatus { get; set; }
 
+        public DateTime? FinalPaymentDueDate { get; set; }
+
         public decimal? PayoutAmount { get; set; }
 
         public string? PayoutStatus { get; set; }

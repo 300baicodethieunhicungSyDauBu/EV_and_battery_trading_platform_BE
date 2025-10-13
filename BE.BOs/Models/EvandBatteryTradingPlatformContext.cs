@@ -155,10 +155,35 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasDefaultValue("Pending");
+            entity.Property(e => e.TransactionNo)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.BankCode)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.BankTranNo)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.CardType)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.ResponseCode)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.TransactionStatus)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.SecureHash)
+                .HasMaxLength(512)
+                .IsUnicode(false);
 
             entity.HasOne(d => d.Order).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.OrderId)
                 .HasConstraintName("FK__Payments__OrderI__66603565");
+
+            entity.HasOne(d => d.Product).WithMany()
+                .HasForeignKey(d => d.ProductId)
+                .HasConstraintName("FK__Payments__Product__Product_Payment");
 
             entity.HasOne(d => d.Payer).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.PayerId)
@@ -208,6 +233,15 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
                 .IsUnicode(false)
                 .HasDefaultValue("NotRequested");
             entity.Property(e => e.Voltage).HasColumnType("decimal(8, 2)");
+            entity.Property(e => e.Transmission)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.BMS)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.CellType)
+                .HasMaxLength(50)
+                .IsUnicode(false);
 
             entity.HasOne(d => d.Seller).WithMany(p => p.Products)
                 .HasForeignKey(d => d.SellerId)
@@ -220,6 +254,9 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
 
             entity.Property(e => e.CreatedDate).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.ImageData).HasColumnType("text");
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
+                .IsUnicode(false);
 
             entity.HasOne(d => d.Product).WithMany(p => p.ProductImages)
                 .HasForeignKey(d => d.ProductId)
@@ -294,6 +331,15 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
                 .IsUnicode(false);
             entity.Property(e => e.Phone)
                 .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.OAuthProvider)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.OAuthId)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.OAuthEmail)
+                .HasMaxLength(255)
                 .IsUnicode(false);
 
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
