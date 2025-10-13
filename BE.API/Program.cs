@@ -100,6 +100,7 @@ builder.Services.AddSwaggerGen();
 
 
 //DI - Dependency Injection
+builder.Services.AddDbContext<BE.BOs.Models.EvandBatteryTradingPlatformContext>();
 builder.Services.AddScoped<IUserRepo, UserRepo>();
 builder.Services.AddScoped<IFavoriteRepo, FavoriteRepo>();
 builder.Services.AddScoped<IProductRepo, ProductRepo>();
@@ -115,6 +116,10 @@ builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IOTPService, OTPService>();
+builder.Services.AddScoped<BE.DAOs.ChatDAO>();
+builder.Services.AddScoped<BE.DAOs.MessageDAO>();
+builder.Services.AddScoped<IChatRepo, ChatRepo>();
+builder.Services.AddScoped<IMessageRepo, MessageRepo>();
 
 
 

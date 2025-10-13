@@ -38,6 +38,10 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
 
     public virtual DbSet<UserRole> UserRoles { get; set; }
 
+    public virtual DbSet<Chat> Chats { get; set; }
+
+    public virtual DbSet<Message> Messages { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer(GetConnectionString());
 
@@ -307,6 +311,38 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
             entity.Property(e => e.RoleName)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<Chat>(entity =>
+        {
+            entity.HasKey(e => e.ChatId).HasName("PK__Chats__A9FBE7C5B3C6F7F2");
+
+            entity.Property(e => e.CreatedDate).HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.User1).WithMany()
+                .HasForeignKey(d => d.User1Id)
+                .HasConstraintName("FK__Chats__User1Id__7C4F7684");
+
+            entity.HasOne(d => d.User2).WithMany()
+                .HasForeignKey(d => d.User2Id)
+                .HasConstraintName("FK__Chats__User2Id__7D439ABD");
+        });
+
+        modelBuilder.Entity<Message>(entity =>
+        {
+            entity.HasKey(e => e.MessageId).HasName("PK__Messages__C87C0C9C4E88ABD4");
+
+            entity.Property(e => e.Content).HasColumnType("text");
+            entity.Property(e => e.CreatedDate).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.IsRead).HasDefaultValue(false);
+
+            entity.HasOne(d => d.Chat).WithMany(p => p.Messages)
+                .HasForeignKey(d => d.ChatId)
+                .HasConstraintName("FK__Messages__ChatId__7E37BEF6");
+
+            entity.HasOne(d => d.Sender).WithMany()
+                .HasForeignKey(d => d.SenderId)
+                .HasConstraintName("FK__Messages__Sender__7F2BE32F");
         });
 
         OnModelCreatingPartial(modelBuilder);
