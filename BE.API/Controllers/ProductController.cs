@@ -264,6 +264,7 @@ namespace BE.API.Controllers
                 var response = products.Select(p => new
                 {
                     p.ProductId,
+                    p.ProductType,
                     p.Title,
                     p.Price,
                     p.Status,
