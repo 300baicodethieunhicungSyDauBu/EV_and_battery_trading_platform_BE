@@ -24,6 +24,8 @@ namespace BE.API.Controllers
             try
             {
                 var products = _productRepo.GetAllProducts();
+
+                // ✅ Map toàn bộ thông tin cần thiết sang ProductResponse
                 var response = products.Select(p => new ProductResponse
                 {
                     ProductId = p.ProductId,
@@ -38,16 +40,21 @@ namespace BE.API.Controllers
                     VehicleType = p.VehicleType,
                     ManufactureYear = p.ManufactureYear,
                     Mileage = p.Mileage,
+                    Transmission = p.Transmission,
+                    SeatCount = p.SeatCount,
                     BatteryHealth = p.BatteryHealth,
                     BatteryType = p.BatteryType,
                     Capacity = p.Capacity,
                     Voltage = p.Voltage,
+                    BMS = p.BMS,
+                    CellType = p.CellType,
                     CycleCount = p.CycleCount,
                     LicensePlate = p.LicensePlate,
                     Status = p.Status,
                     VerificationStatus = p.VerificationStatus,
+                    RejectionReason = p.RejectionReason,
                     CreatedDate = p.CreatedDate,
-                    ImageUrls = p.ProductImages.Select(img => img.ImageData).ToList() // ✅ map hình ảnh
+                    ImageUrls = p.ProductImages.Select(img => img.ImageData).ToList()
                 }).ToList();
 
                 return Ok(response);
@@ -81,10 +88,14 @@ namespace BE.API.Controllers
                     VehicleType = product.VehicleType,
                     ManufactureYear = product.ManufactureYear,
                     Mileage = product.Mileage,
+                    Transmission = product.Transmission,
+                    SeatCount = product.SeatCount,
                     BatteryHealth = product.BatteryHealth,
                     BatteryType = product.BatteryType,
                     Capacity = product.Capacity,
                     Voltage = product.Voltage,
+                    BMS = product.BMS,
+                    CellType = product.CellType,
                     CycleCount = product.CycleCount,
                     LicensePlate = product.LicensePlate,
                     Status = product.Status,
@@ -102,12 +113,12 @@ namespace BE.API.Controllers
         }
 
         [HttpPost]
-        //[Authorize(Policy = "MemberOnly")]
+        [Authorize(Policy = "MemberOnly")]
         public ActionResult CreateProduct([FromBody] ProductRequest request)
         {
             try
             {
-                // Validate license plate format for vehicles
+                // ✅ Validate license plate format for vehicles
                 if (!string.IsNullOrEmpty(request.LicensePlate) &&
                     (request.ProductType?.ToLower().Contains("vehicle") == true ||
                      request.ProductType?.ToLower().Contains("xe") == true))
@@ -119,6 +130,7 @@ namespace BE.API.Controllers
                     }
                 }
 
+                // ✅ Tạo mới product và gán đầy đủ field
                 var product = new Product
                 {
                     SellerId = int.TryParse(User.FindFirst("UserId")?.Value, out var userId) ? userId : 0,
@@ -132,12 +144,22 @@ namespace BE.API.Controllers
                     VehicleType = request.VehicleType,
                     ManufactureYear = request.ManufactureYear,
                     Mileage = request.Mileage,
+                    Transmission = request.Transmission,
+                    SeatCount = request.SeatCount,
                     BatteryHealth = request.BatteryHealth,
                     BatteryType = request.BatteryType,
                     Capacity = request.Capacity,
                     Voltage = request.Voltage,
+                    BMS = request.BMS,
+                    CellType = request.CellType,
                     CycleCount = request.CycleCount,
-                    LicensePlate = request.LicensePlate
+                    LicensePlate = request.LicensePlate,
+
+                    // ✅ Thêm các trạng thái mặc định
+                    Status = "Draft",
+                    VerificationStatus = "NotRequested",
+                    RejectionReason = null,
+                    CreatedDate = DateTime.UtcNow
                 };
 
                 var createdProduct = _productRepo.CreateProduct(product);
@@ -161,12 +183,12 @@ namespace BE.API.Controllers
         }
 
         [HttpPut("{id}")]
-        //[Authorize(Policy = "MemberOnly")]
+        [Authorize(Policy = "MemberOnly")]
         public ActionResult UpdateProduct(int id, [FromBody] ProductRequest request)
         {
             try
             {
-                // Validate license plate format for vehicles
+                // ✅ Validate license plate format for vehicles
                 if (!string.IsNullOrEmpty(request.LicensePlate) &&
                     (request.ProductType?.ToLower().Contains("vehicle") == true ||
                      request.ProductType?.ToLower().Contains("xe") == true))
@@ -181,16 +203,18 @@ namespace BE.API.Controllers
                 var existingProduct = _productRepo.GetProductById(id);
                 if (existingProduct == null)
                 {
-                    return NotFound();
+                    return NotFound("Product not found");
                 }
 
-                // Verify ownership
+                // ✅ Verify ownership
                 var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
                 if (existingProduct.SellerId != userId)
                 {
                     return Forbid();
                 }
 
+                // ✅ Cập nhật toàn bộ các trường tương tự CreateProduct
+                existingProduct.ProductType = request.ProductType;
                 existingProduct.Title = request.Title;
                 existingProduct.Description = request.Description;
                 existingProduct.Price = request.Price;
@@ -200,21 +224,31 @@ namespace BE.API.Controllers
                 existingProduct.VehicleType = request.VehicleType;
                 existingProduct.ManufactureYear = request.ManufactureYear;
                 existingProduct.Mileage = request.Mileage;
+                existingProduct.Transmission = request.Transmission;
+                existingProduct.SeatCount = request.SeatCount;
                 existingProduct.BatteryHealth = request.BatteryHealth;
                 existingProduct.BatteryType = request.BatteryType;
                 existingProduct.Capacity = request.Capacity;
                 existingProduct.Voltage = request.Voltage;
+                existingProduct.BMS = request.BMS;
+                existingProduct.CellType = request.CellType;
                 existingProduct.CycleCount = request.CycleCount;
                 existingProduct.LicensePlate = request.LicensePlate;
+
+                // ✅ Reset trạng thái về "Draft" để admin duyệt lại
+                existingProduct.Status = "Draft";
+                existingProduct.VerificationStatus = "NotRequested";
+                existingProduct.RejectionReason = null;
 
                 var updatedProduct = _productRepo.UpdateProduct(existingProduct);
 
                 var response = new
                 {
+                    updatedProduct.ProductId,
                     updatedProduct.Title,
-                    updatedProduct.Description,
                     updatedProduct.Price,
-                    updatedProduct.Status
+                    updatedProduct.Status,
+                    updatedProduct.VerificationStatus,
                 };
 
                 return Ok(response);
@@ -226,7 +260,7 @@ namespace BE.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        //[Authorize(Policy = "MemberOnly")]
+        [Authorize(Policy = "MemberOnly")]
         public ActionResult DeleteProduct(int id)
         {
             try
@@ -839,7 +873,7 @@ namespace BE.API.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
-        
+
         [HttpGet("batteries/{id}")]
         [AllowAnonymous]
         public ActionResult GetBatteryById(int id)
@@ -847,7 +881,8 @@ namespace BE.API.Controllers
             try
             {
                 var product = _productRepo.GetProductById(id);
-                if (product == null || !string.Equals(product.ProductType, "Battery", StringComparison.OrdinalIgnoreCase))
+                if (product == null ||
+                    !string.Equals(product.ProductType, "Battery", StringComparison.OrdinalIgnoreCase))
                 {
                     return NotFound("Battery not found.");
                 }
@@ -883,7 +918,7 @@ namespace BE.API.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
-        
+
         [HttpGet("vehicles/{id}")]
         [AllowAnonymous]
         public ActionResult GetVehicleById(int id)
@@ -891,7 +926,8 @@ namespace BE.API.Controllers
             try
             {
                 var product = _productRepo.GetProductById(id);
-                if (product == null || !string.Equals(product.ProductType, "Vehicle", StringComparison.OrdinalIgnoreCase))
+                if (product == null ||
+                    !string.Equals(product.ProductType, "Vehicle", StringComparison.OrdinalIgnoreCase))
                 {
                     return NotFound("Vehicle not found.");
                 }
