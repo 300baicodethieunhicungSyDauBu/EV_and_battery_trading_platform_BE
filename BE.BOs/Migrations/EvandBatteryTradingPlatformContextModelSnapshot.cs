@@ -22,6 +22,35 @@ namespace BE.BOs.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("BE.BOs.Models.Chat", b =>
+                {
+                    b.Property<int>("ChatId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ChatId"));
+
+                    b.Property<DateTime?>("CreatedDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<int?>("User1Id")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("User2Id")
+                        .HasColumnType("int");
+
+                    b.HasKey("ChatId")
+                        .HasName("PK__Chats__A9FBE7C5B3C6F7F2");
+
+                    b.HasIndex("User1Id");
+
+                    b.HasIndex("User2Id");
+
+                    b.ToTable("Chats");
+                });
+
             modelBuilder.Entity("BE.BOs.Models.Favorite", b =>
                 {
                     b.Property<int>("FavoriteId")
@@ -67,8 +96,7 @@ namespace BE.BOs.Migrations
                     b.Property<string>("FeeType")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<decimal>("FeeValue")
                         .HasColumnType("decimal(10, 4)");
@@ -84,6 +112,44 @@ namespace BE.BOs.Migrations
                     b.ToTable("FeeSettings");
                 });
 
+            modelBuilder.Entity("BE.BOs.Models.Message", b =>
+                {
+                    b.Property<int>("MessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MessageId"));
+
+                    b.Property<int?>("ChatId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CreatedDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<bool?>("IsRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int?>("SenderId")
+                        .HasColumnType("int");
+
+                    b.HasKey("MessageId")
+                        .HasName("PK__Messages__C87C0C9C4E88ABD4");
+
+                    b.HasIndex("ChatId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("Messages");
+                });
+
             modelBuilder.Entity("BE.BOs.Models.Notification", b =>
                 {
                     b.Property<int>("NotificationId")
@@ -93,7 +159,7 @@ namespace BE.BOs.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NotificationId"));
 
                     b.Property<string>("Content")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CreatedDate")
                         .ValueGeneratedOnAdd()
@@ -102,14 +168,12 @@ namespace BE.BOs.Migrations
 
                     b.Property<string>("NotificationType")
                         .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<int?>("UserId")
                         .HasColumnType("int");
@@ -147,15 +211,16 @@ namespace BE.BOs.Migrations
                     b.Property<string>("DepositStatus")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
+                        .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("Pending");
+
+                    b.Property<DateTime?>("FinalPaymentDueDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("FinalPaymentStatus")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
+                        .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("Pending");
 
                     b.Property<decimal?>("PayoutAmount")
@@ -164,8 +229,7 @@ namespace BE.BOs.Migrations
                     b.Property<string>("PayoutStatus")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
+                        .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("Pending");
 
                     b.Property<int?>("ProductId")
@@ -177,8 +241,7 @@ namespace BE.BOs.Migrations
                     b.Property<string>("Status")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
+                        .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("Pending");
 
                     b.Property<decimal>("TotalAmount")
@@ -207,6 +270,18 @@ namespace BE.BOs.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18, 2)");
 
+                    b.Property<string>("BankCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("BankTranNo")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("CardType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<DateTime?>("CreatedDate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -215,28 +290,44 @@ namespace BE.BOs.Migrations
                     b.Property<int?>("OrderId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("PayDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("PayerId")
                         .HasColumnType("int");
 
                     b.Property<string>("PaymentMethod")
                         .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("PaymentType")
                         .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<int?>("ProductId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ResponseCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("SecureHash")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
                     b.Property<string>("Status")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
+                        .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("Pending");
+
+                    b.Property<string>("TransactionNo")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TransactionStatus")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.HasKey("PaymentId")
                         .HasName("PK__Payments__9B556A3882005226");
@@ -258,27 +349,32 @@ namespace BE.BOs.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductId"));
 
+                    b.Property<string>("BMS")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<decimal?>("BatteryHealth")
                         .HasColumnType("decimal(5, 2)");
 
                     b.Property<string>("BatteryType")
                         .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Brand")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal?>("Capacity")
                         .HasColumnType("decimal(10, 2)");
 
+                    b.Property<string>("CellType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<string>("Condition")
                         .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime?>("CreatedDate")
                         .ValueGeneratedOnAdd()
@@ -289,12 +385,11 @@ namespace BE.BOs.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LicensePlate")
                         .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<int?>("ManufactureYear")
                         .HasColumnType("int");
@@ -304,8 +399,7 @@ namespace BE.BOs.Migrations
 
                     b.Property<string>("Model")
                         .HasMaxLength(150)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(150)");
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18, 2)");
@@ -313,8 +407,14 @@ namespace BE.BOs.Migrations
                     b.Property<string>("ProductType")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("SeatCount")
+                        .HasColumnType("int");
 
                     b.Property<int?>("SellerId")
                         .HasColumnType("int");
@@ -322,26 +422,26 @@ namespace BE.BOs.Migrations
                     b.Property<string>("Status")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
+                        .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("Draft");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Transmission")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("VehicleType")
                         .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("VerificationStatus")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
+                        .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("NotRequested");
 
                     b.Property<decimal?>("Voltage")
@@ -370,7 +470,11 @@ namespace BE.BOs.Migrations
 
                     b.Property<string>("ImageData")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int?>("ProductId")
                         .HasColumnType("int");
@@ -402,13 +506,11 @@ namespace BE.BOs.Migrations
                     b.Property<string>("ReportReason")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("ReportType")
                         .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int?>("ReporterId")
                         .HasColumnType("int");
@@ -416,8 +518,7 @@ namespace BE.BOs.Migrations
                     b.Property<string>("Status")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
+                        .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("Pending");
 
                     b.HasKey("ReportId")
@@ -439,7 +540,7 @@ namespace BE.BOs.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReviewId"));
 
                     b.Property<string>("Content")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CreatedDate")
                         .ValueGeneratedOnAdd()
@@ -481,12 +582,11 @@ namespace BE.BOs.Migrations
                     b.Property<string>("AccountStatus")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
+                        .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("Active");
 
                     b.Property<string>("Avatar")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CreatedDate")
                         .ValueGeneratedOnAdd()
@@ -496,33 +596,38 @@ namespace BE.BOs.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("FullName")
                         .HasMaxLength(200)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(200)");
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("OAuthEmail")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("OAuthId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("OAuthProvider")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("Phone")
                         .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ResetPasswordToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ResetPasswordTokenExpiry")
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("RoleId")
                         .HasColumnType("int");
@@ -530,10 +635,10 @@ namespace BE.BOs.Migrations
                     b.HasKey("UserId")
                         .HasName("PK__Users__1788CC4C582AC607");
 
-                    b.HasIndex("RoleId");
-
-                    b.HasIndex(new[] { "Email" }, "UQ__Users__A9D10534FC507E3D")
+                    b.HasIndex("Email")
                         .IsUnique();
+
+                    b.HasIndex("RoleId");
 
                     b.ToTable("Users");
                 });
@@ -554,16 +659,30 @@ namespace BE.BOs.Migrations
                     b.Property<string>("RoleName")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("RoleId")
                         .HasName("PK__UserRole__8AFACE1AD8916952");
 
-                    b.HasIndex(new[] { "RoleName" }, "UQ__UserRole__8A2B6160251FF8F9")
+                    b.HasIndex("RoleName")
                         .IsUnique();
 
                     b.ToTable("UserRoles");
+                });
+
+            modelBuilder.Entity("BE.BOs.Models.Chat", b =>
+                {
+                    b.HasOne("BE.BOs.Models.User", "User1")
+                        .WithMany()
+                        .HasForeignKey("User1Id");
+
+                    b.HasOne("BE.BOs.Models.User", "User2")
+                        .WithMany()
+                        .HasForeignKey("User2Id");
+
+                    b.Navigation("User1");
+
+                    b.Navigation("User2");
                 });
 
             modelBuilder.Entity("BE.BOs.Models.Favorite", b =>
@@ -583,6 +702,21 @@ namespace BE.BOs.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BE.BOs.Models.Message", b =>
+                {
+                    b.HasOne("BE.BOs.Models.Chat", "Chat")
+                        .WithMany("Messages")
+                        .HasForeignKey("ChatId");
+
+                    b.HasOne("BE.BOs.Models.User", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId");
+
+                    b.Navigation("Chat");
+
+                    b.Navigation("Sender");
+                });
+
             modelBuilder.Entity("BE.BOs.Models.Notification", b =>
                 {
                     b.HasOne("BE.BOs.Models.User", "User")
@@ -597,18 +731,15 @@ namespace BE.BOs.Migrations
                 {
                     b.HasOne("BE.BOs.Models.User", "Buyer")
                         .WithMany("OrderBuyers")
-                        .HasForeignKey("BuyerId")
-                        .HasConstraintName("FK__Orders__BuyerId__6383C8BA");
+                        .HasForeignKey("BuyerId");
 
                     b.HasOne("BE.BOs.Models.Product", "Product")
                         .WithMany("Orders")
-                        .HasForeignKey("ProductId")
-                        .HasConstraintName("FK__Orders__ProductI__656C112C");
+                        .HasForeignKey("ProductId");
 
                     b.HasOne("BE.BOs.Models.User", "Seller")
                         .WithMany("OrderSellers")
-                        .HasForeignKey("SellerId")
-                        .HasConstraintName("FK__Orders__SellerId__6477ECF3");
+                        .HasForeignKey("SellerId");
 
                     b.Navigation("Buyer");
 
@@ -621,13 +752,11 @@ namespace BE.BOs.Migrations
                 {
                     b.HasOne("BE.BOs.Models.Order", "Order")
                         .WithMany("Payments")
-                        .HasForeignKey("OrderId")
-                        .HasConstraintName("FK__Payments__OrderI__66603565");
+                        .HasForeignKey("OrderId");
 
                     b.HasOne("BE.BOs.Models.User", "Payer")
                         .WithMany("Payments")
-                        .HasForeignKey("PayerId")
-                        .HasConstraintName("FK__Payments__PayerI__6754599E");
+                        .HasForeignKey("PayerId");
 
                     b.HasOne("BE.BOs.Models.Product", "Product")
                         .WithMany()
@@ -644,8 +773,7 @@ namespace BE.BOs.Migrations
                 {
                     b.HasOne("BE.BOs.Models.User", "Seller")
                         .WithMany("Products")
-                        .HasForeignKey("SellerId")
-                        .HasConstraintName("FK__Products__Seller__619B8048");
+                        .HasForeignKey("SellerId");
 
                     b.Navigation("Seller");
                 });
@@ -654,8 +782,7 @@ namespace BE.BOs.Migrations
                 {
                     b.HasOne("BE.BOs.Models.Product", "Product")
                         .WithMany("ProductImages")
-                        .HasForeignKey("ProductId")
-                        .HasConstraintName("FK__ProductIm__Produ__628FA481");
+                        .HasForeignKey("ProductId");
 
                     b.Navigation("Product");
                 });
@@ -664,13 +791,11 @@ namespace BE.BOs.Migrations
                 {
                     b.HasOne("BE.BOs.Models.Product", "Product")
                         .WithMany("ReportedListings")
-                        .HasForeignKey("ProductId")
-                        .HasConstraintName("FK__ReportedL__Produ__6D0D32F4");
+                        .HasForeignKey("ProductId");
 
                     b.HasOne("BE.BOs.Models.User", "Reporter")
                         .WithMany("ReportedListings")
-                        .HasForeignKey("ReporterId")
-                        .HasConstraintName("FK__ReportedL__Repor__6E01572D");
+                        .HasForeignKey("ReporterId");
 
                     b.Navigation("Product");
 
@@ -681,18 +806,15 @@ namespace BE.BOs.Migrations
                 {
                     b.HasOne("BE.BOs.Models.Order", "Order")
                         .WithMany("Reviews")
-                        .HasForeignKey("OrderId")
-                        .HasConstraintName("FK__Reviews__OrderId__6A30C649");
+                        .HasForeignKey("OrderId");
 
                     b.HasOne("BE.BOs.Models.User", "Reviewee")
                         .WithMany("ReviewReviewees")
-                        .HasForeignKey("RevieweeId")
-                        .HasConstraintName("FK__Reviews__Reviewe__6C190EBB");
+                        .HasForeignKey("RevieweeId");
 
                     b.HasOne("BE.BOs.Models.User", "Reviewer")
                         .WithMany("ReviewReviewers")
-                        .HasForeignKey("ReviewerId")
-                        .HasConstraintName("FK__Reviews__Reviewe__6B24EA82");
+                        .HasForeignKey("ReviewerId");
 
                     b.Navigation("Order");
 
@@ -705,10 +827,14 @@ namespace BE.BOs.Migrations
                 {
                     b.HasOne("BE.BOs.Models.UserRole", "Role")
                         .WithMany("Users")
-                        .HasForeignKey("RoleId")
-                        .HasConstraintName("FK__Users__RoleId__60A75C0F");
+                        .HasForeignKey("RoleId");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("BE.BOs.Models.Chat", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("BE.BOs.Models.Order", b =>
