@@ -111,9 +111,20 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IOTPService, OTPService>();
 
 // ===== AI HttpClient (giữ nguyên cách bạn set) =====
-var apiBase = cfg["OpenAI:ApiBase"] ?? Environment.GetEnvironmentVariable("OPENAI_API_BASE") ?? "https://openrouter.ai/api";
-var apiKey = cfg["OpenAI:ApiKey"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty;
-var model = cfg["OpenAI:Model"] ?? Environment.GetEnvironmentVariable("OPENAI_MODEL") ?? "gpt-oss-20b";
+var apiBase = cfg["OpenAI:ApiBase"]
+             ?? Environment.GetEnvironmentVariable("OPENAI_API_BASE")
+             ?? Environment.GetEnvironmentVariable("OPENROUTER_API_BASE")
+             ?? "https://openrouter.ai/api";
+var apiKey = cfg["OpenAI:ApiKey"]
+            ?? cfg["OpenRouter:ApiKey"]
+            ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+            ?? Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")
+            ?? string.Empty;
+var model = cfg["OpenAI:Model"]
+            ?? cfg["OpenRouter:Model"]
+            ?? Environment.GetEnvironmentVariable("OPENAI_MODEL")
+            ?? Environment.GetEnvironmentVariable("OPENROUTER_MODEL")
+            ?? "gpt-oss-20b";
 
 builder.Services.AddHttpClient("OpenRouter", client =>
 {
