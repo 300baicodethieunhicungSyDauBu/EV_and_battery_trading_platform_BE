@@ -108,13 +108,14 @@ namespace BE.API.Controllers
             try
             {
                 // Validate license plate format for vehicles
-                if (!string.IsNullOrEmpty(request.LicensePlate) && 
-                    (request.ProductType?.ToLower().Contains("vehicle") == true || 
+                if (!string.IsNullOrEmpty(request.LicensePlate) &&
+                    (request.ProductType?.ToLower().Contains("vehicle") == true ||
                      request.ProductType?.ToLower().Contains("xe") == true))
                 {
                     if (!IsValidLicensePlate(request.LicensePlate))
                     {
-                        return BadRequest("Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
+                        return BadRequest(
+                            "Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
                     }
                 }
 
@@ -166,13 +167,14 @@ namespace BE.API.Controllers
             try
             {
                 // Validate license plate format for vehicles
-                if (!string.IsNullOrEmpty(request.LicensePlate) && 
-                    (request.ProductType?.ToLower().Contains("vehicle") == true || 
+                if (!string.IsNullOrEmpty(request.LicensePlate) &&
+                    (request.ProductType?.ToLower().Contains("vehicle") == true ||
                      request.ProductType?.ToLower().Contains("xe") == true))
                 {
                     if (!IsValidLicensePlate(request.LicensePlate))
                     {
-                        return BadRequest("Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
+                        return BadRequest(
+                            "Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
                     }
                 }
 
@@ -592,7 +594,8 @@ namespace BE.API.Controllers
                 {
                     if (!IsValidLicensePlate(request.LicensePlate))
                     {
-                        return BadRequest("Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
+                        return BadRequest(
+                            "Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
                     }
                 }
 
@@ -715,6 +718,125 @@ namespace BE.API.Controllers
             // Examples: 30A-12345, 51G-12345, 29B-1234, 43C-12345
             var pattern = @"^[0-9]{2}[A-Z]{1,2}-[0-9]{4,5}$";
             return System.Text.RegularExpressions.Regex.IsMatch(licensePlate.ToUpper(), pattern);
+        }
+
+
+        [HttpPut("vehicles/{id}")]
+        [Authorize(Policy = "MemberOnly")]
+        public ActionResult UpdateVehicle(int id, [FromBody] VehicleRequest request)
+        {
+            try
+            {
+                var existingProduct = _productRepo.GetProductById(id);
+                if (existingProduct == null)
+                    return NotFound("Vehicle not found.");
+
+                // Xác nhận đây là sản phẩm loại "Vehicle"
+                if (!string.Equals(existingProduct.ProductType, "Vehicle", StringComparison.OrdinalIgnoreCase))
+                    return BadRequest("Product is not a vehicle.");
+
+                // Kiểm tra quyền sở hữu (chủ sản phẩm)
+                var userId = int.TryParse(User.FindFirst("UserId")?.Value, out var uid) ? uid : 0;
+                if (existingProduct.SellerId != userId && userId != 0)
+                    return Forbid();
+
+                // Kiểm tra định dạng biển số xe
+                if (!string.IsNullOrEmpty(request.LicensePlate))
+                {
+                    if (!IsValidLicensePlate(request.LicensePlate))
+                        return BadRequest("Invalid license plate format (e.g., 30A-12345, 51G-12345)");
+                }
+
+                // Cập nhật dữ liệu
+                existingProduct.Title = request.Title;
+                existingProduct.Description = request.Description;
+                existingProduct.Price = request.Price;
+                existingProduct.Brand = request.Brand;
+                existingProduct.Model = request.Model;
+                existingProduct.Condition = request.Condition;
+                existingProduct.VehicleType = request.VehicleType;
+                existingProduct.ManufactureYear = request.ManufactureYear;
+                existingProduct.Mileage = request.Mileage;
+                existingProduct.Transmission = request.Transmission;
+                existingProduct.SeatCount = request.SeatCount;
+                existingProduct.LicensePlate = request.LicensePlate;
+
+                existingProduct.Status = "Draft";
+                existingProduct.VerificationStatus = "NotRequested";
+
+                var updatedVehicle = _productRepo.UpdateProduct(existingProduct);
+
+                var response = new
+                {
+                    updatedVehicle.ProductId,
+                    updatedVehicle.Title,
+                    updatedVehicle.Price,
+                    updatedVehicle.Status,
+                    updatedVehicle.VerificationStatus,
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpPut("batteries/{id}")]
+        [Authorize(Policy = "MemberOnly")]
+        public ActionResult UpdateBattery(int id, [FromBody] BatteryRequest request)
+        {
+            try
+            {
+                var existingProduct = _productRepo.GetProductById(id);
+                if (existingProduct == null)
+                    return NotFound("Battery not found.");
+
+                // Xác nhận đây là sản phẩm loại "Battery"
+                if (!string.Equals(existingProduct.ProductType, "Battery", StringComparison.OrdinalIgnoreCase))
+                    return BadRequest("Product is not a battery.");
+
+                // Kiểm tra quyền sở hữu
+                var userId = int.TryParse(User.FindFirst("UserId")?.Value, out var uid) ? uid : 0;
+                if (existingProduct.SellerId != userId && userId != 0)
+                    return Forbid();
+
+                // Cập nhật dữ liệu
+                existingProduct.Title = request.Title;
+                existingProduct.Description = request.Description;
+                existingProduct.Price = request.Price;
+                existingProduct.Brand = request.Brand;
+                existingProduct.Model = request.Model;
+                existingProduct.Condition = request.Condition;
+                existingProduct.BatteryType = request.BatteryType;
+                existingProduct.BatteryHealth = request.BatteryHealth;
+                existingProduct.Capacity = request.Capacity;
+                existingProduct.Voltage = request.Voltage;
+                existingProduct.BMS = request.BMS;
+                existingProduct.CellType = request.CellType;
+                existingProduct.CycleCount = request.CycleCount;
+
+                existingProduct.Status = "Draft";
+                existingProduct.VerificationStatus = "NotRequested";
+
+                var updatedBattery = _productRepo.UpdateProduct(existingProduct);
+
+                var response = new
+                {
+                    updatedBattery.ProductId,
+                    updatedBattery.Title,
+                    updatedBattery.Price,
+                    updatedBattery.Status,
+                    updatedBattery.VerificationStatus,
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
         }
     }
 }

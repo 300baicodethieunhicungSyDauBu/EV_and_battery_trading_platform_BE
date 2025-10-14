@@ -110,7 +110,12 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Encoder =
+            System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+    });
 
 // =================== DbContext ===================
 builder.Services.AddDbContext<BE.BOs.Models.EvandBatteryTradingPlatformContext>();
