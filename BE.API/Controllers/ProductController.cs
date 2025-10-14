@@ -838,5 +838,92 @@ namespace BE.API.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
+        
+        [HttpGet("batteries/{id}")]
+        [AllowAnonymous]
+        public ActionResult GetBatteryById(int id)
+        {
+            try
+            {
+                var product = _productRepo.GetProductById(id);
+                if (product == null || !string.Equals(product.ProductType, "Battery", StringComparison.OrdinalIgnoreCase))
+                {
+                    return NotFound("Battery not found.");
+                }
+
+                var response = new BatteryResponse
+                {
+                    ProductId = product.ProductId,
+                    SellerId = product.SellerId,
+                    ProductType = product.ProductType,
+                    Title = product.Title,
+                    Description = product.Description,
+                    Price = product.Price,
+                    Brand = product.Brand,
+                    Model = product.Model,
+                    Condition = product.Condition,
+                    BatteryType = product.BatteryType,
+                    BatteryHealth = product.BatteryHealth,
+                    Capacity = product.Capacity,
+                    Voltage = product.Voltage,
+                    BMS = product.BMS,
+                    CellType = product.CellType,
+                    CycleCount = product.CycleCount,
+                    Status = product.Status,
+                    VerificationStatus = product.VerificationStatus,
+                    CreatedDate = product.CreatedDate,
+                    ImageUrls = product.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+        
+        [HttpGet("vehicles/{id}")]
+        [AllowAnonymous]
+        public ActionResult GetVehicleById(int id)
+        {
+            try
+            {
+                var product = _productRepo.GetProductById(id);
+                if (product == null || !string.Equals(product.ProductType, "Vehicle", StringComparison.OrdinalIgnoreCase))
+                {
+                    return NotFound("Vehicle not found.");
+                }
+
+                var response = new VehicleResponse
+                {
+                    ProductId = product.ProductId,
+                    SellerId = product.SellerId,
+                    ProductType = product.ProductType,
+                    Title = product.Title,
+                    Description = product.Description,
+                    Price = product.Price,
+                    Brand = product.Brand,
+                    Model = product.Model,
+                    Condition = product.Condition,
+                    VehicleType = product.VehicleType,
+                    ManufactureYear = product.ManufactureYear,
+                    Mileage = product.Mileage,
+                    Transmission = product.Transmission,
+                    SeatCount = product.SeatCount,
+                    LicensePlate = product.LicensePlate,
+                    Status = product.Status,
+                    VerificationStatus = product.VerificationStatus,
+                    CreatedDate = product.CreatedDate,
+                    ImageUrls = product.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
     }
 }
