@@ -75,5 +75,10 @@ namespace BE.REPOs.Implementation
         {
             return ProductDAO.Instance.GetProductsByType(productType);
         }
+        
+        public List<Product> GetReSubmittedProducts()
+        {
+            return ProductDAO.Instance.GetReSubmittedProducts();
+        }
     }
 }
