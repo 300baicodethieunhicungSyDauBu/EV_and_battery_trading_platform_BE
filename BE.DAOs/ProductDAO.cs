@@ -148,6 +148,15 @@ namespace BE.DAOs
                 .Where(p => p.ProductType != null && p.ProductType.ToLower().Contains(productType.ToLower()) && p.Status == "Active")
                 .ToList();
         }
+        
+        public List<Product> GetReSubmittedProducts()
+        {
+            return dbcontext.Products
+                .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
+                .Where(p => p.Status == "Re-submit")
+                .ToList();
+        }
     }
 }
 

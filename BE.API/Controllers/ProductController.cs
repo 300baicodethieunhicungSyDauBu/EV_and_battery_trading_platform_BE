@@ -100,6 +100,7 @@ namespace BE.API.Controllers
                     LicensePlate = product.LicensePlate,
                     Status = product.Status,
                     VerificationStatus = product.VerificationStatus,
+                    RejectionReason = product.RejectionReason,
                     CreatedDate = product.CreatedDate,
                     ImageUrls = product.ProductImages.Select(img => img.ImageData).ToList() // ✅
                 };
@@ -236,7 +237,7 @@ namespace BE.API.Controllers
                 existingProduct.LicensePlate = request.LicensePlate;
 
                 // ✅ Reset trạng thái về "Draft" để admin duyệt lại
-                existingProduct.Status = "Draft";
+                existingProduct.Status = "Re-submit";
                 existingProduct.VerificationStatus = "NotRequested";
                 existingProduct.RejectionReason = null;
 
@@ -954,6 +955,53 @@ namespace BE.API.Controllers
                     CreatedDate = product.CreatedDate,
                     ImageUrls = product.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
                 };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+        
+        [HttpGet("resubmit")]
+        [Authorize(Policy = "AdminOnly")] // hoặc bỏ nếu bạn chưa có phân quyền
+        public ActionResult GetReSubmittedProducts()
+        {
+            try
+            {
+                var products = _productRepo.GetReSubmittedProducts();
+
+                var response = products.Select(p => new ProductResponse
+                {
+                    ProductId = p.ProductId,
+                    SellerId = p.SellerId,
+                    ProductType = p.ProductType,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Price = p.Price,
+                    Brand = p.Brand,
+                    Model = p.Model,
+                    Condition = p.Condition,
+                    VehicleType = p.VehicleType,
+                    ManufactureYear = p.ManufactureYear,
+                    Mileage = p.Mileage,
+                    Transmission = p.Transmission,
+                    SeatCount = p.SeatCount,
+                    BatteryHealth = p.BatteryHealth,
+                    BatteryType = p.BatteryType,
+                    Capacity = p.Capacity,
+                    Voltage = p.Voltage,
+                    BMS = p.BMS,
+                    CellType = p.CellType,
+                    CycleCount = p.CycleCount,
+                    LicensePlate = p.LicensePlate,
+                    Status = p.Status,
+                    VerificationStatus = p.VerificationStatus,
+                    RejectionReason = p.RejectionReason,
+                    CreatedDate = p.CreatedDate,
+                    ImageUrls = p.ProductImages.Select(img => img.ImageData).ToList()
+                }).ToList();
 
                 return Ok(response);
             }
