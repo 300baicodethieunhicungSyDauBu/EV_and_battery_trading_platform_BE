@@ -1,23 +1,17 @@
-﻿{
-  "$schema": "http://json.schemastore.org/launchsettings.json",
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:20158",
-      "sslPort": 0
-    }
-  },
+{
   "profiles": {
     "http": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "swagger",
-      "applicationUrl": "http://localhost:5044",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "OPENAI_API_BASE": "https://openrouter.ai/api",
+        "OPENAI_API_KEY": "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",
+        "OPENAI_MODEL": "openai/gpt-oss-20b:free"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5044"
     },
     "IIS Express": {
       "commandName": "IISExpress",
@@ -26,6 +20,15 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    }
+  },
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:20158",
+      "sslPort": 0
     }
   }
 }

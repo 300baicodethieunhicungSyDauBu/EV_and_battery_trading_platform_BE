@@ -1,21 +1,25 @@
-using BE.REPOs.Implementation;
+﻿using BE.REPOs.Implementation;
 using BE.REPOs.Interface;
 using BE.REPOs.Service;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;                  // CookieSecurePolicy, SameSiteMode
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
-using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
+var cfg = builder.Configuration;
 
-
-builder.Services.AddAuthentication(options =>
+// =================== Authentication ===================
+var auth = builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    //options.DefaultSignInScheme = "External";
+    // options.DefaultSignInScheme = "External"; // chỉ cần nếu bạn dùng cookie ngoài
 })
 .AddJwtBearer(options =>
 {
@@ -25,55 +29,68 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["JWT:Issuer"],
-        ValidAudience = builder.Configuration["JWT:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:SecretKey"] ?? "default-secret-key"))
+        ValidIssuer = cfg["JWT:Issuer"],
+        ValidAudience = cfg["JWT:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(cfg["JWT:SecretKey"] ?? "default-secret-key"))
     };
 })
+// Cookie scheme dùng cho OAuth external
 .AddCookie("External", options =>
 {
     options.Cookie.Name = "EVTrading.External";
     options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // đổi thành Always khi deploy HTTPS
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.IsEssential = true;
     options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
-})
-.AddGoogle(options =>
-{
-    options.ClientId = builder.Configuration["OAuth:Google:ClientId"] ?? "";
-    options.ClientSecret = builder.Configuration["OAuth:Google:ClientSecret"] ?? "";
-    options.CallbackPath = "/api/User/google-callback";
-    options.SignInScheme = "External";
-    options.SaveTokens = false;
-})
-.AddFacebook(options =>
-{
-    options.AppId = builder.Configuration["OAuth:Facebook:AppId"] ?? "";
-    options.AppSecret = builder.Configuration["OAuth:Facebook:AppSecret"] ?? "";
-    options.CallbackPath = "/api/User/facebook-callback";
-    options.SignInScheme = "External";
-    options.SaveTokens = false;
 });
 
+// Đăng ký Google/Facebook **chỉ khi** có client id/secret
+var googleId = cfg["OAuth:Google:ClientId"];
+var googleSecret = cfg["OAuth:Google:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(googleId) && !string.IsNullOrWhiteSpace(googleSecret))
+{
+    auth.AddGoogle(options =>
+    {
+        options.ClientId = googleId!;
+        options.ClientSecret = googleSecret!;
+        options.CallbackPath = "/api/User/google-callback";
+        options.SignInScheme = "External";
+        options.SaveTokens = false;
+    });
+}
+
+var fbId = cfg["OAuth:Facebook:AppId"];
+var fbSecret = cfg["OAuth:Facebook:AppSecret"];
+if (!string.IsNullOrWhiteSpace(fbId) && !string.IsNullOrWhiteSpace(fbSecret))
+{
+    auth.AddFacebook(options =>
+    {
+        options.AppId = fbId!;
+        options.AppSecret = fbSecret!;
+        options.CallbackPath = "/api/User/facebook-callback";
+        options.SignInScheme = "External";
+        options.SaveTokens = false;
+    });
+}
+
+// =================== Authorization ===================
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminOnly", policy =>
-        policy.RequireClaim(ClaimTypes.Role, "1")); 
-
-    options.AddPolicy("MemberOnly", policy =>
-        policy.RequireClaim(ClaimTypes.Role, "2"));
+    options.AddPolicy("AdminOnly", p => p.RequireClaim(ClaimTypes.Role, "1"));
+    options.AddPolicy("MemberOnly", p => p.RequireClaim(ClaimTypes.Role, "2"));
 });
 
+// =================== Swagger ===================
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "EV And Battery Trading Platform", Version = "v1" });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = @"JWT Authorization header using the Bearer scheme. 
-                        Enter 'Bearer' [space] and then your token in the text input below.
-                        Example: 'Bearer 12345abcdef'",
+        Description = "JWT Bearer. Ví dụ: 'Bearer {token}'",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
@@ -81,32 +98,24 @@ builder.Services.AddSwaggerGen(c =>
         BearerFormat = "JWT"
     });
 
-    // Require JWT Bearer Token for all endpoints
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
         {
+            new OpenApiSecurityScheme
             {
-                new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
-                    }
-                },
-                new string[] {}
-            }
-        });
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
-
-
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
-
-//DI - Dependency Injection
+// =================== DbContext ===================
 builder.Services.AddDbContext<BE.BOs.Models.EvandBatteryTradingPlatformContext>();
+
+// =================== DI (Repos/Services) ===================
 builder.Services.AddScoped<IUserRepo, UserRepo>();
 builder.Services.AddScoped<IFavoriteRepo, FavoriteRepo>();
 builder.Services.AddScoped<IProductRepo, ProductRepo>();
@@ -127,22 +136,47 @@ builder.Services.AddScoped<BE.DAOs.MessageDAO>();
 builder.Services.AddScoped<IChatRepo, ChatRepo>();
 builder.Services.AddScoped<IMessageRepo, MessageRepo>();
 
+// =================== AI HttpClient ===================
+var apiBase = cfg["OpenAI:ApiBase"]
+             ?? Environment.GetEnvironmentVariable("OPENAI_API_BASE")
+             ?? Environment.GetEnvironmentVariable("OPENROUTER_API_BASE")
+             ?? "https://openrouter.ai/api";
+var apiKey = cfg["OpenAI:ApiKey"]
+            ?? cfg["OpenRouter:ApiKey"]
+            ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+            ?? Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")
+            ?? string.Empty;
+var model = cfg["OpenAI:Model"]
+            ?? cfg["OpenRouter:Model"]
+            ?? Environment.GetEnvironmentVariable("OPENAI_MODEL")
+            ?? Environment.GetEnvironmentVariable("OPENROUTER_MODEL")
+            ?? "gpt-oss-20b";
 
-
-builder.Services.AddCors(options =>
+builder.Services.AddHttpClient("OpenRouter", client =>
 {
-    options.AddPolicy("AllowAll",
-        policy => policy.AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader());
+    client.BaseAddress = new Uri($"{apiBase.TrimEnd('/')}/v1/");
+    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+    if (!string.IsNullOrEmpty(apiKey))
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("HTTP-Referer", "http://localhost:5044");
+    client.DefaultRequestHeaders.TryAddWithoutValidation("X-Title", "EV & Battery Trading Platform");
 });
 
+builder.Services.AddSingleton(new OpenAIOptions
+{
+    Model = model,
+    DefaultMaxTokens = int.TryParse(cfg["OpenAI:DefaultMaxTokens"], out var mx) ? mx : 1024,
+    DefaultTemperature = double.TryParse(cfg["OpenAI:DefaultTemperature"], out var tp) ? tp : 0.3
+});
+builder.Services.AddScoped<IAIChatService, OpenRouterChatService>();
+
+// =================== CORS ===================
+builder.Services.AddCors(o => o.AddPolicy("AllowAll",
+    p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
 var app = builder.Build();
 
-
-
-// Configure the HTTP request pipeline.
+// =================== Pipeline ===================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -150,13 +184,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseCors("AllowAll");
-
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapControllers();
-
 app.Run();
