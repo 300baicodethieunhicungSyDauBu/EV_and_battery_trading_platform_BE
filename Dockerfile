@@ -1,28 +1,29 @@
-# ====== STAGE 1: Build the application ======
+# ===============================
+# Stage 1: Build
+# ===============================
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy everything
+# Copy all files
 COPY . .
 
 # Restore dependencies
-RUN dotnet restore "EV_and_battery_trading_platform_BE.sln"
+RUN dotnet restore "./EV_and_battery_trading_platform_BE.sln"
 
-# Build project in Release mode
-RUN dotnet publish "BE.API/BE.API.csproj" -c Release -o /app/publish
+# Build in Release mode
+RUN dotnet publish "BE.API/BE.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# ====== STAGE 2: Run the application ======
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+
+# ===============================
+# Stage 2: Runtime
+# ===============================
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
-# Copy build output from previous stage
 COPY --from=build /app/publish .
 
-# Expose port (Render sẽ map port này)
+# Expose default port
 EXPOSE 8080
-
-# Environment variable cho ASP.NET Core
 ENV ASPNETCORE_URLS=http://+:8080
 
-# Start the API
 ENTRYPOINT ["dotnet", "BE.API.dll"]
