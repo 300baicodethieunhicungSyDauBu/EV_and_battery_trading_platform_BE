@@ -1010,5 +1010,125 @@ namespace BE.API.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
+
+        [HttpPut("resubmit/{id}")]
+        [Authorize(Policy = "MemberOnly")]
+        public ActionResult ResubmitProduct(int id)
+        {
+            try
+            {
+                var product = _productRepo.GetProductById(id);
+                if (product == null)
+                {
+                    return NotFound("Product not found.");
+                }
+
+                // Verify ownership
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                if (product.SellerId != userId)
+                {
+                    return Forbid("You can only resubmit your own products.");
+                }
+
+                // Check if product is in rejected status
+                if (product.Status != "Rejected")
+                {
+                    return BadRequest("Only rejected products can be resubmitted.");
+                }
+
+                var resubmittedProduct = _productRepo.ResubmitProduct(id);
+                if (resubmittedProduct == null)
+                {
+                    return StatusCode(500, "Failed to resubmit product.");
+                }
+
+                return Ok(new
+                {
+                    resubmittedProduct.ProductId,
+                    resubmittedProduct.Title,
+                    resubmittedProduct.Status,
+                    resubmittedProduct.VerificationStatus,
+                    Message = "Product resubmitted successfully. Waiting for admin review."
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("seller/{sellerId}/rejected")]
+        [Authorize(Policy = "MemberOnly")]
+        public ActionResult GetRejectedProductsBySeller(int sellerId)
+        {
+            try
+            {
+                // Verify that user can only access their own rejected products
+                var userIdClaim = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized("Invalid user token.");
+                }
+                
+                if (userId != sellerId)
+                {
+                    return Forbid($"Access denied. UserId from token: {userId}, SellerId from URL: {sellerId}");
+                }
+
+                // Debug: Get all products by seller first to check
+                var allProducts = _productRepo.GetProductsBySellerId(sellerId);
+                
+                var products = _productRepo.GetRejectedProductsBySellerId(sellerId);
+
+                // Debug response with more information
+                var debugResponse = new
+                {
+                    DebugInfo = new
+                    {
+                        RequestedSellerId = sellerId,
+                        UserIdFromToken = userId,
+                        AllProductsCount = allProducts.Count,
+                        RejectedProductsCount = products.Count,
+                        AllProductsStatuses = allProducts.Select(p => new { p.ProductId, p.Status, p.VerificationStatus, p.RejectionReason }).ToList()
+                    },
+                    RejectedProducts = products.Select(p => new ProductResponse
+                    {
+                        ProductId = p.ProductId,
+                        SellerId = p.SellerId,
+                        ProductType = p.ProductType,
+                        Title = p.Title,
+                        Description = p.Description,
+                        Price = p.Price,
+                        Brand = p.Brand,
+                        Model = p.Model,
+                        Condition = p.Condition,
+                        VehicleType = p.VehicleType,
+                        ManufactureYear = p.ManufactureYear,
+                        Mileage = p.Mileage,
+                        Transmission = p.Transmission,
+                        SeatCount = p.SeatCount,
+                        BatteryHealth = p.BatteryHealth,
+                        BatteryType = p.BatteryType,
+                        Capacity = p.Capacity,
+                        Voltage = p.Voltage,
+                        BMS = p.BMS,
+                        CellType = p.CellType,
+                        CycleCount = p.CycleCount,
+                        LicensePlate = p.LicensePlate,
+                        Status = p.Status,
+                        VerificationStatus = p.VerificationStatus,
+                        RejectionReason = p.RejectionReason,
+                        CreatedDate = p.CreatedDate,
+                        ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+                    }).ToList()
+                };
+
+                return Ok(debugResponse);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
     }
 }
