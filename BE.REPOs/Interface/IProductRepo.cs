@@ -23,5 +23,7 @@ namespace BE.REPOs.Interface
         Product GetProductByExactLicensePlate(string licensePlate);
         List<Product> GetProductsByType(string productType);
         List<Product> GetReSubmittedProducts();
+        Product ResubmitProduct(int id);
+        List<Product> GetRejectedProductsBySellerId(int sellerId);
     }
 }

@@ -80,5 +80,15 @@ namespace BE.REPOs.Implementation
         {
             return ProductDAO.Instance.GetReSubmittedProducts();
         }
+
+        public Product ResubmitProduct(int id)
+        {
+            return ProductDAO.Instance.ResubmitProduct(id);
+        }
+
+        public List<Product> GetRejectedProductsBySellerId(int sellerId)
+        {
+            return ProductDAO.Instance.GetRejectedProductsBySellerId(sellerId);
+        }
     }
 }
