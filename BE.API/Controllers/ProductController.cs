@@ -24,6 +24,8 @@ namespace BE.API.Controllers
             try
             {
                 var products = _productRepo.GetAllProducts();
+
+                // ✅ Map toàn bộ thông tin cần thiết sang ProductResponse
                 var response = products.Select(p => new ProductResponse
                 {
                     ProductId = p.ProductId,
@@ -38,16 +40,21 @@ namespace BE.API.Controllers
                     VehicleType = p.VehicleType,
                     ManufactureYear = p.ManufactureYear,
                     Mileage = p.Mileage,
+                    Transmission = p.Transmission,
+                    SeatCount = p.SeatCount,
                     BatteryHealth = p.BatteryHealth,
                     BatteryType = p.BatteryType,
                     Capacity = p.Capacity,
                     Voltage = p.Voltage,
+                    BMS = p.BMS,
+                    CellType = p.CellType,
                     CycleCount = p.CycleCount,
                     LicensePlate = p.LicensePlate,
                     Status = p.Status,
                     VerificationStatus = p.VerificationStatus,
+                    RejectionReason = p.RejectionReason,
                     CreatedDate = p.CreatedDate,
-                    ImageUrls = p.ProductImages.Select(img => img.ImageData).ToList() // ✅ map hình ảnh
+                    ImageUrls = p.ProductImages.Select(img => img.ImageData).ToList()
                 }).ToList();
 
                 return Ok(response);
@@ -81,14 +88,19 @@ namespace BE.API.Controllers
                     VehicleType = product.VehicleType,
                     ManufactureYear = product.ManufactureYear,
                     Mileage = product.Mileage,
+                    Transmission = product.Transmission,
+                    SeatCount = product.SeatCount,
                     BatteryHealth = product.BatteryHealth,
                     BatteryType = product.BatteryType,
                     Capacity = product.Capacity,
                     Voltage = product.Voltage,
+                    BMS = product.BMS,
+                    CellType = product.CellType,
                     CycleCount = product.CycleCount,
                     LicensePlate = product.LicensePlate,
                     Status = product.Status,
                     VerificationStatus = product.VerificationStatus,
+                    RejectionReason = product.RejectionReason,
                     CreatedDate = product.CreatedDate,
                     ImageUrls = product.ProductImages.Select(img => img.ImageData).ToList() // ✅
                 };
@@ -102,22 +114,24 @@ namespace BE.API.Controllers
         }
 
         [HttpPost]
-        //[Authorize(Policy = "MemberOnly")]
+        [Authorize(Policy = "MemberOnly")]
         public ActionResult CreateProduct([FromBody] ProductRequest request)
         {
             try
             {
-                // Validate license plate format for vehicles
-                if (!string.IsNullOrEmpty(request.LicensePlate) && 
-                    (request.ProductType?.ToLower().Contains("vehicle") == true || 
+                // ✅ Validate license plate format for vehicles
+                if (!string.IsNullOrEmpty(request.LicensePlate) &&
+                    (request.ProductType?.ToLower().Contains("vehicle") == true ||
                      request.ProductType?.ToLower().Contains("xe") == true))
                 {
                     if (!IsValidLicensePlate(request.LicensePlate))
                     {
-                        return BadRequest("Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
+                        return BadRequest(
+                            "Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
                     }
                 }
 
+                // ✅ Tạo mới product và gán đầy đủ field
                 var product = new Product
                 {
                     SellerId = int.TryParse(User.FindFirst("UserId")?.Value, out var userId) ? userId : 0,
@@ -131,12 +145,22 @@ namespace BE.API.Controllers
                     VehicleType = request.VehicleType,
                     ManufactureYear = request.ManufactureYear,
                     Mileage = request.Mileage,
+                    Transmission = request.Transmission,
+                    SeatCount = request.SeatCount,
                     BatteryHealth = request.BatteryHealth,
                     BatteryType = request.BatteryType,
                     Capacity = request.Capacity,
                     Voltage = request.Voltage,
+                    BMS = request.BMS,
+                    CellType = request.CellType,
                     CycleCount = request.CycleCount,
-                    LicensePlate = request.LicensePlate
+                    LicensePlate = request.LicensePlate,
+
+                    // ✅ Thêm các trạng thái mặc định
+                    Status = "Draft",
+                    VerificationStatus = "NotRequested",
+                    RejectionReason = null,
+                    CreatedDate = DateTime.UtcNow
                 };
 
                 var createdProduct = _productRepo.CreateProduct(product);
@@ -160,35 +184,38 @@ namespace BE.API.Controllers
         }
 
         [HttpPut("{id}")]
-        //[Authorize(Policy = "MemberOnly")]
+        [Authorize(Policy = "MemberOnly")]
         public ActionResult UpdateProduct(int id, [FromBody] ProductRequest request)
         {
             try
             {
-                // Validate license plate format for vehicles
-                if (!string.IsNullOrEmpty(request.LicensePlate) && 
-                    (request.ProductType?.ToLower().Contains("vehicle") == true || 
+                // ✅ Validate license plate format for vehicles
+                if (!string.IsNullOrEmpty(request.LicensePlate) &&
+                    (request.ProductType?.ToLower().Contains("vehicle") == true ||
                      request.ProductType?.ToLower().Contains("xe") == true))
                 {
                     if (!IsValidLicensePlate(request.LicensePlate))
                     {
-                        return BadRequest("Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
+                        return BadRequest(
+                            "Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
                     }
                 }
 
                 var existingProduct = _productRepo.GetProductById(id);
                 if (existingProduct == null)
                 {
-                    return NotFound();
+                    return NotFound("Product not found");
                 }
 
-                // Verify ownership
+                // ✅ Verify ownership
                 var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
                 if (existingProduct.SellerId != userId)
                 {
                     return Forbid();
                 }
 
+                // ✅ Cập nhật toàn bộ các trường tương tự CreateProduct
+                existingProduct.ProductType = request.ProductType;
                 existingProduct.Title = request.Title;
                 existingProduct.Description = request.Description;
                 existingProduct.Price = request.Price;
@@ -198,21 +225,31 @@ namespace BE.API.Controllers
                 existingProduct.VehicleType = request.VehicleType;
                 existingProduct.ManufactureYear = request.ManufactureYear;
                 existingProduct.Mileage = request.Mileage;
+                existingProduct.Transmission = request.Transmission;
+                existingProduct.SeatCount = request.SeatCount;
                 existingProduct.BatteryHealth = request.BatteryHealth;
                 existingProduct.BatteryType = request.BatteryType;
                 existingProduct.Capacity = request.Capacity;
                 existingProduct.Voltage = request.Voltage;
+                existingProduct.BMS = request.BMS;
+                existingProduct.CellType = request.CellType;
                 existingProduct.CycleCount = request.CycleCount;
                 existingProduct.LicensePlate = request.LicensePlate;
+
+                // ✅ Reset trạng thái về "Draft" để admin duyệt lại
+                existingProduct.Status = "Re-submit";
+                existingProduct.VerificationStatus = "NotRequested";
+                existingProduct.RejectionReason = null;
 
                 var updatedProduct = _productRepo.UpdateProduct(existingProduct);
 
                 var response = new
                 {
+                    updatedProduct.ProductId,
                     updatedProduct.Title,
-                    updatedProduct.Description,
                     updatedProduct.Price,
-                    updatedProduct.Status
+                    updatedProduct.Status,
+                    updatedProduct.VerificationStatus,
                 };
 
                 return Ok(response);
@@ -224,7 +261,7 @@ namespace BE.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        //[Authorize(Policy = "MemberOnly")]
+        [Authorize(Policy = "MemberOnly")]
         public ActionResult DeleteProduct(int id)
         {
             try
@@ -262,6 +299,7 @@ namespace BE.API.Controllers
                 var response = products.Select(p => new
                 {
                     p.ProductId,
+                    p.ProductType,
                     p.Title,
                     p.Price,
                     p.Status,
@@ -592,7 +630,8 @@ namespace BE.API.Controllers
                 {
                     if (!IsValidLicensePlate(request.LicensePlate))
                     {
-                        return BadRequest("Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
+                        return BadRequest(
+                            "Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
                     }
                 }
 
@@ -715,6 +754,381 @@ namespace BE.API.Controllers
             // Examples: 30A-12345, 51G-12345, 29B-1234, 43C-12345
             var pattern = @"^[0-9]{2}[A-Z]{1,2}-[0-9]{4,5}$";
             return System.Text.RegularExpressions.Regex.IsMatch(licensePlate.ToUpper(), pattern);
+        }
+
+
+        [HttpPut("vehicles/{id}")]
+        [Authorize(Policy = "MemberOnly")]
+        public ActionResult UpdateVehicle(int id, [FromBody] VehicleRequest request)
+        {
+            try
+            {
+                var existingProduct = _productRepo.GetProductById(id);
+                if (existingProduct == null)
+                    return NotFound("Vehicle not found.");
+
+                // Xác nhận đây là sản phẩm loại "Vehicle"
+                if (!string.Equals(existingProduct.ProductType, "Vehicle", StringComparison.OrdinalIgnoreCase))
+                    return BadRequest("Product is not a vehicle.");
+
+                // Kiểm tra quyền sở hữu (chủ sản phẩm)
+                var userId = int.TryParse(User.FindFirst("UserId")?.Value, out var uid) ? uid : 0;
+                if (existingProduct.SellerId != userId && userId != 0)
+                    return Forbid();
+
+                // Kiểm tra định dạng biển số xe
+                if (!string.IsNullOrEmpty(request.LicensePlate))
+                {
+                    if (!IsValidLicensePlate(request.LicensePlate))
+                        return BadRequest("Invalid license plate format (e.g., 30A-12345, 51G-12345)");
+                }
+
+                // Cập nhật dữ liệu
+                existingProduct.Title = request.Title;
+                existingProduct.Description = request.Description;
+                existingProduct.Price = request.Price;
+                existingProduct.Brand = request.Brand;
+                existingProduct.Model = request.Model;
+                existingProduct.Condition = request.Condition;
+                existingProduct.VehicleType = request.VehicleType;
+                existingProduct.ManufactureYear = request.ManufactureYear;
+                existingProduct.Mileage = request.Mileage;
+                existingProduct.Transmission = request.Transmission;
+                existingProduct.SeatCount = request.SeatCount;
+                existingProduct.LicensePlate = request.LicensePlate;
+
+                existingProduct.Status = "Draft";
+                existingProduct.VerificationStatus = "NotRequested";
+
+                var updatedVehicle = _productRepo.UpdateProduct(existingProduct);
+
+                var response = new
+                {
+                    updatedVehicle.ProductId,
+                    updatedVehicle.Title,
+                    updatedVehicle.Price,
+                    updatedVehicle.Status,
+                    updatedVehicle.VerificationStatus,
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpPut("batteries/{id}")]
+        [Authorize(Policy = "MemberOnly")]
+        public ActionResult UpdateBattery(int id, [FromBody] BatteryRequest request)
+        {
+            try
+            {
+                var existingProduct = _productRepo.GetProductById(id);
+                if (existingProduct == null)
+                    return NotFound("Battery not found.");
+
+                // Xác nhận đây là sản phẩm loại "Battery"
+                if (!string.Equals(existingProduct.ProductType, "Battery", StringComparison.OrdinalIgnoreCase))
+                    return BadRequest("Product is not a battery.");
+
+                // Kiểm tra quyền sở hữu
+                var userId = int.TryParse(User.FindFirst("UserId")?.Value, out var uid) ? uid : 0;
+                if (existingProduct.SellerId != userId && userId != 0)
+                    return Forbid();
+
+                // Cập nhật dữ liệu
+                existingProduct.Title = request.Title;
+                existingProduct.Description = request.Description;
+                existingProduct.Price = request.Price;
+                existingProduct.Brand = request.Brand;
+                existingProduct.Model = request.Model;
+                existingProduct.Condition = request.Condition;
+                existingProduct.BatteryType = request.BatteryType;
+                existingProduct.BatteryHealth = request.BatteryHealth;
+                existingProduct.Capacity = request.Capacity;
+                existingProduct.Voltage = request.Voltage;
+                existingProduct.BMS = request.BMS;
+                existingProduct.CellType = request.CellType;
+                existingProduct.CycleCount = request.CycleCount;
+
+                existingProduct.Status = "Draft";
+                existingProduct.VerificationStatus = "NotRequested";
+
+                var updatedBattery = _productRepo.UpdateProduct(existingProduct);
+
+                var response = new
+                {
+                    updatedBattery.ProductId,
+                    updatedBattery.Title,
+                    updatedBattery.Price,
+                    updatedBattery.Status,
+                    updatedBattery.VerificationStatus,
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("batteries/{id}")]
+        [AllowAnonymous]
+        public ActionResult GetBatteryById(int id)
+        {
+            try
+            {
+                var product = _productRepo.GetProductById(id);
+                if (product == null ||
+                    !string.Equals(product.ProductType, "Battery", StringComparison.OrdinalIgnoreCase))
+                {
+                    return NotFound("Battery not found.");
+                }
+
+                var response = new BatteryResponse
+                {
+                    ProductId = product.ProductId,
+                    SellerId = product.SellerId,
+                    ProductType = product.ProductType,
+                    Title = product.Title,
+                    Description = product.Description,
+                    Price = product.Price,
+                    Brand = product.Brand,
+                    Model = product.Model,
+                    Condition = product.Condition,
+                    BatteryType = product.BatteryType,
+                    BatteryHealth = product.BatteryHealth,
+                    Capacity = product.Capacity,
+                    Voltage = product.Voltage,
+                    BMS = product.BMS,
+                    CellType = product.CellType,
+                    CycleCount = product.CycleCount,
+                    Status = product.Status,
+                    VerificationStatus = product.VerificationStatus,
+                    CreatedDate = product.CreatedDate,
+                    ImageUrls = product.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("vehicles/{id}")]
+        [AllowAnonymous]
+        public ActionResult GetVehicleById(int id)
+        {
+            try
+            {
+                var product = _productRepo.GetProductById(id);
+                if (product == null ||
+                    !string.Equals(product.ProductType, "Vehicle", StringComparison.OrdinalIgnoreCase))
+                {
+                    return NotFound("Vehicle not found.");
+                }
+
+                var response = new VehicleResponse
+                {
+                    ProductId = product.ProductId,
+                    SellerId = product.SellerId,
+                    ProductType = product.ProductType,
+                    Title = product.Title,
+                    Description = product.Description,
+                    Price = product.Price,
+                    Brand = product.Brand,
+                    Model = product.Model,
+                    Condition = product.Condition,
+                    VehicleType = product.VehicleType,
+                    ManufactureYear = product.ManufactureYear,
+                    Mileage = product.Mileage,
+                    Transmission = product.Transmission,
+                    SeatCount = product.SeatCount,
+                    LicensePlate = product.LicensePlate,
+                    Status = product.Status,
+                    VerificationStatus = product.VerificationStatus,
+                    CreatedDate = product.CreatedDate,
+                    ImageUrls = product.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+        
+        [HttpGet("resubmit")]
+        [Authorize(Policy = "AdminOnly")] // hoặc bỏ nếu bạn chưa có phân quyền
+        public ActionResult GetReSubmittedProducts()
+        {
+            try
+            {
+                var products = _productRepo.GetReSubmittedProducts();
+
+                var response = products.Select(p => new ProductResponse
+                {
+                    ProductId = p.ProductId,
+                    SellerId = p.SellerId,
+                    ProductType = p.ProductType,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Price = p.Price,
+                    Brand = p.Brand,
+                    Model = p.Model,
+                    Condition = p.Condition,
+                    VehicleType = p.VehicleType,
+                    ManufactureYear = p.ManufactureYear,
+                    Mileage = p.Mileage,
+                    Transmission = p.Transmission,
+                    SeatCount = p.SeatCount,
+                    BatteryHealth = p.BatteryHealth,
+                    BatteryType = p.BatteryType,
+                    Capacity = p.Capacity,
+                    Voltage = p.Voltage,
+                    BMS = p.BMS,
+                    CellType = p.CellType,
+                    CycleCount = p.CycleCount,
+                    LicensePlate = p.LicensePlate,
+                    Status = p.Status,
+                    VerificationStatus = p.VerificationStatus,
+                    RejectionReason = p.RejectionReason,
+                    CreatedDate = p.CreatedDate,
+                    ImageUrls = p.ProductImages.Select(img => img.ImageData).ToList()
+                }).ToList();
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpPut("resubmit/{id}")]
+        [Authorize(Policy = "MemberOnly")]
+        public ActionResult ResubmitProduct(int id)
+        {
+            try
+            {
+                var product = _productRepo.GetProductById(id);
+                if (product == null)
+                {
+                    return NotFound("Product not found.");
+                }
+
+                // Verify ownership
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                if (product.SellerId != userId)
+                {
+                    return Forbid("You can only resubmit your own products.");
+                }
+
+                // Check if product is in rejected status
+                if (product.Status != "Rejected")
+                {
+                    return BadRequest("Only rejected products can be resubmitted.");
+                }
+
+                var resubmittedProduct = _productRepo.ResubmitProduct(id);
+                if (resubmittedProduct == null)
+                {
+                    return StatusCode(500, "Failed to resubmit product.");
+                }
+
+                return Ok(new
+                {
+                    resubmittedProduct.ProductId,
+                    resubmittedProduct.Title,
+                    resubmittedProduct.Status,
+                    resubmittedProduct.VerificationStatus,
+                    Message = "Product resubmitted successfully. Waiting for admin review."
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("seller/{sellerId}/rejected")]
+        [Authorize(Policy = "MemberOnly")]
+        public ActionResult GetRejectedProductsBySeller(int sellerId)
+        {
+            try
+            {
+                // Verify that user can only access their own rejected products
+                var userIdClaim = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized("Invalid user token.");
+                }
+                
+                if (userId != sellerId)
+                {
+                    return Forbid($"Access denied. UserId from token: {userId}, SellerId from URL: {sellerId}");
+                }
+
+                // Debug: Get all products by seller first to check
+                var allProducts = _productRepo.GetProductsBySellerId(sellerId);
+                
+                var products = _productRepo.GetRejectedProductsBySellerId(sellerId);
+
+                // Debug response with more information
+                var debugResponse = new
+                {
+                    DebugInfo = new
+                    {
+                        RequestedSellerId = sellerId,
+                        UserIdFromToken = userId,
+                        AllProductsCount = allProducts.Count,
+                        RejectedProductsCount = products.Count,
+                        AllProductsStatuses = allProducts.Select(p => new { p.ProductId, p.Status, p.VerificationStatus, p.RejectionReason }).ToList()
+                    },
+                    RejectedProducts = products.Select(p => new ProductResponse
+                    {
+                        ProductId = p.ProductId,
+                        SellerId = p.SellerId,
+                        ProductType = p.ProductType,
+                        Title = p.Title,
+                        Description = p.Description,
+                        Price = p.Price,
+                        Brand = p.Brand,
+                        Model = p.Model,
+                        Condition = p.Condition,
+                        VehicleType = p.VehicleType,
+                        ManufactureYear = p.ManufactureYear,
+                        Mileage = p.Mileage,
+                        Transmission = p.Transmission,
+                        SeatCount = p.SeatCount,
+                        BatteryHealth = p.BatteryHealth,
+                        BatteryType = p.BatteryType,
+                        Capacity = p.Capacity,
+                        Voltage = p.Voltage,
+                        BMS = p.BMS,
+                        CellType = p.CellType,
+                        CycleCount = p.CycleCount,
+                        LicensePlate = p.LicensePlate,
+                        Status = p.Status,
+                        VerificationStatus = p.VerificationStatus,
+                        RejectionReason = p.RejectionReason,
+                        CreatedDate = p.CreatedDate,
+                        ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+                    }).ToList()
+                };
+
+                return Ok(debugResponse);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
         }
     }
 }

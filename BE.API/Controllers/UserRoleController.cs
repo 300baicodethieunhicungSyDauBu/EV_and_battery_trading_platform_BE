@@ -19,7 +19,6 @@ namespace BE.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Policy = "AdminOnly")]
         public ActionResult<IEnumerable<UserRoleResponse>> GetAllUserRoles()
         {
             try
@@ -42,7 +41,6 @@ namespace BE.API.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Policy = "AdminOnly")]
         public ActionResult<UserRoleResponse> GetUserRoleById(int id)
         {
             try
@@ -70,7 +68,6 @@ namespace BE.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "AdminOnly")]
         public ActionResult<UserRoleResponse> CreateUserRole([FromBody] UserRoleRequest request)
         {
             try
@@ -111,7 +108,6 @@ namespace BE.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Policy = "AdminOnly")]
         public ActionResult<UserRoleResponse> UpdateUserRole(int id, [FromBody] UserRoleRequest request)
         {
             try
@@ -154,7 +150,6 @@ namespace BE.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Policy = "AdminOnly")]
         public ActionResult DeleteUserRole(int id)
         {
             try

@@ -148,6 +148,36 @@ namespace BE.DAOs
                 .Where(p => p.ProductType != null && p.ProductType.ToLower().Contains(productType.ToLower()) && p.Status == "Active")
                 .ToList();
         }
+        
+        public List<Product> GetReSubmittedProducts()
+        {
+            return dbcontext.Products
+                .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
+                .Where(p => p.Status == "Re-submit")
+                .ToList();
+        }
+
+        public Product? ResubmitProduct(int id)
+        {
+            var product = dbcontext.Products.FirstOrDefault(p => p.ProductId == id);
+            if (product == null) return null;
+
+            product.Status = "Re-submit";
+            product.VerificationStatus = "NotRequested";
+            product.RejectionReason = null;
+            dbcontext.SaveChanges();
+            return product;
+        }
+
+        public List<Product> GetRejectedProductsBySellerId(int sellerId)
+        {
+            return dbcontext.Products
+                .Include(p => p.Seller)
+                .Include(p => p.ProductImages)
+                .Where(p => p.SellerId == sellerId && p.Status == "Rejected")
+                .ToList();
+        }
     }
 }
 
