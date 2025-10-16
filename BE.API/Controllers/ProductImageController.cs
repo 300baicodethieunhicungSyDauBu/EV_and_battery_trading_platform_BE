@@ -10,14 +10,14 @@ namespace BE.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class ProductImageController : ControllerBase
     {
         private readonly IProductImageRepo _productImageRepo;
         private readonly IProductRepo _productRepo;
         private readonly CloudinaryService _cloudinaryService;
 
-        public ProductImageController(IProductImageRepo productImageRepo, IProductRepo productRepo, CloudinaryService cloudinaryService)
+        public ProductImageController(IProductImageRepo productImageRepo, IProductRepo productRepo,
+            CloudinaryService cloudinaryService)
         {
             _productImageRepo = productImageRepo;
             _productRepo = productRepo;
@@ -35,6 +35,7 @@ namespace BE.API.Controllers
                     ImageId = img.ImageId,
                     ProductId = img.ProductId,
                     ImageData = img.ImageData,
+                    Name = img.Name,
                     CreatedDate = img.CreatedDate
                 }).ToList();
 
@@ -62,6 +63,7 @@ namespace BE.API.Controllers
                     ImageId = image.ImageId,
                     ProductId = image.ProductId,
                     ImageData = image.ImageData,
+                    Name = image.Name,
                     CreatedDate = image.CreatedDate
                 };
 
@@ -79,35 +81,44 @@ namespace BE.API.Controllers
         {
             try
             {
-                // Verify product ownership
+                // ✅ Kiểm tra sản phẩm có tồn tại không
                 var product = _productRepo.GetProductById(request.ProductId ?? 0);
                 if (product == null)
-                {
                     return NotFound("Product not found");
-                }
 
+                // ✅ Kiểm tra quyền sở hữu sản phẩm
                 var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-                if (product.SellerId != userId && !User.IsInRole("1"))
-                {
+                if (product.SellerId != userId && !User.IsInRole("1")) // "1" = Admin
                     return Forbid();
+
+                // ✅ Kiểm tra tên loại ảnh
+                if (string.IsNullOrWhiteSpace(request.Name) ||
+                    !new[] { "Vehicle", "Battery", "Document" }.Contains(request.Name,
+                        StringComparer.OrdinalIgnoreCase))
+                {
+                    return BadRequest("Name must be one of: Vehicle, Battery, or Document.");
                 }
 
-                // Upload to Cloudinary
+                // ✅ Upload ảnh lên Cloudinary
                 string imageUrl = await _cloudinaryService.UploadImageAsync(request.ImageFile);
 
+                // ✅ Tạo record ProductImage mới
                 var productImage = new ProductImage
                 {
                     ProductId = request.ProductId,
-                    ImageData = imageUrl, // Store the Cloudinary URL
+                    ImageData = imageUrl,
+                    Name = request.Name, // 🟢 Thêm tên loại ảnh
                     CreatedDate = DateTime.Now
                 };
 
                 var createdImage = _productImageRepo.CreateProductImage(productImage);
 
+                // ✅ Tạo response trả về
                 var response = new ProductImageResponse
                 {
                     ImageId = createdImage.ImageId,
                     ProductId = createdImage.ProductId,
+                    Name = createdImage.Name,
                     ImageData = createdImage.ImageData,
                     CreatedDate = createdImage.CreatedDate
                 };
@@ -123,22 +134,32 @@ namespace BE.API.Controllers
         [HttpPost("multiple")]
         [Authorize(Policy = "MemberOnly")]
         public async Task<ActionResult<List<ProductImageResponse>>> CreateMultipleProductImages(
-        [FromForm] int productId,
-        [FromForm] List<IFormFile> images)
+            [FromForm] int productId,
+            [FromForm] string name,
+            [FromForm] List<IFormFile> images)
         {
             try
             {
+                // ✅ Kiểm tra sản phẩm tồn tại
                 var product = _productRepo.GetProductById(productId);
                 if (product == null)
-                {
                     return NotFound("Product not found");
+
+                // ✅ Kiểm tra quyền sở hữu
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                if (product.SellerId != userId && !User.IsInRole("1")) // "1" = Admin
+                    return Forbid();
+
+                // ✅ Validate loại ảnh (Vehicle/Battery/Document)
+                if (string.IsNullOrWhiteSpace(name) ||
+                    !new[] { "Vehicle", "Battery", "Document" }.Contains(name, StringComparer.OrdinalIgnoreCase))
+                {
+                    return BadRequest("Name must be one of: Vehicle, Battery, or Document.");
                 }
 
-                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-                if (product.SellerId != userId && !User.IsInRole("1"))
-                {
-                    return Forbid();
-                }
+                // ✅ Validate danh sách ảnh
+                if (images == null || !images.Any())
+                    return BadRequest("At least one image is required.");
 
                 var responses = new List<ProductImageResponse>();
 
@@ -149,6 +170,7 @@ namespace BE.API.Controllers
                     var productImage = new ProductImage
                     {
                         ProductId = productId,
+                        Name = name, // 🟢 Thêm tên loại ảnh
                         ImageData = imageUrl,
                         CreatedDate = DateTime.Now
                     };
@@ -159,6 +181,7 @@ namespace BE.API.Controllers
                     {
                         ImageId = createdImage.ImageId,
                         ProductId = createdImage.ProductId,
+                        Name = createdImage.Name,
                         ImageData = createdImage.ImageData,
                         CreatedDate = createdImage.CreatedDate
                     });
@@ -172,45 +195,57 @@ namespace BE.API.Controllers
             }
         }
 
-        //[HttpPut("{id}")]
-        //[Authorize(Policy = "MemberOnly")]
-        //public ActionResult<ProductImageResponse> UpdateProductImage(int id, [FromBody] ProductImageRequest request)
-        //{
-        //    try
-        //    {
-        //        var existingImage = _productImageRepo.GetProductImageById(id);
-        //        if (existingImage == null)
-        //        {
-        //            return NotFound();
-        //        }
+        [HttpPut("{id}")]
+        [Authorize(Policy = "MemberOnly")]
+        public async Task<ActionResult<ProductImageResponse>> UpdateProductImage(
+            int id,
+            [FromForm] ProductImageRequest request)
+        {
+            try
+            {
+                var existingImage = _productImageRepo.GetProductImageById(id);
+                if (existingImage == null)
+                {
+                    return NotFound("Product image not found.");
+                }
 
-        //        // Verify product ownership
-        //        var product = _productRepo.GetProductById(existingImage.ProductId ?? 0);
-        //        var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-        //        if (product?.SellerId != userId && !User.IsInRole("1"))
-        //        {
-        //            return Forbid();
-        //        }
+                // ✅ Kiểm tra quyền sở hữu sản phẩm
+                var product = _productRepo.GetProductById(existingImage.ProductId ?? 0);
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
 
-        //        existingImage.ImageData = request.ImageData;
+                if (product?.SellerId != userId && !User.IsInRole("1")) // 1 = Admin
+                {
+                    return Forbid("You are not authorized to modify this product image.");
+                }
 
-        //        var updatedImage = _productImageRepo.UpdateProductImage(existingImage);
+                // ✅ Upload ảnh mới lên Cloudinary nếu có
+                string? newImageUrl = null;
+                if (request.ImageFile != null)
+                {
+                    newImageUrl = await _cloudinaryService.UploadImageAsync(request.ImageFile);
+                    existingImage.ImageData = newImageUrl;
+                }
 
-        //        var response = new ProductImageResponse
-        //        {
-        //            ImageId = updatedImage.ImageId,
-        //            ProductId = updatedImage.ProductId,
-        //            ImageData = updatedImage.ImageData,
-        //            CreatedDate = updatedImage.CreatedDate
-        //        };
+                // ✅ Cập nhật thời gian chỉnh sửa
+                existingImage.CreatedDate = DateTime.Now;
 
-        //        return Ok(response);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, "Internal server error: " + ex.Message);
-        //    }
-        //}
+                var updatedImage = _productImageRepo.UpdateProductImage(existingImage);
+
+                var response = new ProductImageResponse
+                {
+                    ImageId = updatedImage.ImageId,
+                    ProductId = updatedImage.ProductId,
+                    ImageData = updatedImage.ImageData,
+                    CreatedDate = updatedImage.CreatedDate
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
 
         [HttpDelete("{id}")]
         [Authorize(Policy = "MemberOnly")]
@@ -240,6 +275,52 @@ namespace BE.API.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
-    }
+        
+        [HttpGet("product/{productId}/by-name")]
+        [AllowAnonymous]
+        public ActionResult<IEnumerable<ProductImageResponse>> GetProductImagesByName(int productId, [FromQuery] string name)
+        {
+            try
+            {
+                // ✅ Validate input
+                if (string.IsNullOrWhiteSpace(name))
+                    return BadRequest("Image name (Vehicle, Battery, or Document) is required.");
 
+                // ✅ Validate name
+                var allowedNames = new[] { "Vehicle", "Battery", "Document" };
+                if (!allowedNames.Contains(name, StringComparer.OrdinalIgnoreCase))
+                    return BadRequest("Invalid name. Must be one of: Vehicle, Battery, Document.");
+
+                // ✅ Kiểm tra sản phẩm tồn tại
+                var product = _productRepo.GetProductById(productId);
+                if (product == null)
+                    return NotFound("Product not found.");
+
+                // ✅ Lấy danh sách ảnh theo ProductId + Name
+                var images = _productImageRepo
+                    .GetImagesByProductId(productId)
+                    .Where(i => i.Name != null && i.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                if (!images.Any())
+                    return NotFound($"No images found for product {productId} with name '{name}'.");
+
+                // ✅ Map sang DTO response
+                var response = images.Select(img => new ProductImageResponse
+                {
+                    ImageId = img.ImageId,
+                    ProductId = img.ProductId,
+                    Name = img.Name,
+                    ImageData = img.ImageData,
+                    CreatedDate = img.CreatedDate
+                }).ToList();
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+    }
 }
