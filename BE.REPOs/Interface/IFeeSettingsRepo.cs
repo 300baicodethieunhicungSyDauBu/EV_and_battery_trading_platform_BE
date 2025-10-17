@@ -2,7 +2,7 @@
 
 namespace BE.REPOs.Interface
 {
-    public interface IFeeSettings
+    public interface IFeeSettingsRepo
     {
         List<FeeSetting> GetAllFeeSettings();
         FeeSetting? GetFeeSettingById(int feeId);
@@ -11,5 +11,6 @@ namespace BE.REPOs.Interface
         FeeSetting CreateFeeSetting(FeeSetting feeSetting);
         FeeSetting UpdateFeeSetting(FeeSetting feeSetting);
         bool DeleteFeeSetting(int feeId);
+        decimal GetActiveFeeValue(string feeType);
     }
 }
