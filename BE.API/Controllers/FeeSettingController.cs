@@ -11,11 +11,11 @@ namespace BE.API.Controllers
     [Route("api/[controller]")]
     public class FeeSettingController : ControllerBase
     {
-        private readonly IFeeSettingsRepo _feeSettingsRepoRepo;
+        private readonly IFeeSettingsRepo _feeSettingsRepo;
 
         public FeeSettingController(IFeeSettingsRepo feeSettingsRepoRepo)
         {
-            _feeSettingsRepoRepo = feeSettingsRepoRepo;
+            _feeSettingsRepo = feeSettingsRepoRepo;
         }
 
         [HttpGet]
@@ -24,7 +24,7 @@ namespace BE.API.Controllers
         {
             try
             {
-                var feeSettings = _feeSettingsRepoRepo.GetAllFeeSettings();
+                var feeSettings = _feeSettingsRepo.GetAllFeeSettings();
                 var response = feeSettings.Select(fee => new FeeSettingResponse
                 {
                     FeeId = fee.FeeId,
@@ -48,7 +48,7 @@ namespace BE.API.Controllers
         {
             try
             {
-                var feeSetting = _feeSettingsRepoRepo.GetFeeSettingById(id);
+                var feeSetting = _feeSettingsRepo.GetFeeSettingById(id);
                 if (feeSetting == null)
                 {
                     return NotFound("Fee setting not found");
@@ -76,7 +76,7 @@ namespace BE.API.Controllers
         {
             try
             {
-                var feeSettings = _feeSettingsRepoRepo.GetActiveFeeSettings();
+                var feeSettings = _feeSettingsRepo.GetActiveFeeSettings();
                 var response = feeSettings.Select(fee => new FeeSettingResponse
                 {
                     FeeId = fee.FeeId,
@@ -100,7 +100,7 @@ namespace BE.API.Controllers
         {
             try
             {
-                var feeSettings = _feeSettingsRepoRepo.GetFeeSettingsByType(feeType);
+                var feeSettings = _feeSettingsRepo.GetFeeSettingsByType(feeType);
                 var response = feeSettings.Select(fee => new FeeSettingResponse
                 {
                     FeeId = fee.FeeId,
@@ -141,7 +141,7 @@ namespace BE.API.Controllers
                     IsActive = request.IsActive
                 };
 
-                var createdFeeSetting = _feeSettingsRepoRepo.CreateFeeSetting(feeSetting);
+                var createdFeeSetting = _feeSettingsRepo.CreateFeeSetting(feeSetting);
 
                 var response = new FeeSettingResponse
                 {
@@ -176,7 +176,7 @@ namespace BE.API.Controllers
                     return BadRequest("Fee value must be non-negative");
                 }
 
-                var existingFeeSetting = _feeSettingsRepoRepo.GetFeeSettingById(id);
+                var existingFeeSetting = _feeSettingsRepo.GetFeeSettingById(id);
                 if (existingFeeSetting == null)
                 {
                     return NotFound("Fee setting not found");
@@ -186,7 +186,7 @@ namespace BE.API.Controllers
                 existingFeeSetting.FeeValue = request.FeeValue;
                 existingFeeSetting.IsActive = request.IsActive;
 
-                var updatedFeeSetting = _feeSettingsRepoRepo.UpdateFeeSetting(existingFeeSetting);
+                var updatedFeeSetting = _feeSettingsRepo.UpdateFeeSetting(existingFeeSetting);
 
                 var response = new FeeSettingResponse
                 {
@@ -211,7 +211,7 @@ namespace BE.API.Controllers
         {
             try
             {
-                var result = _feeSettingsRepoRepo.DeleteFeeSetting(id);
+                var result = _feeSettingsRepo.DeleteFeeSetting(id);
                 if (!result)
                 {
                     return NotFound("Fee setting not found");
@@ -231,7 +231,7 @@ namespace BE.API.Controllers
         {
             try
             {
-                var fee = _feeSettingsRepoRepo.GetActiveFeeSettings()
+                var fee = _feeSettingsRepo.GetActiveFeeSettings()
                     .FirstOrDefault(f => f.FeeType.Equals(feeType, StringComparison.OrdinalIgnoreCase));
 
                 if (fee == null)

@@ -4,7 +4,7 @@ using BE.REPOs.Interface;
 
 namespace BE.REPOs.Implementation
 {
-    public class FeeSettingsRepoRepo : IFeeSettingsRepo
+    public class FeeSettingsRepo : IFeeSettingsRepo
     {
         public List<FeeSetting> GetAllFeeSettings()
         {
