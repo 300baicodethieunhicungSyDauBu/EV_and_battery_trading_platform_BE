@@ -85,6 +85,92 @@ namespace BE.API.Controllers
             }
         }
 
+        [HttpGet]
+        [Authorize(Policy = "AdminOnly")]
+        public IActionResult GetAllPayments()
+        {
+            try
+            {
+                var payments = _paymentRepo.GetAllPayments();
+                return Ok(payments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("{id}")]
+        [Authorize(Policy = "MemberOnly")]
+        public IActionResult GetPaymentById(int id)
+        {
+            try
+            {
+                var payment = _paymentRepo.GetPaymentById(id);
+                if (payment == null)
+                    return NotFound($"Payment with ID {id} not found");
+                
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                var userRole = User.FindFirst("Role")?.Value ?? "";
+                
+                // Admin có thể xem tất cả, user chỉ xem payment của mình
+                if (userRole != "Admin" && payment.PayerId != userId)
+                    return Forbid("You can only view your own payments");
+                
+                return Ok(payment);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("my-payments")]
+        [Authorize(Policy = "MemberOnly")]
+        public IActionResult GetMyPayments()
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                var payments = _paymentRepo.GetPaymentsByPayerId(userId);
+                return Ok(payments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("payer/{payerId}")]
+        [Authorize(Policy = "AdminOnly")]
+        public IActionResult GetPaymentsByPayerId(int payerId)
+        {
+            try
+            {
+                var payments = _paymentRepo.GetPaymentsByPayerId(payerId);
+                return Ok(payments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("order/{orderId}")]
+        [Authorize(Policy = "AdminOnly")]
+        public IActionResult GetPaymentsByOrderId(int orderId)
+        {
+            try
+            {
+                var payments = _paymentRepo.GetPaymentsByOrderId(orderId);
+                return Ok(payments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
         [HttpGet("vnpay-return")]
         [AllowAnonymous]
         public IActionResult VnPayReturn([FromQuery] Dictionary<string, string> queryParams)

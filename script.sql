@@ -291,3 +291,8 @@ GO
 COMMIT;
 GO
 
+INSERT INTO [UserRoles] ([RoleName])
+VALUES 
+    (N'Admin'),
+    (N'Member');
+GO
