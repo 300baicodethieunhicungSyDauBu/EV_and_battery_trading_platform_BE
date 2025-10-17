@@ -11,9 +11,4 @@
     <ProjectReference Include="..\BE.BOs\BE.BOs.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.16" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.16" />
-  </ItemGroup>
-
 </Project>
