@@ -11,11 +11,11 @@ namespace BE.API.Controllers
     [Route("api/[controller]")]
     public class FeeSettingController : ControllerBase
     {
-        private readonly IFeeSettings _feeSettingsRepo;
+        private readonly IFeeSettingsRepo _feeSettingsRepo;
 
-        public FeeSettingController(IFeeSettings feeSettingsRepo)
+        public FeeSettingController(IFeeSettingsRepo feeSettingsRepoRepo)
         {
-            _feeSettingsRepo = feeSettingsRepo;
+            _feeSettingsRepo = feeSettingsRepoRepo;
         }
 
         [HttpGet]
@@ -218,6 +218,26 @@ namespace BE.API.Controllers
                 }
 
                 return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+        
+        [HttpGet("active/{feeType}")]
+        [AllowAnonymous]
+        public ActionResult<decimal> GetActiveFeeValue(string feeType)
+        {
+            try
+            {
+                var fee = _feeSettingsRepo.GetActiveFeeSettings()
+                    .FirstOrDefault(f => f.FeeType.Equals(feeType, StringComparison.OrdinalIgnoreCase));
+
+                if (fee == null)
+                    return NotFound($"No active fee found for type: {feeType}");
+
+                return Ok(fee.FeeValue);
             }
             catch (Exception ex)
             {

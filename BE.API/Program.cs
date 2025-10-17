@@ -130,7 +130,7 @@ builder.Services.AddScoped<IProductImageRepo, ProductImageRepo>();
 builder.Services.AddScoped<IUserRoleRepo, UserRoleRepo>();
 builder.Services.AddScoped<IReviewsRepo, ReviewsRepo>();
 builder.Services.AddScoped<IReportedListingsRepo, ReportedListingsRepo>();
-builder.Services.AddScoped<IFeeSettings, FeeSettingsRepo>();
+builder.Services.AddScoped<IFeeSettingsRepo, FeeSettingsRepo>();
 builder.Services.AddScoped<INotificationsRepo, NotificationsRepo>();
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
