@@ -6,6 +6,7 @@ using BE.REPOs.Interface;
 using BE.REPOs.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BE.API.Controllers
 {
@@ -111,10 +112,10 @@ namespace BE.API.Controllers
                     return NotFound($"Payment with ID {id} not found");
                 
                 var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-                var userRole = User.FindFirst("Role")?.Value ?? "";
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
                 
                 // Admin có thể xem tất cả, user chỉ xem payment của mình
-                if (userRole != "Admin" && payment.PayerId != userId)
+                if (userRole != "1" && payment.PayerId != userId)
                     return Forbid("You can only view your own payments");
                 
                 return Ok(payment);
@@ -138,6 +139,32 @@ namespace BE.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("test")]
+        [Authorize]
+        public IActionResult TestPaymentApi()
+        {
+            try
+            {
+                var userId = User.FindFirst("UserId")?.Value;
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+                var userName = User.FindFirst(ClaimTypes.Name)?.Value;
+                
+                return Ok(new
+                {
+                    message = "Payment API is working!",
+                    userId = userId,
+                    userRole = userRole,
+                    userName = userName,
+                    timestamp = DateTime.Now,
+                    canAccessAdminOnly = userRole == "1"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Test error: {ex.Message}");
             }
         }
 
