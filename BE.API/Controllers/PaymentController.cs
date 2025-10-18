@@ -1,89 +1,82 @@
 ﻿using BE.API.DTOs.Request;
 using BE.BOs.Models;
 using BE.BOs.VnPayModels;
-using BE.REPOs.Implementation;
 using BE.REPOs.Interface;
 using BE.REPOs.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+<<<<<<< HEAD
 using System.Security.Claims;
+=======
+using System.Globalization;
+>>>>>>> 7bfccccfc9dbb0150d5a5797ff6a0509d0d1d248
 
 namespace BE.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controller]")] // /api/payment
     [Authorize]
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentRepo _paymentRepo;
         private readonly IOrderRepo _orderRepo;
         private readonly IProductRepo _productRepo;
-        private readonly IVnPayService _vnpayService;
+        private readonly IVnPayService _vnPay;
 
-        public PaymentController(IPaymentRepo paymentRepo, IOrderRepo orderRepo,IProductRepo productRepo, IVnPayService vnpayService)
+        public PaymentController(IPaymentRepo paymentRepo, IOrderRepo orderRepo, IProductRepo productRepo, IVnPayService vnPay)
         {
             _paymentRepo = paymentRepo;
             _orderRepo = orderRepo;
             _productRepo = productRepo;
-            _vnpayService = vnpayService;
+            _vnPay = vnPay;
         }
 
         [HttpPost]
         [Authorize(Policy = "MemberOnly")]
-        public IActionResult CreatePayment([FromBody] PaymentRequest request)
+        public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request)
         {
-            try
+            var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
+            if (!int.TryParse(userIdStr, out var userId) || userId <= 0) return Unauthorized("Invalid user");
+
+            // Xác định loại thanh toán
+            var paymentType = request.PaymentType?.Trim();
+            if (string.IsNullOrEmpty(paymentType))
             {
-                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-
-                // Nếu client gửi 0 thì coi như null
-                var orderId = request.OrderId > 0 ? request.OrderId : null;
-                var productId = request.ProductId > 0 ? request.ProductId : null;
-
-                // Xác định loại thanh toán
-                string paymentType;
-                if (orderId != null && productId == null)
-                    paymentType = "Deposit"; // hoặc "FinalPayment" tùy luồng
-                else if (productId != null && orderId == null)
-                    paymentType = "Verification";
-                else
-                    return BadRequest("Either OrderId or ProductId must be provided, not both.");
-
-                // Tạo bản ghi thanh toán
-                var payment = new Payment
-                {
-                    OrderId = orderId,
-                    ProductId = productId,
-                    PayerId = userId,
-                    PaymentType = paymentType,
-                    Amount = request.Amount,
-                    PaymentMethod = "VNPay",
-                    Status = "Pending",
-                    CreatedDate = DateTime.Now
-                };
-
-                var createdPayment = _paymentRepo.CreatePayment(payment);
-
-                var paymentInfo = new PaymentInformationModel
-                {
-                    OrderType = "other",
-                    Amount = createdPayment.Amount,
-                    OrderDescription = $"Thanh toán {paymentType.ToLower()} - ID: {createdPayment.PaymentId}",
-                    Name = createdPayment.PaymentId.ToString()
-                };
-
-                var paymentUrl = _vnpayService.CreatePaymentUrl(paymentInfo, HttpContext);
-
-                return Ok(new
-                {
-                    PaymentId = createdPayment.PaymentId,
-                    PaymentUrl = paymentUrl
-                });
+                // suy ra nếu FE không gửi
+                paymentType = (request.ProductId.HasValue && !request.OrderId.HasValue) ? "Verification"
+                             : (request.OrderId.HasValue ? "Deposit" : "");
             }
-            catch (Exception ex)
+            if (string.IsNullOrEmpty(paymentType)) return BadRequest("PaymentType is required.");
+            if (request.Amount <= 0) return BadRequest("Amount must be > 0");
+            if ((paymentType is "Deposit" or "FinalPayment") && !request.OrderId.HasValue)
+                return BadRequest($"{paymentType} requires OrderId.");
+            if (paymentType == "Verification" && !request.ProductId.HasValue)
+                return BadRequest("Verification requires ProductId.");
+
+            var payment = new Payment
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+                OrderId = request.OrderId,
+                ProductId = request.ProductId,
+                PayerId = userId,
+                PaymentType = paymentType,
+                Amount = request.Amount,
+                PaymentMethod = "VNPAY",
+                Status = "Pending",
+                CreatedDate = DateTime.Now
+            };
+
+            var created = await _paymentRepo.CreatePaymentAsync(payment);
+
+            var info = new PaymentInformationModel
+            {
+                OrderType = "other",
+                Amount = created.Amount,
+                OrderDescription = $"Thanh toán {paymentType.ToLower()} - ID: {created.PaymentId}",
+                Name = created.PaymentId.ToString() // dùng làm vnp_TxnRef
+            };
+
+            var paymentUrl = _vnPay.CreatePaymentUrl(info, HttpContext);
+            return Ok(new { PaymentId = created.PaymentId, PaymentUrl = paymentUrl });
         }
 
         [HttpGet]
@@ -200,89 +193,86 @@ namespace BE.API.Controllers
 
         [HttpGet("vnpay-return")]
         [AllowAnonymous]
-        public IActionResult VnPayReturn([FromQuery] Dictionary<string, string> queryParams)
+        public async Task<IActionResult> VnPayReturn([FromQuery] Dictionary<string, string> query)
         {
-            try
+            if (query is null || !query.ContainsKey("vnp_TxnRef") || !query.ContainsKey("vnp_SecureHash"))
+                return BadRequest("Invalid VNPay callback.");
+            if (!_vnPay.ValidateSignature(query)) return BadRequest("Invalid signature");
+            if (!int.TryParse(query["vnp_TxnRef"], out var paymentId)) return BadRequest("Invalid TxnRef");
+
+            var payment = await _paymentRepo.GetPaymentForUpdateAsync(paymentId);
+            if (payment is null) return NotFound("Payment not found");
+            if (await _paymentRepo.HasSuccessfulPaymentAsync(paymentId))
+                return Ok(new { message = "Payment already succeeded", paymentId });
+
+            // Lấy response (option: dùng PaymentExecute để map đầy đủ)
+            var resp = _vnPay.PaymentExecute(Request.Query);
+            var responseCode = query.GetValueOrDefault("vnp_ResponseCode", "");
+
+            payment.TransactionNo = query.GetValueOrDefault("vnp_TransactionNo", "");
+            payment.BankCode = query.GetValueOrDefault("vnp_BankCode", "");
+            payment.CardType = query.GetValueOrDefault("vnp_CardType", "");
+            payment.TransactionStatus = query.GetValueOrDefault("vnp_TransactionStatus", "");
+            payment.ResponseCode = responseCode;
+            var payDateRaw = query.GetValueOrDefault("vnp_PayDate", "");
+            if (!string.IsNullOrWhiteSpace(payDateRaw) &&
+                DateTime.TryParseExact(payDateRaw, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var payDate))
             {
-                if (!queryParams.ContainsKey("vnp_TxnRef") || !queryParams.ContainsKey("vnp_SecureHash"))
-                    return BadRequest("Invalid VNPay callback.");
-
-                // 1️⃣ Validate chữ ký
-                var isValidSignature = _vnpayService.ValidateSignature(queryParams);
-                if (!isValidSignature)
-                    return BadRequest("Invalid signature");
-
-                // 2️⃣ Lấy PaymentId từ callback
-                long paymentIdLong = long.Parse(queryParams["vnp_TxnRef"]);
-                var payment = _paymentRepo.GetPaymentById((int)paymentIdLong);
-                if (payment == null)
-                    return NotFound("Payment not found");
-
-                // 3️⃣ Lấy response code từ VNPay
-                string responseCode = queryParams.ContainsKey("vnp_ResponseCode")
-                    ? queryParams["vnp_ResponseCode"]
-                    : "";
-
-                if (responseCode != "00")
-                {
-                    payment.Status = "Failed";
-                    _paymentRepo.UpdatePayment(payment);
-                    return Ok(new { message = "Payment failed", paymentId = payment.PaymentId });
-                }
-
-                // 4️⃣ Nếu thành công
-                payment.Status = "Success";
-                _paymentRepo.UpdatePayment(payment);
-
-                // 5️⃣ Xử lý nghiệp vụ theo loại thanh toán
-                if (payment.PaymentType == "Deposit")
-                {
-                    var order = _orderRepo.GetOrderById(payment.OrderId.Value);
-                    if (order != null)
-                    {
-                        order.DepositStatus = "Paid";
-                        order.Status = "Deposited";
-                        _orderRepo.UpdateOrder(order);
-                    }
-                }
-                else if (payment.PaymentType == "FinalPayment")
-                {
-                    var order = _orderRepo.GetOrderById(payment.OrderId.Value);
-                    if (order != null)
-                    {
-                        order.FinalPaymentStatus = "Paid";
-                        order.Status = "Completed";
-                        order.CompletedDate = DateTime.Now;
-                        _orderRepo.UpdateOrder(order);
-                    }
-                }
-                else if (payment.PaymentType == "Verification")
-                {
-                    if (payment.ProductId != null)
-                    {
-                        var product = _productRepo.GetProductById(payment.ProductId.Value);
-                        if (product != null)
-                        {
-                            product.VerificationStatus = "Requested";
-                            _productRepo.UpdateProduct(product);
-                        }
-                    }
-                }
-
-                // 6️⃣ Trả về kết quả
-                return Ok(new
-                {
-                    message = "Payment success",
-                    paymentId = payment.PaymentId,
-                    type = payment.PaymentType,
-                    status = payment.Status
-                });
+                payment.PayDate = payDate;
             }
-            catch (Exception ex)
+
+            if (responseCode == "00" && resp.Success)
             {
-                return StatusCode(500, "Error processing VNPay return: " + ex.Message);
+                payment.Status = "Success";
+                await _paymentRepo.UpdatePaymentAsync(payment);
+
+                // Nghiệp vụ
+                if (payment.PaymentType == "Deposit" && payment.OrderId.HasValue)
+                {
+                    var od = _orderRepo.GetOrderById(payment.OrderId.Value);
+                    if (od != null) { od.DepositStatus = "Paid"; od.Status = "Deposited"; _orderRepo.UpdateOrder(od); }
+                }
+                else if (payment.PaymentType == "FinalPayment" && payment.OrderId.HasValue)
+                {
+                    var od = _orderRepo.GetOrderById(payment.OrderId.Value);
+                    if (od != null) { od.FinalPaymentStatus = "Paid"; od.Status = "Completed"; od.CompletedDate = DateTime.Now; _orderRepo.UpdateOrder(od); }
+                }
+                else if (payment.PaymentType == "Verification" && payment.ProductId.HasValue)
+                {
+                    var p = _productRepo.GetProductById(payment.ProductId.Value);
+                    if (p != null) { p.VerificationStatus = "Requested"; _productRepo.UpdateProduct(p); }
+                }
+
+                return Ok(new { message = "Payment success", paymentId = payment.PaymentId, type = payment.PaymentType });
+            }
+            else
+            {
+                payment.Status = "Failed";
+                await _paymentRepo.UpdatePaymentAsync(payment);
+                return Ok(new { message = "Payment failed", paymentId = payment.PaymentId, code = responseCode });
             }
         }
 
+        [HttpPost("vnpay-ipn")]
+        [AllowAnonymous]
+        public async Task<IActionResult> VnPayIpn([FromQuery] Dictionary<string, string> query)
+        {
+            if (query is null || !query.ContainsKey("vnp_TxnRef") || !query.ContainsKey("vnp_SecureHash")) return Content("Fail");
+            if (!_vnPay.ValidateSignature(query)) return Content("Fail");
+            if (!int.TryParse(query["vnp_TxnRef"], out var paymentId)) return Content("Fail");
+
+            var payment = await _paymentRepo.GetPaymentForUpdateAsync(paymentId);
+            if (payment is null) return Content("Fail");
+            if (await _paymentRepo.HasSuccessfulPaymentAsync(paymentId)) return Content("OK");
+
+            var responseCode = query.GetValueOrDefault("vnp_ResponseCode", "");
+            payment.TransactionNo = query.GetValueOrDefault("vnp_TransactionNo", "");
+            payment.ResponseCode = responseCode;
+            payment.Status = responseCode == "00" ? "Success" : "Failed";
+            await _paymentRepo.UpdatePaymentAsync(payment);
+
+            return Content("OK");
+        }
     }
 }
+    
