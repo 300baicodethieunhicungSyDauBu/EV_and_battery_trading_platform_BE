@@ -1130,5 +1130,80 @@ namespace BE.API.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
+        
+        [HttpGet("verification/requested")]
+[Authorize(Policy = "AdminOnly")]
+public ActionResult GetRequestedVerificationProducts()
+{
+    try
+    {
+        var products = _productRepo.GetAllProducts()
+            .Where(p => p.VerificationStatus == "Requested")
+            .ToList();
+
+        if (!products.Any())
+            return NotFound("No products with VerificationStatus = 'Requested'.");
+
+        var response = products.Select(p => new ProductResponse
+        {
+            ProductId = p.ProductId,
+            SellerId = p.SellerId,
+            ProductType = p.ProductType,
+            Title = p.Title,
+            Description = p.Description,
+            Price = p.Price,
+            Brand = p.Brand,
+            Model = p.Model,
+            Condition = p.Condition,
+            Status = p.Status,
+            VerificationStatus = p.VerificationStatus,
+            CreatedDate = p.CreatedDate,
+            ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+        }).ToList();
+
+        return Ok(response);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, "Internal server error: " + ex.Message);
+    }
+}
+
+
+[HttpPut("verify/{id}")]
+[Authorize(Policy = "AdminOnly")]
+public ActionResult VerifyProduct(int id)
+{
+    try
+    {
+        var product = _productRepo.GetProductById(id);
+        if (product == null)
+        {
+            return NotFound("Product not found.");
+        }
+
+        if (product.VerificationStatus != "Requested")
+        {
+            return BadRequest("Only products with VerificationStatus = 'Requested' can be verified.");
+        }
+
+        product.VerificationStatus = "Verified";
+        product.Status = "Active"; // optional: tự động kích hoạt
+        _productRepo.UpdateProduct(product);
+
+        return Ok(new
+        {
+            product.ProductId,
+            product.Title,
+            product.Status,
+            product.VerificationStatus,
+            Message = "Product verified successfully."
+        });
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, "Internal server error: " + ex.Message);
+    }
+}
     }
 }

@@ -130,7 +130,7 @@ builder.Services.AddScoped<IProductImageRepo, ProductImageRepo>();
 builder.Services.AddScoped<IUserRoleRepo, UserRoleRepo>();
 builder.Services.AddScoped<IReviewsRepo, ReviewsRepo>();
 builder.Services.AddScoped<IReportedListingsRepo, ReportedListingsRepo>();
-builder.Services.AddScoped<IFeeSettings, FeeSettingsRepo>();
+builder.Services.AddScoped<IFeeSettingsRepo, FeeSettingsRepo>();
 builder.Services.AddScoped<INotificationsRepo, NotificationsRepo>();
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
@@ -182,11 +182,12 @@ builder.Services.AddCors(o => o.AddPolicy("AllowAll",
 var app = builder.Build();
 
 // =================== Pipeline ===================
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "EV Battery API v1");
+    c.RoutePrefix = string.Empty; // Swagger ở root (/) thay vì /swagger
+});
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");

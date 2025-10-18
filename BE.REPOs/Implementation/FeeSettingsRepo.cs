@@ -4,7 +4,7 @@ using BE.REPOs.Interface;
 
 namespace BE.REPOs.Implementation
 {
-    public class FeeSettingsRepo : IFeeSettings
+    public class FeeSettingsRepo : IFeeSettingsRepo
     {
         public List<FeeSetting> GetAllFeeSettings()
         {
@@ -39,6 +39,14 @@ namespace BE.REPOs.Implementation
         public bool DeleteFeeSetting(int feeId)
         {
             return FeeSettingsDAO.Instance.DeleteFeeSetting(feeId);
+        }
+        public decimal GetActiveFeeValue(string feeType)
+        {
+            using var ctx = new EvandBatteryTradingPlatformContext();
+            var fee = ctx.FeeSettings
+                .AsQueryable()
+                .FirstOrDefault(f => f.FeeType == feeType && f.IsActive == true);
+            return fee?.FeeValue ?? 0m;
         }
     }
 }
