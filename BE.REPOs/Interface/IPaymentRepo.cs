@@ -12,9 +12,19 @@ namespace BE.REPOs.Interface
         Task<Payment> CreatePaymentAsync(Payment payment);
         Task<Payment> UpdatePaymentAsync(Payment payment);
 
-        // Tra cứu phục vụ nghiệp vụ
+        // CRUD cơ bản (sync) - để tương thích với controller hiện tại
+        IReadOnlyList<Payment> GetAllPayments();
+        Payment? GetPaymentById(int id);
+        Payment CreatePayment(Payment payment);
+        Payment UpdatePayment(Payment payment);
+
+        // Tra cứu phục vụ nghiệp vụ (async)
         Task<IReadOnlyList<Payment>> GetPaymentsByOrderIdAsync(int orderId);
         Task<IReadOnlyList<Payment>> GetPaymentsByPayerIdAsync(int payerId);
+
+        // Tra cứu phục vụ nghiệp vụ (sync) - để tương thích với controller hiện tại
+        IReadOnlyList<Payment> GetPaymentsByOrderId(int orderId);
+        IReadOnlyList<Payment> GetPaymentsByPayerId(int payerId);
 
         // ★ Thêm cho VNPay:
         // Lấy bản ghi để update an toàn (tuỳ ORM bạn có thể dùng rowversion/concurrency token)

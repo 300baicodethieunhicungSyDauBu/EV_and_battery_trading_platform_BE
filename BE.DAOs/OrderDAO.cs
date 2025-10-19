@@ -52,11 +52,20 @@ namespace BE.DAOs
 
         public Order CreateOrder(Order order)
         {
-            order.CreatedDate = DateTime.Now;
-            order.Status = "Pending";
-            order.DepositStatus = "Pending";
-            order.FinalPaymentStatus = "Pending";
-            order.PayoutStatus = "Pending";
+            // Only set CreatedDate if not already set
+            if (!order.CreatedDate.HasValue)
+                order.CreatedDate = DateTime.Now;
+            
+            // Only set default values if not already set
+            if (string.IsNullOrEmpty(order.Status))
+                order.Status = "Pending";
+            if (string.IsNullOrEmpty(order.DepositStatus))
+                order.DepositStatus = "Unpaid";
+            if (string.IsNullOrEmpty(order.FinalPaymentStatus))
+                order.FinalPaymentStatus = "Unpaid";
+            if (string.IsNullOrEmpty(order.PayoutStatus))
+                order.PayoutStatus = "Pending";
+            
             dbcontext.Orders.Add(order);
             dbcontext.SaveChanges();
             return order;

@@ -12,7 +12,7 @@ namespace BE.REPOs.Implementation
         private readonly EvandBatteryTradingPlatformContext _db;
         public PaymentRepo(EvandBatteryTradingPlatformContext db) => _db = db;
 
-        // CRUD cơ bản
+        // CRUD cơ bản (async)
         public async Task<IReadOnlyList<Payment>> GetAllPaymentsAsync()
             => await _db.Payments.AsNoTracking().OrderByDescending(p => p.CreatedDate).ToListAsync();
 
@@ -33,11 +33,40 @@ namespace BE.REPOs.Implementation
             return payment;
         }
 
+        // CRUD cơ bản (sync) - để tương thích với controller hiện tại
+        public IReadOnlyList<Payment> GetAllPayments()
+            => _db.Payments.AsNoTracking().OrderByDescending(p => p.CreatedDate).ToList();
+
+        public Payment? GetPaymentById(int id)
+            => _db.Payments.AsNoTracking().FirstOrDefault(p => p.PaymentId == id);
+
+        public Payment CreatePayment(Payment payment)
+        {
+            _db.Payments.Add(payment);
+            _db.SaveChanges();
+            return payment;
+        }
+
+        public Payment UpdatePayment(Payment payment)
+        {
+            _db.Payments.Update(payment);
+            _db.SaveChanges();
+            return payment;
+        }
+
+        // Tra cứu phục vụ nghiệp vụ (async)
         public async Task<IReadOnlyList<Payment>> GetPaymentsByOrderIdAsync(int orderId)
             => await _db.Payments.AsNoTracking().Where(p => p.OrderId == orderId).ToListAsync();
 
         public async Task<IReadOnlyList<Payment>> GetPaymentsByPayerIdAsync(int payerId)
             => await _db.Payments.AsNoTracking().Where(p => p.PayerId == payerId).ToListAsync();
+
+        // Tra cứu phục vụ nghiệp vụ (sync) - để tương thích với controller hiện tại
+        public IReadOnlyList<Payment> GetPaymentsByOrderId(int orderId)
+            => _db.Payments.AsNoTracking().Where(p => p.OrderId == orderId).ToList();
+
+        public IReadOnlyList<Payment> GetPaymentsByPayerId(int payerId)
+            => _db.Payments.AsNoTracking().Where(p => p.PayerId == payerId).ToList();
 
         // VNPay helpers
 

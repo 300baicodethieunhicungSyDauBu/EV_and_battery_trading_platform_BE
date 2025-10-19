@@ -12,10 +12,14 @@ namespace BE.API.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderRepo _orderRepo;
+        private readonly IUserRepo _userRepo;
+        private readonly IProductRepo _productRepo;
 
-        public OrderController(IOrderRepo orderRepo)
+        public OrderController(IOrderRepo orderRepo, IUserRepo userRepo, IProductRepo productRepo)
         {
             _orderRepo = orderRepo;
+            _userRepo = userRepo;
+            _productRepo = productRepo;
         }
 
         [HttpGet]
@@ -119,15 +123,54 @@ namespace BE.API.Controllers
         {
             try
             {
+                // Validation
+                if (request.SellerId <= 0)
+                    return BadRequest("Valid SellerId is required.");
+                if (request.ProductId <= 0)
+                    return BadRequest("Valid ProductId is required.");
+                if (request.TotalAmount <= 0)
+                    return BadRequest("TotalAmount must be greater than 0.");
+                if (request.DepositAmount < 0)
+                    return BadRequest("DepositAmount cannot be negative.");
+
                 var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                if (userId <= 0) return Unauthorized("Invalid user token.");
+
+                // Validate foreign key existence
+                var buyerId = request.BuyerId ?? userId;
+                
+                // Check if Seller exists
+                var seller = _userRepo.GetUserById(request.SellerId!.Value);
+                if (seller == null)
+                    return BadRequest($"Seller with ID {request.SellerId} does not exist.");
+
+                // Check if Product exists
+                var product = _productRepo.GetProductById(request.ProductId!.Value);
+                if (product == null)
+                    return BadRequest($"Product with ID {request.ProductId} does not exist.");
+
+                // Check if Buyer exists (if different from current user)
+                if (buyerId != userId)
+                {
+                    var buyer = _userRepo.GetUserById(buyerId);
+                    if (buyer == null)
+                        return BadRequest($"Buyer with ID {buyerId} does not exist.");
+                }
 
                 var order = new Order
                 {
-                    BuyerId = userId,
+                    BuyerId = buyerId, // Use validated buyerId
                     SellerId = request.SellerId,
                     ProductId = request.ProductId,
                     TotalAmount = request.TotalAmount,
-                    DepositAmount = request.DepositAmount
+                    DepositAmount = request.DepositAmount,
+                    Status = request.Status ?? "Pending",
+                    DepositStatus = request.DepositStatus ?? "Unpaid",
+                    FinalPaymentStatus = request.FinalPaymentStatus ?? "Unpaid",
+                    FinalPaymentDueDate = request.FinalPaymentDueDate,
+                    PayoutAmount = request.PayoutAmount ?? 0,
+                    PayoutStatus = request.PayoutStatus ?? "Pending",
+                    CreatedDate = DateTime.Now
                 };
 
                 var createdOrder = _orderRepo.CreateOrder(order);
@@ -135,9 +178,14 @@ namespace BE.API.Controllers
                 var response = new
                 {
                     createdOrder.OrderId,
+                    createdOrder.BuyerId,
+                    createdOrder.SellerId,
+                    createdOrder.ProductId,
                     createdOrder.TotalAmount,
                     createdOrder.DepositAmount,
                     createdOrder.Status,
+                    createdOrder.DepositStatus,
+                    createdOrder.FinalPaymentStatus,
                     createdOrder.CreatedDate
                 };
 

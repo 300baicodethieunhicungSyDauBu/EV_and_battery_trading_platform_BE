@@ -5,11 +5,9 @@ using BE.REPOs.Interface;
 using BE.REPOs.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-<<<<<<< HEAD
 using System.Security.Claims;
-=======
 using System.Globalization;
->>>>>>> 7bfccccfc9dbb0150d5a5797ff6a0509d0d1d248
+
 
 namespace BE.API.Controllers
 {
@@ -48,15 +46,15 @@ namespace BE.API.Controllers
             }
             if (string.IsNullOrEmpty(paymentType)) return BadRequest("PaymentType is required.");
             if (request.Amount <= 0) return BadRequest("Amount must be > 0");
-            if ((paymentType is "Deposit" or "FinalPayment") && !request.OrderId.HasValue)
-                return BadRequest($"{paymentType} requires OrderId.");
-            if (paymentType == "Verification" && !request.ProductId.HasValue)
-                return BadRequest("Verification requires ProductId.");
+            if ((paymentType is "Deposit" or "FinalPayment") && (!request.OrderId.HasValue || request.OrderId <= 0))
+                return BadRequest($"{paymentType} requires a valid OrderId.");
+            if (paymentType == "Verification" && (!request.ProductId.HasValue || request.ProductId <= 0))
+                return BadRequest("Verification requires a valid ProductId.");
 
             var payment = new Payment
             {
-                OrderId = request.OrderId,
-                ProductId = request.ProductId,
+                OrderId = request.OrderId > 0 ? request.OrderId : null,
+                ProductId = request.ProductId > 0 ? request.ProductId : null,
                 PayerId = userId,
                 PaymentType = paymentType,
                 Amount = request.Amount,
