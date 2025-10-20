@@ -1207,7 +1207,7 @@ namespace BE.API.Controllers
             }
         }
         
-        [HttpPost("search")]
+[HttpPost("search")]
 [AllowAnonymous]
 public ActionResult SearchProducts([FromBody] ProductSearchRequest request)
 {
@@ -1215,48 +1215,139 @@ public ActionResult SearchProducts([FromBody] ProductSearchRequest request)
     {
         var products = _productRepo.GetAllProducts().AsQueryable();
 
+        // 🔍 1️⃣ Keyword search (case-insensitive)
         if (!string.IsNullOrWhiteSpace(request.Keyword))
         {
             var keyword = request.Keyword.ToLower();
-
             products = products.Where(p =>
-                p.Title.ToLower().Contains(keyword) ||
-                p.Brand.ToLower().Contains(keyword) ||
-                p.Model.ToLower().Contains(keyword));
+                (p.Title != null && p.Title.ToLower().Contains(keyword)) ||
+                (p.Brand != null && p.Brand.ToLower().Contains(keyword)) ||
+                (p.Model != null && p.Model.ToLower().Contains(keyword))
+            );
         }
 
+        // 🔍 2️⃣ ProductType (Vehicle / Battery)
         if (!string.IsNullOrEmpty(request.ProductType))
-            products = products.Where(p => p.ProductType == request.ProductType);
+        {
+            var type = request.ProductType.ToLower();
+            products = products.Where(p => p.ProductType.ToLower() == type);
+        }
 
+        // 🔍 3️⃣ Brand, Model, Condition (case-insensitive)
         if (!string.IsNullOrEmpty(request.Brand))
-            products = products.Where(p => p.Brand == request.Brand);
+        {
+            var brand = request.Brand.ToLower();
+            products = products.Where(p => p.Brand != null && p.Brand.ToLower().Contains(brand));
+        }
 
+        if (!string.IsNullOrEmpty(request.Model))
+        {
+            var model = request.Model.ToLower();
+            products = products.Where(p => p.Model != null && p.Model.ToLower().Contains(model));
+        }
+
+        if (!string.IsNullOrEmpty(request.Condition))
+        {
+            var condition = request.Condition.ToLower();
+            products = products.Where(p => p.Condition != null && p.Condition.ToLower().Contains(condition));
+        }
+
+        // 💰 4️⃣ Price Range
         if (request.MinPrice.HasValue)
             products = products.Where(p => p.Price >= request.MinPrice.Value);
         if (request.MaxPrice.HasValue)
             products = products.Where(p => p.Price <= request.MaxPrice.Value);
 
-        // Vehicle filters
+        // 🚗 5️⃣ Vehicle-specific filters
         if (!string.IsNullOrEmpty(request.VehicleType))
-            products = products.Where(p => p.VehicleType == request.VehicleType);
+        {
+            var vtype = request.VehicleType.ToLower();
+            products = products.Where(p => p.VehicleType != null && p.VehicleType.ToLower().Contains(vtype));
+        }
+
+        if (!string.IsNullOrEmpty(request.Transmission))
+        {
+            var transmission = request.Transmission.ToLower();
+            products = products.Where(p => p.Transmission != null && p.Transmission.ToLower().Contains(transmission));
+        }
+
+        if (request.MinManufactureYear.HasValue)
+            products = products.Where(p => p.ManufactureYear >= request.MinManufactureYear.Value);
+        if (request.MaxManufactureYear.HasValue)
+            products = products.Where(p => p.ManufactureYear <= request.MaxManufactureYear.Value);
+
         if (request.MaxMileage.HasValue)
             products = products.Where(p => p.Mileage <= request.MaxMileage.Value);
 
-        // Battery filters
+        if (request.SeatCount.HasValue)
+            products = products.Where(p => p.SeatCount == request.SeatCount.Value);
+
+        // 🔋 6️⃣ Battery-specific filters
         if (!string.IsNullOrEmpty(request.BatteryType))
-            products = products.Where(p => p.BatteryType == request.BatteryType);
+        {
+            var btype = request.BatteryType.ToLower();
+            products = products.Where(p => p.BatteryType != null && p.BatteryType.ToLower().Contains(btype));
+        }
+
         if (request.MinBatteryHealth.HasValue)
             products = products.Where(p => p.BatteryHealth >= request.MinBatteryHealth.Value);
+        if (request.MaxBatteryHealth.HasValue)
+            products = products.Where(p => p.BatteryHealth <= request.MaxBatteryHealth.Value);
 
+        if (request.MinCapacity.HasValue)
+            products = products.Where(p => p.Capacity >= request.MinCapacity.Value);
+        if (request.MaxCapacity.HasValue)
+            products = products.Where(p => p.Capacity <= request.MaxCapacity.Value);
+
+        if (!string.IsNullOrEmpty(request.CellType))
+        {
+            var cell = request.CellType.ToLower();
+            products = products.Where(p => p.CellType != null && p.CellType.ToLower().Contains(cell));
+        }
+
+        if (!string.IsNullOrEmpty(request.BMS))
+        {
+            var bms = request.BMS.ToLower();
+            products = products.Where(p => p.BMS != null && p.BMS.ToLower().Contains(bms));
+        }
+
+        // ⚙️ 7️⃣ Status filters
+        if (!string.IsNullOrEmpty(request.Status))
+        {
+            var status = request.Status.ToLower();
+            products = products.Where(p => p.Status != null && p.Status.ToLower() == status);
+        }
+
+        if (!string.IsNullOrEmpty(request.VerificationStatus))
+        {
+            var verStatus = request.VerificationStatus.ToLower();
+            products = products.Where(p => p.VerificationStatus != null && p.VerificationStatus.ToLower() == verStatus);
+        }
+
+        // ✅ 8️⃣ Map sang Response
         var result = products.Select(p => new ProductResponse
         {
             ProductId = p.ProductId,
+            SellerId = p.SellerId,
+            ProductType = p.ProductType,
             Title = p.Title,
             Brand = p.Brand,
             Model = p.Model,
+            Condition = p.Condition,
             Price = p.Price,
-            ProductType = p.ProductType,
+            VehicleType = p.VehicleType,
+            ManufactureYear = p.ManufactureYear,
+            Mileage = p.Mileage,
+            Transmission = p.Transmission,
+            SeatCount = p.SeatCount,
+            BatteryType = p.BatteryType,
+            BatteryHealth = p.BatteryHealth,
+            Capacity = p.Capacity,
+            Voltage = p.Voltage,
+            CellType = p.CellType,
+            BMS = p.BMS,
             Status = p.Status,
+            VerificationStatus = p.VerificationStatus,
             ImageUrls = p.ProductImages.Select(img => img.ImageData).ToList()
         }).ToList();
 
@@ -1267,6 +1358,7 @@ public ActionResult SearchProducts([FromBody] ProductSearchRequest request)
         return StatusCode(500, "Internal server error: " + ex.Message);
     }
 }
+
 
     }
 }
