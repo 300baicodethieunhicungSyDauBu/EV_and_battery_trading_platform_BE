@@ -963,7 +963,7 @@ namespace BE.API.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
-        
+
         [HttpGet("resubmit")]
         [Authorize(Policy = "AdminOnly")] // hoặc bỏ nếu bạn chưa có phân quyền
         public ActionResult GetReSubmittedProducts()
@@ -1069,7 +1069,7 @@ namespace BE.API.Controllers
                 {
                     return Unauthorized("Invalid user token.");
                 }
-                
+
                 if (userId != sellerId)
                 {
                     return Forbid($"Access denied. UserId from token: {userId}, SellerId from URL: {sellerId}");
@@ -1077,7 +1077,7 @@ namespace BE.API.Controllers
 
                 // Debug: Get all products by seller first to check
                 var allProducts = _productRepo.GetProductsBySellerId(sellerId);
-                
+
                 var products = _productRepo.GetRejectedProductsBySellerId(sellerId);
 
                 // Debug response with more information
@@ -1089,7 +1089,8 @@ namespace BE.API.Controllers
                         UserIdFromToken = userId,
                         AllProductsCount = allProducts.Count,
                         RejectedProductsCount = products.Count,
-                        AllProductsStatuses = allProducts.Select(p => new { p.ProductId, p.Status, p.VerificationStatus, p.RejectionReason }).ToList()
+                        AllProductsStatuses = allProducts.Select(p => new
+                            { p.ProductId, p.Status, p.VerificationStatus, p.RejectionReason }).ToList()
                     },
                     RejectedProducts = products.Select(p => new ProductResponse
                     {
@@ -1130,38 +1131,136 @@ namespace BE.API.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
-        
+
         [HttpGet("verification/requested")]
-[Authorize(Policy = "AdminOnly")]
-public ActionResult GetRequestedVerificationProducts()
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult GetRequestedVerificationProducts()
+        {
+            try
+            {
+                var products = _productRepo.GetAllProducts()
+                    .Where(p => p.VerificationStatus == "Requested")
+                    .ToList();
+
+                if (!products.Any())
+                    return NotFound("No products with VerificationStatus = 'Requested'.");
+
+                var response = products.Select(p => new ProductResponse
+                {
+                    ProductId = p.ProductId,
+                    SellerId = p.SellerId,
+                    ProductType = p.ProductType,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Price = p.Price,
+                    Brand = p.Brand,
+                    Model = p.Model,
+                    Condition = p.Condition,
+                    Status = p.Status,
+                    VerificationStatus = p.VerificationStatus,
+                    CreatedDate = p.CreatedDate,
+                    ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+                }).ToList();
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+
+        [HttpPut("verify/{id}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult VerifyProduct(int id)
+        {
+            try
+            {
+                var product = _productRepo.GetProductById(id);
+                if (product == null)
+                {
+                    return NotFound("Product not found.");
+                }
+
+                if (product.VerificationStatus != "Requested")
+                {
+                    return BadRequest("Only products with VerificationStatus = 'Requested' can be verified.");
+                }
+
+                product.VerificationStatus = "Verified";
+                product.Status = "Active"; // optional: tự động kích hoạt
+                _productRepo.UpdateProduct(product);
+
+                return Ok(new
+                {
+                    product.ProductId,
+                    product.Title,
+                    product.Status,
+                    product.VerificationStatus,
+                    Message = "Product verified successfully."
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+        
+        [HttpPost("search")]
+[AllowAnonymous]
+public ActionResult SearchProducts([FromBody] ProductSearchRequest request)
 {
     try
     {
-        var products = _productRepo.GetAllProducts()
-            .Where(p => p.VerificationStatus == "Requested")
-            .ToList();
+        var products = _productRepo.GetAllProducts().AsQueryable();
 
-        if (!products.Any())
-            return NotFound("No products with VerificationStatus = 'Requested'.");
+        if (!string.IsNullOrWhiteSpace(request.Keyword))
+        {
+            var keyword = request.Keyword.ToLower();
 
-        var response = products.Select(p => new ProductResponse
+            products = products.Where(p =>
+                p.Title.ToLower().Contains(keyword) ||
+                p.Brand.ToLower().Contains(keyword) ||
+                p.Model.ToLower().Contains(keyword));
+        }
+
+        if (!string.IsNullOrEmpty(request.ProductType))
+            products = products.Where(p => p.ProductType == request.ProductType);
+
+        if (!string.IsNullOrEmpty(request.Brand))
+            products = products.Where(p => p.Brand == request.Brand);
+
+        if (request.MinPrice.HasValue)
+            products = products.Where(p => p.Price >= request.MinPrice.Value);
+        if (request.MaxPrice.HasValue)
+            products = products.Where(p => p.Price <= request.MaxPrice.Value);
+
+        // Vehicle filters
+        if (!string.IsNullOrEmpty(request.VehicleType))
+            products = products.Where(p => p.VehicleType == request.VehicleType);
+        if (request.MaxMileage.HasValue)
+            products = products.Where(p => p.Mileage <= request.MaxMileage.Value);
+
+        // Battery filters
+        if (!string.IsNullOrEmpty(request.BatteryType))
+            products = products.Where(p => p.BatteryType == request.BatteryType);
+        if (request.MinBatteryHealth.HasValue)
+            products = products.Where(p => p.BatteryHealth >= request.MinBatteryHealth.Value);
+
+        var result = products.Select(p => new ProductResponse
         {
             ProductId = p.ProductId,
-            SellerId = p.SellerId,
-            ProductType = p.ProductType,
             Title = p.Title,
-            Description = p.Description,
-            Price = p.Price,
             Brand = p.Brand,
             Model = p.Model,
-            Condition = p.Condition,
+            Price = p.Price,
+            ProductType = p.ProductType,
             Status = p.Status,
-            VerificationStatus = p.VerificationStatus,
-            CreatedDate = p.CreatedDate,
-            ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+            ImageUrls = p.ProductImages.Select(img => img.ImageData).ToList()
         }).ToList();
 
-        return Ok(response);
+        return Ok(result);
     }
     catch (Exception ex)
     {
@@ -1169,41 +1268,5 @@ public ActionResult GetRequestedVerificationProducts()
     }
 }
 
-
-[HttpPut("verify/{id}")]
-[Authorize(Policy = "AdminOnly")]
-public ActionResult VerifyProduct(int id)
-{
-    try
-    {
-        var product = _productRepo.GetProductById(id);
-        if (product == null)
-        {
-            return NotFound("Product not found.");
-        }
-
-        if (product.VerificationStatus != "Requested")
-        {
-            return BadRequest("Only products with VerificationStatus = 'Requested' can be verified.");
-        }
-
-        product.VerificationStatus = "Verified";
-        product.Status = "Active"; // optional: tự động kích hoạt
-        _productRepo.UpdateProduct(product);
-
-        return Ok(new
-        {
-            product.ProductId,
-            product.Title,
-            product.Status,
-            product.VerificationStatus,
-            Message = "Product verified successfully."
-        });
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, "Internal server error: " + ex.Message);
-    }
-}
     }
 }
