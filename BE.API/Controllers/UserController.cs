@@ -59,26 +59,27 @@ namespace BE.API.Controllers
         private string GenerateJwtToken(User user)
         {
             var claims = new List<Claim> {
-            new Claim(ClaimTypes.Name,user.FullName ?? "Unknown"),
-            new Claim(ClaimTypes.Email,user.Email),
-            new Claim("UserId",user.UserId.ToString())
+                new Claim(ClaimTypes.Name, user.FullName ?? "Unknown"),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("UserId", user.UserId.ToString())
             };
 
             if (user.RoleId.HasValue)
             {
                 claims.Add(new Claim(ClaimTypes.Role, user.RoleId.Value.ToString()));
             }
-            
+
             var secretKey = _configuration["JWT:SecretKey"] ?? "default-secret-key";
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            // 🔥 Token sống 100 năm (cơ bản là “vĩnh viễn”)
             var preparedToken = new JwtSecurityToken(
-                            issuer: _configuration["JWT:Issuer"],
-                            audience: _configuration["JWT:Audience"],
-                            claims: claims,
-                            expires: DateTime.Now.AddMinutes(30),
-                            signingCredentials: creds);
+                issuer: _configuration["JWT:Issuer"],
+                audience: _configuration["JWT:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddYears(100),
+                signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(preparedToken);
         }
