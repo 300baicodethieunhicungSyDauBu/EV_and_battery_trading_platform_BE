@@ -5,6 +5,8 @@ using BE.REPOs.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using BE.API.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace BE.API.Controllers;
 
@@ -14,11 +16,13 @@ public class MessageController : ControllerBase
 {
     private readonly IMessageRepo _messageRepo;
     private readonly IChatRepo _chatRepo;
+    private readonly IHubContext<ChatHub> _hubContext;
 
-    public MessageController(IMessageRepo messageRepo, IChatRepo chatRepo)
+    public MessageController(IMessageRepo messageRepo, IChatRepo chatRepo, IHubContext<ChatHub> hubContext)
     {
         _messageRepo = messageRepo;
         _chatRepo = chatRepo;
+        _hubContext = hubContext;
     }
 
     [HttpGet]
@@ -187,27 +191,22 @@ public class MessageController : ControllerBase
 
     [HttpPost]
     [Authorize(Policy = "MemberOnly")]
-    public ActionResult<MessageResponse> CreateMessage([FromBody] MessageRequest request)
+    public async Task<ActionResult<MessageResponse>> CreateMessage([FromBody] MessageRequest request)
     {
         try
         {
             var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-            
-            // Verify sender is the current user
-            if (request.SenderId != userId)
-            {
-                return Forbid("You can only send messages as yourself.");
-            }
 
-            // Verify chat exists and user is part of it
+            if (request.SenderId != userId)
+                return Forbid("You can only send messages as yourself.");
+
             var chat = _chatRepo.GetChatById(request.ChatId);
             if (chat == null || (chat.User1Id != userId && chat.User2Id != userId))
-            {
                 return Forbid("You can only send messages to chats you're part of.");
-            }
 
+            // ✅ Lưu message
             var message = _messageRepo.CreateMessage(request.ChatId, request.SenderId, request.Content);
-            
+
             var messageResponse = new MessageResponse
             {
                 MessageId = message.MessageId,
@@ -217,6 +216,10 @@ public class MessageController : ControllerBase
                 IsRead = message.IsRead,
                 CreatedDate = message.CreatedDate
             };
+
+            // ✅ Notify đến tất cả client trong group (chatId)
+            await _hubContext.Clients.Group(request.ChatId.ToString())
+                .SendAsync("ReceiveMessage", messageResponse);
 
             return CreatedAtAction(nameof(GetMessageById), new { id = message.MessageId }, messageResponse);
         }

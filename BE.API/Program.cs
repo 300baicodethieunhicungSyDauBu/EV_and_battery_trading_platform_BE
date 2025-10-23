@@ -10,6 +10,7 @@ using Microsoft.OpenApi.Models;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using BE.API.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 var cfg = builder.Configuration;
@@ -177,9 +178,15 @@ builder.Services.AddScoped<IAIChatService, OpenRouterChatService>();
 
 // =================== CORS ===================
 builder.Services.AddCors(o => o.AddPolicy("AllowAll",
-    p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+    p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().AllowCredentials()));
+
+// Thêm SignalR
+builder.Services.AddSignalR();
 
 var app = builder.Build();
+
+// Map hub endpoint
+app.MapHub<ChatHub>("/chatHub");
 
 // =================== Pipeline ===================
 app.UseSwagger();
