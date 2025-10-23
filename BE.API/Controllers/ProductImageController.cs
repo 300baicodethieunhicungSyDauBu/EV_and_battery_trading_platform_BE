@@ -84,11 +84,7 @@ namespace BE.API.Controllers
                 var product = _productRepo.GetProductById(request.ProductId ?? 0);
                 if (product == null)
                     return NotFound("Product not found");
-
-                // ✅ Kiểm tra quyền sở hữu sản phẩm
-                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-                if (product.SellerId != userId && !User.IsInRole("1")) // "1" = Admin
-                    return Forbid();
+                
 
                 // ✅ Kiểm tra tên loại ảnh
                 if (string.IsNullOrWhiteSpace(request.Name) ||
@@ -142,11 +138,7 @@ namespace BE.API.Controllers
                 var product = _productRepo.GetProductById(productId);
                 if (product == null)
                     return NotFound("Product not found");
-
-                // ✅ Kiểm tra quyền sở hữu
-                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-                if (product.SellerId != userId && !User.IsInRole("1")) // "1" = Admin
-                    return Forbid();
+                
 
                 // ✅ Validate loại ảnh (Vehicle/Battery/Document)
                 if (string.IsNullOrWhiteSpace(name) ||
