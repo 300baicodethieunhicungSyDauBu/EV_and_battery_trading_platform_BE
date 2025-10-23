@@ -198,15 +198,7 @@ namespace BE.API.Controllers
                     return NotFound("Product image not found.");
                 }
 
-                // ✅ Kiểm tra quyền sở hữu sản phẩm
-                var product = _productRepo.GetProductById(existingImage.ProductId ?? 0);
-                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-
-                if (product?.SellerId != userId && !User.IsInRole("1")) // 1 = Admin
-                {
-                    return Forbid("You are not authorized to modify this product image.");
-                }
-
+                
                 // ✅ Upload ảnh mới lên Cloudinary nếu có
                 string? newImageUrl = null;
                 if (request.ImageFile != null)
@@ -245,14 +237,6 @@ namespace BE.API.Controllers
                 if (image == null)
                 {
                     return NotFound();
-                }
-
-                // Verify product ownership
-                var product = _productRepo.GetProductById(image.ProductId ?? 0);
-                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-                if (product?.SellerId != userId && !User.IsInRole("1"))
-                {
-                    return Forbid();
                 }
 
                 var result = _productImageRepo.DeleteProductImage(id);
