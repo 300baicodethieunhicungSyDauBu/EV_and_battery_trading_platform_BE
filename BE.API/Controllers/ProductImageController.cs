@@ -76,7 +76,6 @@ namespace BE.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "MemberOnly")]
         public async Task<ActionResult<ProductImageResponse>> CreateProductImage([FromForm] ProductImageRequest request)
         {
             try
@@ -132,7 +131,6 @@ namespace BE.API.Controllers
         }
 
         [HttpPost("multiple")]
-        [Authorize(Policy = "MemberOnly")]
         public async Task<ActionResult<List<ProductImageResponse>>> CreateMultipleProductImages(
             [FromForm] int productId,
             [FromForm] string name,
@@ -196,7 +194,6 @@ namespace BE.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Policy = "MemberOnly")]
         public async Task<ActionResult<ProductImageResponse>> UpdateProductImage(
             int id,
             [FromForm] ProductImageRequest request)
@@ -248,7 +245,6 @@ namespace BE.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Policy = "MemberOnly")]
         public ActionResult DeleteProductImage(int id)
         {
             try
@@ -277,7 +273,6 @@ namespace BE.API.Controllers
         }
         
         [HttpGet("product/{productId}/by-name")]
-        [AllowAnonymous]
         public ActionResult<IEnumerable<ProductImageResponse>> GetProductImagesByName(int productId, [FromQuery] string name)
         {
             try
