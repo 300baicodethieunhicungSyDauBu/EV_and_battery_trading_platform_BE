@@ -97,7 +97,6 @@ namespace BE.DAOs
             if (product == null) return null;
 
             product.Status = "Active";
-            product.VerificationStatus = "Approved";
             dbcontext.SaveChanges();
             return product;
         }
