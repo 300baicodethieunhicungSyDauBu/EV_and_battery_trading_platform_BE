@@ -215,14 +215,34 @@ namespace BE.API.Controllers
                     return Forbid();
                 }
 
+                // Lưu trạng thái cũ để so sánh
+                var oldStatus = order.Status;
                 order.Status = request.Status;
                 var updatedOrder = _orderRepo.UpdateOrder(order);
+
+                // Logic cập nhật Product status khi seller xác nhận
+                if (order.SellerId == userId && 
+                    (request.Status == "Confirmed" || request.Status == "Completed") &&
+                    oldStatus != request.Status &&
+                    order.ProductId.HasValue)
+                {
+                    var product = _productRepo.GetProductById(order.ProductId.Value);
+                    if (product != null && product.Status == "Reserved")
+                    {
+                        product.Status = "Sold";
+                        _productRepo.UpdateProduct(product);
+                    }
+                }
 
                 var response = new
                 {
                     updatedOrder.OrderId,
                     updatedOrder.Status,
-                    UpdatedDate = DateTime.Now
+                    UpdatedDate = DateTime.Now,
+                    ProductStatusUpdated = (order.SellerId == userId && 
+                                          (request.Status == "Confirmed" || request.Status == "Completed") &&
+                                          oldStatus != request.Status &&
+                                          order.ProductId.HasValue)
                 };
 
                 return Ok(response);
@@ -230,6 +250,58 @@ namespace BE.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpPost("test-seller-confirm/{orderId}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult TestSellerConfirm(int orderId, [FromBody] TestSellerConfirmRequest request)
+        {
+            try
+            {
+                var order = _orderRepo.GetOrderById(orderId);
+                if (order == null)
+                {
+                    return NotFound("Order not found");
+                }
+
+                // Simulate seller confirmation
+                var oldStatus = order.Status;
+                order.Status = request.NewStatus;
+                var updatedOrder = _orderRepo.UpdateOrder(order);
+
+                // Apply seller confirmation logic
+                bool productStatusUpdated = false;
+                if (order.SellerId == request.SellerId && 
+                    (request.NewStatus == "Confirmed" || request.NewStatus == "Completed") &&
+                    oldStatus != request.NewStatus &&
+                    order.ProductId.HasValue)
+                {
+                    var product = _productRepo.GetProductById(order.ProductId.Value);
+                    if (product != null && product.Status == "Reserved")
+                    {
+                        product.Status = "Sold";
+                        _productRepo.UpdateProduct(product);
+                        productStatusUpdated = true;
+                    }
+                }
+
+                var response = new
+                {
+                    OrderId = updatedOrder.OrderId,
+                    OldStatus = oldStatus,
+                    NewStatus = updatedOrder.Status,
+                    SellerId = order.SellerId,
+                    ProductId = order.ProductId,
+                    ProductStatusUpdated = productStatusUpdated,
+                    UpdatedDate = DateTime.Now
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Test seller confirm error: " + ex.Message);
             }
         }
 
@@ -248,11 +320,31 @@ namespace BE.API.Controllers
                     o.TotalAmount,
                     o.Status,
                     o.CreatedDate,
-                    SellerName = o.Seller?.FullName,
-                    Product = new
+                    o.CompletedDate,
+                    PurchaseDate = o.CompletedDate ?? o.CreatedDate, // Use CompletedDate if available, otherwise CreatedDate
+                    SellerName = o.Seller?.FullName ?? "N/A",
+                    Product = o.Product != null ? new
                     {
-                        o.Product?.Title,
-                        o.Product?.Price
+                        ProductId = (int?)o.Product.ProductId,
+                        Title = o.Product.Title,
+                        Price = o.Product.Price,
+                        Status = o.Product.Status,
+                        ImageData = o.Product.ProductImages?.FirstOrDefault()?.ImageData // Get first product image
+                    } : new
+                    {
+                        ProductId = (int?)null,
+                        Title = "Sản phẩm không tìm thấy",
+                        Price = o.TotalAmount, // Use order amount as fallback
+                        Status = "Unknown",
+                        ImageData = (string?)null
+                    },
+                    // Additional debug info
+                    DebugInfo = new
+                    {
+                        HasProduct = o.Product != null,
+                        ProductId = o.ProductId,
+                        OrderStatus = o.Status,
+                        IsCompleted = o.Status == "Completed"
                     }
                 }).ToList();
 
@@ -293,6 +385,109 @@ namespace BE.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("debug-purchases")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult DebugPurchases()
+        {
+            try
+            {
+                var orders = _orderRepo.GetAllOrders();
+                
+                var problematicOrders = orders.Where(o => 
+                    o.Status == "Completed" && 
+                    (o.Product == null || o.CompletedDate == null)
+                ).ToList();
+
+                var debugInfo = new
+                {
+                    TotalOrders = orders.Count,
+                    CompletedOrders = orders.Count(o => o.Status == "Completed"),
+                    ProblematicOrders = problematicOrders.Count,
+                    ProblematicDetails = problematicOrders.Select(o => new
+                    {
+                        o.OrderId,
+                        o.BuyerId,
+                        o.SellerId,
+                        o.ProductId,
+                        o.Status,
+                        o.CreatedDate,
+                        o.CompletedDate,
+                        HasProduct = o.Product != null,
+                        ProductTitle = o.Product?.Title ?? "NULL",
+                        ProductStatus = o.Product?.Status ?? "NULL"
+                    }).ToList(),
+                    AllCompletedOrders = orders.Where(o => o.Status == "Completed").Select(o => new
+                    {
+                        o.OrderId,
+                        o.ProductId,
+                        o.Status,
+                        o.CompletedDate,
+                        ProductExists = o.Product != null,
+                        ProductTitle = o.Product?.Title
+                    }).ToList()
+                };
+
+                return Ok(debugInfo);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Debug error: " + ex.Message);
+            }
+        }
+
+        [HttpPost("fix-completed-orders")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult FixCompletedOrders()
+        {
+            try
+            {
+                var orders = _orderRepo.GetAllOrders();
+                var fixedCount = 0;
+                var errors = new List<string>();
+
+                foreach (var order in orders.Where(o => o.Status == "Completed"))
+                {
+                    try
+                    {
+                        // Fix missing CompletedDate
+                        if (!order.CompletedDate.HasValue)
+                        {
+                            order.CompletedDate = order.CreatedDate ?? DateTime.Now;
+                            _orderRepo.UpdateOrder(order);
+                            fixedCount++;
+                        }
+
+                        // Check if product exists and is properly linked
+                        if (order.ProductId.HasValue && order.Product == null)
+                        {
+                            var product = _productRepo.GetProductById(order.ProductId.Value);
+                            if (product == null)
+                            {
+                                errors.Add($"Order {order.OrderId}: Product {order.ProductId} not found");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"Error fixing order {order.OrderId}: {ex.Message}");
+                    }
+                }
+
+                return Ok(new
+                {
+                    message = "Fix completed orders process finished",
+                    fixedCount = fixedCount,
+                    totalCompletedOrders = orders.Count(o => o.Status == "Completed"),
+                    errors = errors,
+                    timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Fix error: " + ex.Message);
             }
         }
     }

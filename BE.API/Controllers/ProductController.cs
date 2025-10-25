@@ -12,10 +12,12 @@ namespace BE.API.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IProductRepo _productRepo;
+        private readonly IOrderRepo _orderRepo;
 
-        public ProductController(IProductRepo productRepo)
+        public ProductController(IProductRepo productRepo, IOrderRepo orderRepo)
         {
             _productRepo = productRepo;
+            _orderRepo = orderRepo;
         }
 
         [HttpGet]
@@ -314,6 +316,212 @@ namespace BE.API.Controllers
             {
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
+        }
+
+        [HttpGet("admin/all-statuses")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult GetAllProductStatuses()
+        {
+            try
+            {
+                var products = _productRepo.GetAllProducts();
+                
+                var statusGroups = products.GroupBy(p => p.Status)
+                    .Select(g => new
+                    {
+                        Status = g.Key,
+                        Count = g.Count(),
+                        Description = GetStatusDescription(g.Key, null),
+                        Products = g.Select(p => new
+                        {
+                            p.ProductId,
+                            p.Title,
+                            p.VerificationStatus,
+                            p.SellerId,
+                            p.CreatedDate
+                        }).ToList()
+                    })
+                    .OrderBy(g => g.Status)
+                    .ToList();
+
+                var response = new
+                {
+                    TotalProducts = products.Count,
+                    StatusGroups = statusGroups,
+                    StatusMapping = new
+                    {
+                        Draft = "Chờ duyệt - Admin chưa duyệt",
+                        Active = "Đang bán - Có thể mua",
+                        Reserved = "Đã có đơn hàng - Chờ thanh toán deposit",
+                        Sold = "Đã bán - Không thể mua nữa",
+                        Rejected = "Đã từ chối - Cần seller chỉnh sửa",
+                        Deleted = "Đã xóa"
+                    },
+                    Message = "Admin dashboard nên hiển thị: Reserved = 'Đã có đơn hàng', Draft = 'Chờ duyệt'"
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Get all statuses error: " + ex.Message);
+            }
+        }
+
+        [HttpPost("test-update-status/{productId}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult TestUpdateProductStatus(int productId, [FromBody] TestUpdateStatusRequest request)
+        {
+            try
+            {
+                var product = _productRepo.GetProductById(productId);
+                if (product == null)
+                {
+                    return NotFound($"Product with ID {productId} not found");
+                }
+
+                var oldStatus = product.Status;
+                product.Status = request.NewStatus;
+                var updatedProduct = _productRepo.UpdateProduct(product);
+
+                var response = new
+                {
+                    ProductId = updatedProduct.ProductId,
+                    Title = updatedProduct.Title,
+                    OldStatus = oldStatus,
+                    NewStatus = updatedProduct.Status,
+                    StatusDescription = GetStatusDescription(updatedProduct.Status, updatedProduct.VerificationStatus),
+                    UpdatedDate = DateTime.Now,
+                    Message = $"Product status updated from '{oldStatus}' to '{request.NewStatus}'"
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Test update error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("debug/status/{productId}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult DebugProductStatus(int productId)
+        {
+            try
+            {
+                var product = _productRepo.GetProductById(productId);
+                if (product == null)
+                {
+                    return NotFound($"Product with ID {productId} not found");
+                }
+
+                // Lấy thông tin Order liên quan
+                var orders = _orderRepo.GetAllOrders()
+                    .Where(o => o.ProductId == productId)
+                    .ToList();
+
+                var response = new
+                {
+                    ProductId = product.ProductId,
+                    Title = product.Title,
+                    Status = product.Status,
+                    VerificationStatus = product.VerificationStatus,
+                    StatusDescription = GetStatusDescription(product.Status, product.VerificationStatus),
+                    CreatedDate = product.CreatedDate,
+                    SellerId = product.SellerId,
+                    SellerName = product.Seller?.FullName,
+                    
+                    // Thông tin Order liên quan
+                    RelatedOrders = orders.Select(o => new
+                    {
+                        o.OrderId,
+                        o.Status,
+                        o.DepositStatus,
+                        o.FinalPaymentStatus,
+                        o.BuyerId,
+                        o.SellerId,
+                        o.CreatedDate
+                    }).ToList(),
+                    
+                    // Thông tin Payment liên quan
+                    RelatedPayments = orders.SelectMany(o => o.Payments ?? new List<Payment>()).Select(p => new
+                    {
+                        p.PaymentId,
+                        p.PaymentType,
+                        p.Status,
+                        p.Amount,
+                        p.CreatedDate,
+                        p.PayDate
+                    }).ToList(),
+                    
+                    DebugInfo = new
+                    {
+                        ExpectedStatus = "Reserved (có đơn hàng, chờ thanh toán)",
+                        ActualStatus = product.Status,
+                        IsCorrect = product.Status == "Reserved",
+                        ShouldShowAs = product.Status == "Reserved" ? "Đã có đơn hàng" : "Chờ duyệt"
+                    }
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Debug error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("admin/status/{status}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult GetProductsByStatus(string status)
+        {
+            try
+            {
+                var products = _productRepo.GetAllProducts()
+                    .Where(p => p.Status != null && p.Status.ToLower() == status.ToLower())
+                    .ToList();
+
+                var response = products.Select(p => new
+                {
+                    p.ProductId,
+                    p.Title,
+                    p.Price,
+                    p.Status,
+                    p.VerificationStatus,
+                    p.CreatedDate,
+                    SellerName = p.Seller?.FullName,
+                    SellerId = p.SellerId,
+                    ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>(),
+                    // Thêm thông tin để phân biệt trạng thái
+                    StatusDescription = GetStatusDescription(p.Status, p.VerificationStatus)
+                }).ToList();
+
+                return Ok(new
+                {
+                    Status = status,
+                    Count = products.Count,
+                    Products = response
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        private string GetStatusDescription(string? status, string? verificationStatus)
+        {
+            return status?.ToLower() switch
+            {
+                "draft" => "Bản nháp - Chờ seller hoàn thiện",
+                "re-submit" => "Chờ duyệt lại - Seller đã chỉnh sửa",
+                "rejected" => "Đã từ chối - Cần seller chỉnh sửa",
+                "active" => "Đang bán - Có thể mua",
+                "reserved" => "Đã có đơn hàng - Chờ thanh toán deposit",
+                "sold" => "Đã bán - Không thể mua nữa",
+                "deleted" => "Đã xóa",
+                _ => $"Trạng thái không xác định: {status}"
+            };
         }
 
         [HttpGet("drafts")]
