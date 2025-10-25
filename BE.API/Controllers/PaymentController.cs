@@ -228,12 +228,45 @@ namespace BE.API.Controllers
                 if (payment.PaymentType == "Deposit" && payment.OrderId.HasValue)
                 {
                     var od = _orderRepo.GetOrderById(payment.OrderId.Value);
-                    if (od != null) { od.DepositStatus = "Paid"; od.Status = "Deposited"; _orderRepo.UpdateOrder(od); }
+                    if (od != null) 
+                    { 
+                        od.DepositStatus = "Paid"; 
+                        od.Status = "Deposited"; 
+                        _orderRepo.UpdateOrder(od);
+                        
+                        // Cập nhật Product status thành "Reserved" khi có deposit thành công
+                        if (od.ProductId.HasValue)
+                        {
+                            var product = _productRepo.GetProductById(od.ProductId.Value);
+                            if (product != null && product.Status == "Active")
+                            {
+                                product.Status = "Reserved";
+                                _productRepo.UpdateProduct(product);
+                            }
+                        }
+                    }
                 }
                 else if (payment.PaymentType == "FinalPayment" && payment.OrderId.HasValue)
                 {
                     var od = _orderRepo.GetOrderById(payment.OrderId.Value);
-                    if (od != null) { od.FinalPaymentStatus = "Paid"; od.Status = "Completed"; od.CompletedDate = DateTime.Now; _orderRepo.UpdateOrder(od); }
+                    if (od != null) 
+                    { 
+                        od.FinalPaymentStatus = "Paid"; 
+                        od.Status = "Completed"; 
+                        od.CompletedDate = DateTime.Now; 
+                        _orderRepo.UpdateOrder(od);
+                        
+                        // Cập nhật Product status thành "Sold" khi order hoàn thành
+                        if (od.ProductId.HasValue)
+                        {
+                            var product = _productRepo.GetProductById(od.ProductId.Value);
+                            if (product != null && product.Status == "Reserved")
+                            {
+                                product.Status = "Sold";
+                                _productRepo.UpdateProduct(product);
+                            }
+                        }
+                    }
                 }
                 else if (payment.PaymentType == "Verification" && payment.ProductId.HasValue)
                 {
@@ -248,6 +281,85 @@ namespace BE.API.Controllers
                 payment.Status = "Failed";
                 await _paymentRepo.UpdatePaymentAsync(payment);
                 return Ok(new { message = "Payment failed", paymentId = payment.PaymentId, code = responseCode });
+            }
+        }
+
+        [HttpPost("test-callback")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> TestCallback([FromBody] TestCallbackRequest request)
+        {
+            try
+            {
+                var payment = await _paymentRepo.GetPaymentForUpdateAsync(request.PaymentId);
+                if (payment == null) return NotFound("Payment not found");
+
+                // Simulate successful payment
+                payment.Status = "Success";
+                payment.ResponseCode = "00";
+                payment.TransactionNo = "TEST_" + DateTime.Now.Ticks;
+                payment.PayDate = DateTime.Now;
+                await _paymentRepo.UpdatePaymentAsync(payment);
+
+                // Apply business logic
+                if (payment.PaymentType == "Deposit" && payment.OrderId.HasValue)
+                {
+                    var od = _orderRepo.GetOrderById(payment.OrderId.Value);
+                    if (od != null) 
+                    { 
+                        od.DepositStatus = "Paid"; 
+                        od.Status = "Deposited"; 
+                        _orderRepo.UpdateOrder(od);
+                        
+                        // Cập nhật Product status thành "Reserved" khi có deposit thành công
+                        if (od.ProductId.HasValue)
+                        {
+                            var product = _productRepo.GetProductById(od.ProductId.Value);
+                            if (product != null && product.Status == "Active")
+                            {
+                                product.Status = "Reserved";
+                                _productRepo.UpdateProduct(product);
+                            }
+                        }
+                    }
+                }
+                else if (payment.PaymentType == "FinalPayment" && payment.OrderId.HasValue)
+                {
+                    var od = _orderRepo.GetOrderById(payment.OrderId.Value);
+                    if (od != null) 
+                    { 
+                        od.FinalPaymentStatus = "Paid"; 
+                        od.Status = "Completed"; 
+                        od.CompletedDate = DateTime.Now; 
+                        _orderRepo.UpdateOrder(od);
+                        
+                        // Cập nhật Product status thành "Sold" khi order hoàn thành
+                        if (od.ProductId.HasValue)
+                        {
+                            var product = _productRepo.GetProductById(od.ProductId.Value);
+                            if (product != null && product.Status == "Reserved")
+                            {
+                                product.Status = "Sold";
+                                _productRepo.UpdateProduct(product);
+                            }
+                        }
+                    }
+                }
+                else if (payment.PaymentType == "Verification" && payment.ProductId.HasValue)
+                {
+                    var p = _productRepo.GetProductById(payment.ProductId.Value);
+                    if (p != null) { p.VerificationStatus = "Requested"; _productRepo.UpdateProduct(p); }
+                }
+
+                return Ok(new { 
+                    message = "Test callback executed successfully", 
+                    paymentId = payment.PaymentId, 
+                    type = payment.PaymentType,
+                    timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Test callback error: {ex.Message}");
             }
         }
 
@@ -270,6 +382,263 @@ namespace BE.API.Controllers
             await _paymentRepo.UpdatePaymentAsync(payment);
 
             return Content("OK");
+        }
+
+        [HttpPost("seller-confirm")]
+        [Authorize(Policy = "MemberOnly")]
+        public IActionResult SellerConfirmSale([FromBody] SellerConfirmWrapperRequest request)
+        {
+            try
+            {
+                // ✅ Authentication required: Chỉ user đã đăng nhập mới có thể gọi API
+                var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
+                if (!int.TryParse(userIdStr, out var userId) || userId <= 0)
+                    return Unauthorized("Invalid user authentication");
+
+                // Validate request
+                if (request?.Request == null)
+                    return BadRequest("Request data is required");
+
+                if (request.Request.ProductId <= 0)
+                    return BadRequest("Invalid product ID");
+
+                // Get the product to verify ownership and status
+                var product = _productRepo.GetProductById(request.Request.ProductId);
+                if (product == null)
+                    return NotFound("Product not found");
+
+                // ✅ Authorization check: Chỉ owner của sản phẩm mới có thể xác nhận bán
+                if (product.SellerId != userId)
+                    return Forbid("You can only confirm sales for your own products");
+
+                // ✅ Status validation: Chỉ cho phép xác nhận bán sản phẩm có status "Reserved"
+                if (product.Status != "Reserved")
+                    return BadRequest($"Product must be in 'Reserved' status to confirm sale. Current status: {product.Status}");
+
+                // ✅ Logic nghiệp vụ: Cập nhật status từ "Reserved" → "Sold"
+                product.Status = "Sold";
+
+                // Update the product
+                var updatedProduct = _productRepo.UpdateProduct(product);
+                if (updatedProduct == null)
+                    return StatusCode(500, "Failed to update product status");
+
+                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                return Ok(new
+                {
+                    message = "Sale confirmed successfully",
+                    productId = updatedProduct.ProductId,
+                    sellerId = updatedProduct.SellerId,
+                    oldStatus = "Reserved",
+                    newStatus = updatedProduct.Status,
+                    createdDate = updatedProduct.CreatedDate,
+                    timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("admin-accept")]
+        [Authorize(Policy = "AdminOnly")]
+        public IActionResult AdminAcceptSale([FromBody] AdminAcceptWrapperRequest request)
+        {
+            try
+            {
+                // ✅ Authentication required: Chỉ admin đã đăng nhập mới có thể gọi API
+                var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
+                if (!int.TryParse(userIdStr, out var userId) || userId <= 0)
+                    return Unauthorized("Invalid user authentication");
+
+                // ✅ Authorization check: Chỉ admin mới có thể xác nhận
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+                if (userRole != "1") // Assuming "1" is admin role
+                    return Forbid("Only administrators can accept sales");
+
+                // Validate request
+                if (request?.Request == null)
+                    return BadRequest("Request data is required");
+
+                if (request.Request.ProductId <= 0)
+                    return BadRequest("Invalid product ID");
+
+                // Get the product to verify status
+                var product = _productRepo.GetProductById(request.Request.ProductId);
+                if (product == null)
+                    return NotFound("Product not found");
+
+                // ✅ Status validation: Chỉ cho phép admin xác nhận sản phẩm có status "Reserved"
+                if (product.Status != "Reserved")
+                    return BadRequest($"Product must be in 'Reserved' status for admin acceptance. Current status: {product.Status}");
+
+                // ✅ Logic nghiệp vụ: Admin xác nhận và chuyển status từ "Reserved" → "Sold"
+                product.Status = "Sold";
+
+                // Update the product
+                var updatedProduct = _productRepo.UpdateProduct(product);
+                if (updatedProduct == null)
+                    return StatusCode(500, "Failed to update product status");
+
+                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                return Ok(new
+                {
+                    message = "Admin accepted sale successfully",
+                    productId = updatedProduct.ProductId,
+                    sellerId = updatedProduct.SellerId,
+                    adminId = userId,
+                    oldStatus = "Reserved",
+                    newStatus = updatedProduct.Status,
+                    createdDate = updatedProduct.CreatedDate,
+                    timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("admin-accept-test")]
+        [AllowAnonymous]
+        public IActionResult AdminAcceptTest([FromBody] AdminAcceptWrapperRequest request)
+        {
+            try
+            {
+                return Ok(new
+                {
+                    message = "Admin accept test endpoint working",
+                    receivedRequest = request,
+                    timestamp = DateTime.Now,
+                    debug = new
+                    {
+                        hasRequest = request != null,
+                        hasRequestData = request?.Request != null,
+                        productId = request?.Request?.ProductId
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Test error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("admin-accept-debug")]
+        [AllowAnonymous]
+        public IActionResult AdminAcceptDebug()
+        {
+            try
+            {
+                return Ok(new
+                {
+                    message = "Admin accept debug endpoint working",
+                    timestamp = DateTime.Now,
+                    availableEndpoints = new[]
+                    {
+                        "POST /api/Payment/admin-accept",
+                        "POST /api/Payment/admin-accept-test",
+                        "GET /api/Payment/admin-accept-debug"
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Debug error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("admin-accept-auth-test")]
+        [Authorize]
+        public IActionResult AdminAcceptAuthTest([FromBody] AdminAcceptWrapperRequest request)
+        {
+            try
+            {
+                var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+                var userName = User.FindFirst(ClaimTypes.Name)?.Value ?? "";
+
+                return Ok(new
+                {
+                    message = "Admin accept auth test endpoint working",
+                    authentication = new
+                    {
+                        userId = userIdStr,
+                        userRole = userRole,
+                        userName = userName,
+                        isAdmin = userRole == "1"
+                    },
+                    receivedRequest = request,
+                    timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Auth test error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("admin-confirm")]
+        [Authorize(Policy = "AdminOnly")]
+        public IActionResult AdminConfirmSale([FromBody] AdminAcceptWrapperRequest request)
+        {
+            try
+            {
+                // ✅ Authentication required: Chỉ admin đã đăng nhập mới có thể gọi API
+                var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
+                if (!int.TryParse(userIdStr, out var userId) || userId <= 0)
+                    return Unauthorized("Invalid user authentication");
+
+                // ✅ Authorization check: Chỉ admin mới có thể xác nhận
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+                if (userRole != "1") // Assuming "1" is admin role
+                    return Forbid("Only administrators can confirm sales");
+
+                // Validate request
+                if (request?.Request == null)
+                    return BadRequest("Request data is required");
+
+                if (request.Request.ProductId <= 0)
+                    return BadRequest("Invalid product ID");
+
+                // Get the product to verify status
+                var product = _productRepo.GetProductById(request.Request.ProductId);
+                if (product == null)
+                    return NotFound("Product not found");
+
+                // ✅ Status validation: Chỉ cho phép admin xác nhận sản phẩm có status "Reserved"
+                if (product.Status != "Reserved")
+                    return BadRequest($"Product must be in 'Reserved' status for admin confirmation. Current status: {product.Status}");
+
+                // ✅ Logic nghiệp vụ: Admin xác nhận và chuyển status từ "Reserved" → "Sold"
+                product.Status = "Sold";
+
+                // Update the product
+                var updatedProduct = _productRepo.UpdateProduct(product);
+                if (updatedProduct == null)
+                    return StatusCode(500, "Failed to update product status");
+
+                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                return Ok(new
+                {
+                    message = "Admin confirmed sale successfully",
+                    productId = updatedProduct.ProductId,
+                    sellerId = updatedProduct.SellerId,
+                    adminId = userId,
+                    oldStatus = "Reserved",
+                    newStatus = updatedProduct.Status,
+                    createdDate = updatedProduct.CreatedDate,
+                    timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
     }
 }
