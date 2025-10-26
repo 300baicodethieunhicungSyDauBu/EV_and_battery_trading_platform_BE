@@ -21,7 +21,8 @@ namespace BE.API.Controllers
         private readonly IProductRepo _productRepo;
         private readonly IVnPayService _vnPay;
 
-        public PaymentController(IPaymentRepo paymentRepo, IOrderRepo orderRepo, IProductRepo productRepo, IVnPayService vnPay)
+        public PaymentController(IPaymentRepo paymentRepo, IOrderRepo orderRepo, IProductRepo productRepo,
+            IVnPayService vnPay)
         {
             _paymentRepo = paymentRepo;
             _orderRepo = orderRepo;
@@ -41,9 +42,11 @@ namespace BE.API.Controllers
             if (string.IsNullOrEmpty(paymentType))
             {
                 // suy ra nếu FE không gửi
-                paymentType = (request.ProductId.HasValue && !request.OrderId.HasValue) ? "Verification"
-                             : (request.OrderId.HasValue ? "Deposit" : "");
+                paymentType = (request.ProductId.HasValue && !request.OrderId.HasValue)
+                    ? "Verification"
+                    : (request.OrderId.HasValue ? "Deposit" : "");
             }
+
             if (string.IsNullOrEmpty(paymentType)) return BadRequest("PaymentType is required.");
             if (request.Amount <= 0) return BadRequest("Amount must be > 0");
             if ((paymentType is "Deposit" or "FinalPayment") && (!request.OrderId.HasValue || request.OrderId <= 0))
@@ -101,14 +104,14 @@ namespace BE.API.Controllers
                 var payment = _paymentRepo.GetPaymentById(id);
                 if (payment == null)
                     return NotFound($"Payment with ID {id} not found");
-                
+
                 var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
-                
+
                 // Admin có thể xem tất cả, user chỉ xem payment của mình
                 if (userRole != "1" && payment.PayerId != userId)
                     return Forbid("You can only view your own payments");
-                
+
                 return Ok(payment);
             }
             catch (Exception ex)
@@ -142,7 +145,7 @@ namespace BE.API.Controllers
                 var userId = User.FindFirst("UserId")?.Value;
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
                 var userName = User.FindFirst(ClaimTypes.Name)?.Value;
-                
+
                 return Ok(new
                 {
                     message = "Payment API is working!",
@@ -194,16 +197,34 @@ namespace BE.API.Controllers
         public async Task<IActionResult> VnPayReturn([FromQuery] Dictionary<string, string> query)
         {
             if (query is null || !query.ContainsKey("vnp_TxnRef") || !query.ContainsKey("vnp_SecureHash"))
-                return BadRequest("Invalid VNPay callback.");
-            if (!_vnPay.ValidateSignature(query)) return BadRequest("Invalid signature");
-            if (!int.TryParse(query["vnp_TxnRef"], out var paymentId)) return BadRequest("Invalid TxnRef");
+                return Content("<script>alert('Invalid VNPay callback');window.close();</script>", "text/html");
+
+            if (!_vnPay.ValidateSignature(query))
+                return Content("<script>alert('Invalid signature');window.close();</script>", "text/html");
+
+            if (!int.TryParse(query["vnp_TxnRef"], out var paymentId))
+                return Content("<script>alert('Invalid TxnRef');window.close();</script>", "text/html");
 
             var payment = await _paymentRepo.GetPaymentForUpdateAsync(paymentId);
-            if (payment is null) return NotFound("Payment not found");
-            if (await _paymentRepo.HasSuccessfulPaymentAsync(paymentId))
-                return Ok(new { message = "Payment already succeeded", paymentId });
+            if (payment is null)
+                return Content("<script>alert('Payment not found');window.close();</script>", "text/html");
 
-            // Lấy response (option: dùng PaymentExecute để map đầy đủ)
+            if (await _paymentRepo.HasSuccessfulPaymentAsync(paymentId))
+            {
+                string htmlAlready = $@"
+            <html><body>
+            <script>
+                if (window.opener) {{
+                    window.opener.postMessage({{ status: 'success', paymentId: '{paymentId}', message: 'already-paid' }}, '*');
+                    window.close();
+                }} else {{
+                    document.write('Payment already succeeded. You can close this tab.');
+                }}
+            </script></body></html>";
+                return Content(htmlAlready, "text/html");
+            }
+
+            // ✅ Xử lý kết quả
             var resp = _vnPay.PaymentExecute(Request.Query);
             var responseCode = query.GetValueOrDefault("vnp_ResponseCode", "");
 
@@ -212,29 +233,31 @@ namespace BE.API.Controllers
             payment.CardType = query.GetValueOrDefault("vnp_CardType", "");
             payment.TransactionStatus = query.GetValueOrDefault("vnp_TransactionStatus", "");
             payment.ResponseCode = responseCode;
+
             var payDateRaw = query.GetValueOrDefault("vnp_PayDate", "");
             if (!string.IsNullOrWhiteSpace(payDateRaw) &&
-                DateTime.TryParseExact(payDateRaw, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var payDate))
+                DateTime.TryParseExact(payDateRaw, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.None,
+                    out var payDate))
             {
                 payment.PayDate = payDate;
             }
 
+            // ✅ Thanh toán thành công
             if (responseCode == "00" && resp.Success)
             {
                 payment.Status = "Success";
                 await _paymentRepo.UpdatePaymentAsync(payment);
 
-                // Nghiệp vụ
+                // Xử lý nghiệp vụ
                 if (payment.PaymentType == "Deposit" && payment.OrderId.HasValue)
                 {
                     var od = _orderRepo.GetOrderById(payment.OrderId.Value);
-                    if (od != null) 
-                    { 
-                        od.DepositStatus = "Paid"; 
-                        od.Status = "Deposited"; 
+                    if (od != null)
+                    {
+                        od.DepositStatus = "Paid";
+                        od.Status = "Deposited";
                         _orderRepo.UpdateOrder(od);
-                        
-                        // Cập nhật Product status thành "Reserved" khi có deposit thành công
+
                         if (od.ProductId.HasValue)
                         {
                             var product = _productRepo.GetProductById(od.ProductId.Value);
@@ -249,14 +272,13 @@ namespace BE.API.Controllers
                 else if (payment.PaymentType == "FinalPayment" && payment.OrderId.HasValue)
                 {
                     var od = _orderRepo.GetOrderById(payment.OrderId.Value);
-                    if (od != null) 
-                    { 
-                        od.FinalPaymentStatus = "Paid"; 
-                        od.Status = "Completed"; 
-                        od.CompletedDate = DateTime.Now; 
+                    if (od != null)
+                    {
+                        od.FinalPaymentStatus = "Paid";
+                        od.Status = "Completed";
+                        od.CompletedDate = DateTime.Now;
                         _orderRepo.UpdateOrder(od);
-                        
-                        // Cập nhật Product status thành "Sold" khi order hoàn thành
+
                         if (od.ProductId.HasValue)
                         {
                             var product = _productRepo.GetProductById(od.ProductId.Value);
@@ -271,18 +293,74 @@ namespace BE.API.Controllers
                 else if (payment.PaymentType == "Verification" && payment.ProductId.HasValue)
                 {
                     var p = _productRepo.GetProductById(payment.ProductId.Value);
-                    if (p != null) { p.VerificationStatus = "Requested"; _productRepo.UpdateProduct(p); }
+                    if (p != null)
+                    {
+                        p.VerificationStatus = "Requested";
+                        _productRepo.UpdateProduct(p);
+                    }
                 }
 
-                return Ok(new { message = "Payment success", paymentId = payment.PaymentId, type = payment.PaymentType });
+                // ✅ Trả HTML để đóng tab
+                string htmlSuccess = $@"
+<!DOCTYPE html>
+<html lang='vi'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Thanh toán thành công</title>
+</head>
+<body style='font-family:sans-serif;text-align:center;margin-top:80px;'>
+    <h2>✅ Thanh toán thành công!</h2>
+    <p>Bạn có thể đóng cửa sổ này.</p>
+    <script>
+        try {{
+            if (window.opener) {{
+                window.opener.postMessage({{
+                    status: 'success',
+                    paymentId: '{payment.PaymentId}',
+                    type: '{payment.PaymentType}'
+                }}, '*');
+                window.close();
+            }} else {{
+                document.body.innerHTML += '<p>Vui lòng đóng tab này thủ công.</p>';
+            }}
+        }} catch (e) {{
+            document.body.innerHTML += '<p>Không thể tự đóng cửa sổ, vui lòng đóng thủ công.</p>';
+        }}
+    </script>
+</body>
+</html>";
+                return new ContentResult
+                {
+                    Content = htmlSuccess,
+                    ContentType = "text/html; charset=utf-8"
+                };
             }
             else
             {
                 payment.Status = "Failed";
                 await _paymentRepo.UpdatePaymentAsync(payment);
-                return Ok(new { message = "Payment failed", paymentId = payment.PaymentId, code = responseCode });
+
+                string htmlFail = $@"
+            <html><body style='font-family:sans-serif;text-align:center;margin-top:80px;'>
+                <h2>Thanh toán thất bại!</h2>
+                <p>Mã lỗi: {responseCode}</p>
+                <script>
+                    if (window.opener) {{
+                        window.opener.postMessage({{
+                            status: 'failed',
+                            paymentId: '{payment.PaymentId}',
+                            code: '{responseCode}'
+                        }}, '*');
+                        window.close();
+                    }} else {{
+                        document.write('Vui lòng đóng tab này thủ công.');
+                    }}
+                </script>
+            </body></html>";
+                return Content(htmlFail, "text/html");
             }
         }
+
 
         [HttpPost("test-callback")]
         [Authorize(Policy = "AdminOnly")]
@@ -304,12 +382,12 @@ namespace BE.API.Controllers
                 if (payment.PaymentType == "Deposit" && payment.OrderId.HasValue)
                 {
                     var od = _orderRepo.GetOrderById(payment.OrderId.Value);
-                    if (od != null) 
-                    { 
-                        od.DepositStatus = "Paid"; 
-                        od.Status = "Deposited"; 
+                    if (od != null)
+                    {
+                        od.DepositStatus = "Paid";
+                        od.Status = "Deposited";
                         _orderRepo.UpdateOrder(od);
-                        
+
                         // Cập nhật Product status thành "Reserved" khi có deposit thành công
                         if (od.ProductId.HasValue)
                         {
@@ -325,13 +403,13 @@ namespace BE.API.Controllers
                 else if (payment.PaymentType == "FinalPayment" && payment.OrderId.HasValue)
                 {
                     var od = _orderRepo.GetOrderById(payment.OrderId.Value);
-                    if (od != null) 
-                    { 
-                        od.FinalPaymentStatus = "Paid"; 
-                        od.Status = "Completed"; 
-                        od.CompletedDate = DateTime.Now; 
+                    if (od != null)
+                    {
+                        od.FinalPaymentStatus = "Paid";
+                        od.Status = "Completed";
+                        od.CompletedDate = DateTime.Now;
                         _orderRepo.UpdateOrder(od);
-                        
+
                         // Cập nhật Product status thành "Sold" khi order hoàn thành
                         if (od.ProductId.HasValue)
                         {
@@ -347,12 +425,17 @@ namespace BE.API.Controllers
                 else if (payment.PaymentType == "Verification" && payment.ProductId.HasValue)
                 {
                     var p = _productRepo.GetProductById(payment.ProductId.Value);
-                    if (p != null) { p.VerificationStatus = "Requested"; _productRepo.UpdateProduct(p); }
+                    if (p != null)
+                    {
+                        p.VerificationStatus = "Requested";
+                        _productRepo.UpdateProduct(p);
+                    }
                 }
 
-                return Ok(new { 
-                    message = "Test callback executed successfully", 
-                    paymentId = payment.PaymentId, 
+                return Ok(new
+                {
+                    message = "Test callback executed successfully",
+                    paymentId = payment.PaymentId,
                     type = payment.PaymentType,
                     timestamp = DateTime.Now
                 });
@@ -367,7 +450,8 @@ namespace BE.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> VnPayIpn([FromQuery] Dictionary<string, string> query)
         {
-            if (query is null || !query.ContainsKey("vnp_TxnRef") || !query.ContainsKey("vnp_SecureHash")) return Content("Fail");
+            if (query is null || !query.ContainsKey("vnp_TxnRef") || !query.ContainsKey("vnp_SecureHash"))
+                return Content("Fail");
             if (!_vnPay.ValidateSignature(query)) return Content("Fail");
             if (!int.TryParse(query["vnp_TxnRef"], out var paymentId)) return Content("Fail");
 
@@ -413,7 +497,8 @@ namespace BE.API.Controllers
 
                 // ✅ Status validation: Chỉ cho phép xác nhận bán sản phẩm có status "Reserved"
                 if (product.Status != "Reserved")
-                    return BadRequest($"Product must be in 'Reserved' status to confirm sale. Current status: {product.Status}");
+                    return BadRequest(
+                        $"Product must be in 'Reserved' status to confirm sale. Current status: {product.Status}");
 
                 // ✅ Logic nghiệp vụ: Cập nhật status từ "Reserved" → "Sold"
                 product.Status = "Sold";
@@ -472,7 +557,8 @@ namespace BE.API.Controllers
 
                 // ✅ Status validation: Chỉ cho phép admin xác nhận sản phẩm có status "Reserved"
                 if (product.Status != "Reserved")
-                    return BadRequest($"Product must be in 'Reserved' status for admin acceptance. Current status: {product.Status}");
+                    return BadRequest(
+                        $"Product must be in 'Reserved' status for admin acceptance. Current status: {product.Status}");
 
                 // ✅ Logic nghiệp vụ: Admin xác nhận và chuyển status từ "Reserved" → "Sold"
                 product.Status = "Sold";
@@ -611,7 +697,8 @@ namespace BE.API.Controllers
 
                 // ✅ Status validation: Chỉ cho phép admin xác nhận sản phẩm có status "Reserved"
                 if (product.Status != "Reserved")
-                    return BadRequest($"Product must be in 'Reserved' status for admin confirmation. Current status: {product.Status}");
+                    return BadRequest(
+                        $"Product must be in 'Reserved' status for admin confirmation. Current status: {product.Status}");
 
                 // ✅ Logic nghiệp vụ: Admin xác nhận và chuyển status từ "Reserved" → "Sold"
                 product.Status = "Sold";
@@ -642,4 +729,3 @@ namespace BE.API.Controllers
         }
     }
 }
-    

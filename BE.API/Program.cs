@@ -178,7 +178,7 @@ builder.Services.AddScoped<IAIChatService, OpenRouterChatService>();
 
 // =================== CORS ===================
 builder.Services.AddCors(o => o.AddPolicy("AllowAll",
-    p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().AllowCredentials()));
+    p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
 // Thêm SignalR
 builder.Services.AddSignalR();
