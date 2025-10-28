@@ -952,7 +952,6 @@ namespace BE.API.Controllers
 
 
         [HttpPut("vehicles/{id}")]
-        [Authorize(Policy = "MemberOnly")]
         public ActionResult UpdateVehicle(int id, [FromBody] VehicleRequest request)
         {
             try
@@ -964,11 +963,7 @@ namespace BE.API.Controllers
                 // Xác nhận đây là sản phẩm loại "Vehicle"
                 if (!string.Equals(existingProduct.ProductType, "Vehicle", StringComparison.OrdinalIgnoreCase))
                     return BadRequest("Product is not a vehicle.");
-
-                // Kiểm tra quyền sở hữu (chủ sản phẩm)
-                var userId = int.TryParse(User.FindFirst("UserId")?.Value, out var uid) ? uid : 0;
-                if (existingProduct.SellerId != userId && userId != 0)
-                    return Forbid();
+                
 
                 // Kiểm tra định dạng biển số xe
                 if (!string.IsNullOrEmpty(request.LicensePlate))
