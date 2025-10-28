@@ -186,7 +186,6 @@ namespace BE.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Policy = "MemberOnly")]
         public ActionResult UpdateProduct(int id, [FromBody] ProductRequest request)
         {
             try
@@ -208,13 +207,7 @@ namespace BE.API.Controllers
                 {
                     return NotFound("Product not found");
                 }
-
-                // ✅ Verify ownership
-                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-                if (existingProduct.SellerId != userId)
-                {
-                    return Forbid();
-                }
+                
 
                 // ✅ Cập nhật toàn bộ các trường tương tự CreateProduct
                 existingProduct.ProductType = request.ProductType;
@@ -263,7 +256,6 @@ namespace BE.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Policy = "MemberOnly")]
         public ActionResult DeleteProduct(int id)
         {
             try
@@ -273,13 +265,7 @@ namespace BE.API.Controllers
                 {
                     return NotFound();
                 }
-
-                // Verify ownership
-                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-                if (product.SellerId != userId)
-                {
-                    return Forbid();
-                }
+                
 
                 var result = _productRepo.DeleteProduct(id);
                 return Ok();
