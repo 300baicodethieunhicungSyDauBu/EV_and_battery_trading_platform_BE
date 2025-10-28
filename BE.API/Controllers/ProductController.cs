@@ -1028,7 +1028,6 @@ namespace BE.API.Controllers
         }
 
         [HttpPut("batteries/{id}")]
-        [Authorize(Policy = "MemberOnly")]
         public ActionResult UpdateBattery(int id, [FromBody] BatteryRequest request)
         {
             try
@@ -1040,11 +1039,7 @@ namespace BE.API.Controllers
                 // Xác nhận đây là sản phẩm loại "Battery"
                 if (!string.Equals(existingProduct.ProductType, "Battery", StringComparison.OrdinalIgnoreCase))
                     return BadRequest("Product is not a battery.");
-
-                // Kiểm tra quyền sở hữu
-                var userId = int.TryParse(User.FindFirst("UserId")?.Value, out var uid) ? uid : 0;
-                if (existingProduct.SellerId != userId && userId != 0)
-                    return Forbid();
+                
 
                 // Cập nhật dữ liệu
                 existingProduct.Title = request.Title;
