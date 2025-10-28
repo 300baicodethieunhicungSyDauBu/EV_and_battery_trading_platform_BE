@@ -196,35 +196,53 @@ namespace BE.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> VnPayReturn([FromQuery] Dictionary<string, string> query)
         {
+            // ❌ Trường hợp query không hợp lệ
             if (query is null || !query.ContainsKey("vnp_TxnRef") || !query.ContainsKey("vnp_SecureHash"))
-                return Content("<script>alert('Invalid VNPay callback');window.close();</script>", "text/html");
+                return Content("<script>alert('Invalid VNPay callback');window.close();</script>",
+                    "text/html; charset=utf-8");
 
             if (!_vnPay.ValidateSignature(query))
-                return Content("<script>alert('Invalid signature');window.close();</script>", "text/html");
+                return Content("<script>alert('Invalid signature');window.close();</script>",
+                    "text/html; charset=utf-8");
 
             if (!int.TryParse(query["vnp_TxnRef"], out var paymentId))
-                return Content("<script>alert('Invalid TxnRef');window.close();</script>", "text/html");
+                return Content("<script>alert('Invalid TxnRef');window.close();</script>", "text/html; charset=utf-8");
 
             var payment = await _paymentRepo.GetPaymentForUpdateAsync(paymentId);
             if (payment is null)
-                return Content("<script>alert('Payment not found');window.close();</script>", "text/html");
+                return Content("<script>alert('Payment not found');window.close();</script>",
+                    "text/html; charset=utf-8");
 
             if (await _paymentRepo.HasSuccessfulPaymentAsync(paymentId))
             {
                 string htmlAlready = $@"
-            <html><body>
-            <script>
-                if (window.opener) {{
-                    window.opener.postMessage({{ status: 'success', paymentId: '{paymentId}', message: 'already-paid' }}, '*');
-                    window.close();
-                }} else {{
-                    document.write('Payment already succeeded. You can close this tab.');
-                }}
-            </script></body></html>";
-                return Content(htmlAlready, "text/html");
+<!DOCTYPE html>
+<html lang='vi'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Đã thanh toán</title>
+</head>
+<body style='font-family:sans-serif;text-align:center;margin-top:80px;'>
+    <h2>💳 Thanh toán đã được ghi nhận trước đó!</h2>
+    <p>Bạn có thể đóng cửa sổ này.</p>
+    <script>
+        if (window.opener) {{
+            window.opener.postMessage({{
+                status: 'success',
+                paymentId: '{paymentId}',
+                message: 'already-paid'
+            }}, '*');
+            window.close();
+        }} else {{
+            document.body.innerHTML += '<p>Vui lòng đóng tab này thủ công.</p>';
+        }}
+    </script>
+</body>
+</html>";
+                return Content(htmlAlready, "text/html; charset=utf-8");
             }
 
-            // ✅ Xử lý kết quả
+            // ✅ Xử lý kết quả VNPay
             var resp = _vnPay.PaymentExecute(Request.Query);
             var responseCode = query.GetValueOrDefault("vnp_ResponseCode", "");
 
@@ -242,13 +260,13 @@ namespace BE.API.Controllers
                 payment.PayDate = payDate;
             }
 
-            // ✅ Thanh toán thành công
+            // ✅ Thành công
             if (responseCode == "00" && resp.Success)
             {
                 payment.Status = "Success";
                 await _paymentRepo.UpdatePaymentAsync(payment);
 
-                // Xử lý nghiệp vụ
+                // Nghiệp vụ theo loại thanh toán
                 if (payment.PaymentType == "Deposit" && payment.OrderId.HasValue)
                 {
                     var od = _orderRepo.GetOrderById(payment.OrderId.Value);
@@ -300,7 +318,7 @@ namespace BE.API.Controllers
                     }
                 }
 
-                // ✅ Trả HTML để đóng tab
+                // ✅ HTML trả về cho tab VNPay
                 string htmlSuccess = $@"
 <!DOCTYPE html>
 <html lang='vi'>
@@ -329,36 +347,39 @@ namespace BE.API.Controllers
     </script>
 </body>
 </html>";
-                return new ContentResult
-                {
-                    Content = htmlSuccess,
-                    ContentType = "text/html; charset=utf-8"
-                };
-            }
-            else
-            {
-                payment.Status = "Failed";
-                await _paymentRepo.UpdatePaymentAsync(payment);
 
-                string htmlFail = $@"
-            <html><body style='font-family:sans-serif;text-align:center;margin-top:80px;'>
-                <h2>Thanh toán thất bại!</h2>
-                <p>Mã lỗi: {responseCode}</p>
-                <script>
-                    if (window.opener) {{
-                        window.opener.postMessage({{
-                            status: 'failed',
-                            paymentId: '{payment.PaymentId}',
-                            code: '{responseCode}'
-                        }}, '*');
-                        window.close();
-                    }} else {{
-                        document.write('Vui lòng đóng tab này thủ công.');
-                    }}
-                </script>
-            </body></html>";
-                return Content(htmlFail, "text/html");
+                return Content(htmlSuccess, "text/html; charset=utf-8");
             }
+
+            // ❌ Thất bại
+            payment.Status = "Failed";
+            await _paymentRepo.UpdatePaymentAsync(payment);
+
+            string htmlFail = $@"
+<!DOCTYPE html>
+<html lang='vi'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Thanh toán thất bại</title>
+</head>
+<body style='font-family:sans-serif;text-align:center;margin-top:80px;'>
+    <h2>❌ Thanh toán thất bại!</h2>
+    <p>Mã lỗi: {responseCode}</p>
+    <script>
+        if (window.opener) {{
+            window.opener.postMessage({{
+                status: 'failed',
+                paymentId: '{payment.PaymentId}',
+                code: '{responseCode}'
+            }}, '*');
+            window.close();
+        }} else {{
+            document.body.innerHTML += '<p>Vui lòng đóng tab này thủ công.</p>';
+        }}
+    </script>
+</body>
+</html>";
+            return Content(htmlFail, "text/html; charset=utf-8");
         }
 
 
