@@ -92,7 +92,15 @@ namespace BE.DAOs
             review.CreatedDate = DateTime.Now;
             context.Reviews.Add(review);
             context.SaveChanges();
-            return review;
+            
+            // Reload the review with all navigation properties
+            var createdReview = context.Reviews
+                .Include(r => r.Reviewer)
+                .Include(r => r.Reviewee)
+                .Include(r => r.Order)
+                .FirstOrDefault(r => r.ReviewId == review.ReviewId);
+            
+            return createdReview ?? review;
         }
 
         public Review UpdateReview(Review review)
@@ -104,7 +112,15 @@ namespace BE.DAOs
                 existingReview.Rating = review.Rating;
                 existingReview.Content = review.Content;
                 context.SaveChanges();
-                return existingReview;
+                
+                // Reload the review with all navigation properties
+                var updatedReview = context.Reviews
+                    .Include(r => r.Reviewer)
+                    .Include(r => r.Reviewee)
+                    .Include(r => r.Order)
+                    .FirstOrDefault(r => r.ReviewId == existingReview.ReviewId);
+                
+                return updatedReview ?? existingReview;
             }
             return review;
         }
