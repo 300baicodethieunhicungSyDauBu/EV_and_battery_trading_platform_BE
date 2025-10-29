@@ -62,15 +62,17 @@ public class MessageDAO
 
     public Message CreateMessage(int chatId, int senderId, string content)
     {
+        var chat = _context.Chats.FirstOrDefault(c => c.ChatId == chatId);
+        if (chat == null) throw new Exception("Chat not found");
+
         var message = new Message
         {
             ChatId = chatId,
             SenderId = senderId,
             Content = content,
             IsRead = false,
-            CreatedDate = DateTime.Now
+            CreatedDate = DateTime.UtcNow // Dùng UTC chuẩn hơn
         };
-
         _context.Messages.Add(message);
         _context.SaveChanges();
         return message;

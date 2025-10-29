@@ -4,6 +4,7 @@ using BE.BOs.Models;
 using BE.REPOs.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BE.API.Controllers
 {
@@ -180,11 +181,42 @@ namespace BE.API.Controllers
                     return Unauthorized("Invalid user");
                 }
 
+                // Get the order to determine the seller (reviewee)
+                using var context = new EvandBatteryTradingPlatformContext();
+                var order = context.Orders
+                    .Include(o => o.Seller)
+                    .Include(o => o.Buyer)
+                    .FirstOrDefault(o => o.OrderId == request.OrderId);
+
+                if (order == null)
+                {
+                    return NotFound("Order not found");
+                }
+
+                // Validate that the buyer is the one creating the review
+                if (order.BuyerId != reviewerId)
+                {
+                    return Forbid("You can only review sellers for orders you have placed");
+                }
+
+                // Validate that the reviewer is not reviewing themselves
+                if (order.SellerId == reviewerId)
+                {
+                    return BadRequest("You cannot review yourself");
+                }
+
+                // Automatically set the RevieweeId from the order's SellerId
+                var revieweeId = order.SellerId ?? 0;
+                if (revieweeId == 0)
+                {
+                    return BadRequest("Order does not have a valid seller");
+                }
+
                 var review = new Review
                 {
                     OrderId = request.OrderId,
                     ReviewerId = reviewerId,
-                    RevieweeId = request.RevieweeId,
+                    RevieweeId = revieweeId, // Use seller from order, not from request
                     Rating = request.Rating,
                     Content = request.Content
                 };

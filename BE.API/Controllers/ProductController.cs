@@ -12,10 +12,12 @@ namespace BE.API.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IProductRepo _productRepo;
+        private readonly IOrderRepo _orderRepo;
 
-        public ProductController(IProductRepo productRepo)
+        public ProductController(IProductRepo productRepo, IOrderRepo orderRepo)
         {
             _productRepo = productRepo;
+            _orderRepo = orderRepo;
         }
 
         [HttpGet]
@@ -184,7 +186,6 @@ namespace BE.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Policy = "MemberOnly")]
         public ActionResult UpdateProduct(int id, [FromBody] ProductRequest request)
         {
             try
@@ -207,12 +208,6 @@ namespace BE.API.Controllers
                     return NotFound("Product not found");
                 }
 
-                // ✅ Verify ownership
-                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-                if (existingProduct.SellerId != userId)
-                {
-                    return Forbid();
-                }
 
                 // ✅ Cập nhật toàn bộ các trường tương tự CreateProduct
                 existingProduct.ProductType = request.ProductType;
@@ -261,7 +256,6 @@ namespace BE.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Policy = "MemberOnly")]
         public ActionResult DeleteProduct(int id)
         {
             try
@@ -272,12 +266,6 @@ namespace BE.API.Controllers
                     return NotFound();
                 }
 
-                // Verify ownership
-                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-                if (product.SellerId != userId)
-                {
-                    return Forbid();
-                }
 
                 var result = _productRepo.DeleteProduct(id);
                 return Ok();
@@ -314,6 +302,212 @@ namespace BE.API.Controllers
             {
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
+        }
+
+        [HttpGet("admin/all-statuses")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult GetAllProductStatuses()
+        {
+            try
+            {
+                var products = _productRepo.GetAllProducts();
+
+                var statusGroups = products.GroupBy(p => p.Status)
+                    .Select(g => new
+                    {
+                        Status = g.Key,
+                        Count = g.Count(),
+                        Description = GetStatusDescription(g.Key, null),
+                        Products = g.Select(p => new
+                        {
+                            p.ProductId,
+                            p.Title,
+                            p.VerificationStatus,
+                            p.SellerId,
+                            p.CreatedDate
+                        }).ToList()
+                    })
+                    .OrderBy(g => g.Status)
+                    .ToList();
+
+                var response = new
+                {
+                    TotalProducts = products.Count,
+                    StatusGroups = statusGroups,
+                    StatusMapping = new
+                    {
+                        Draft = "Chờ duyệt - Admin chưa duyệt",
+                        Active = "Đang bán - Có thể mua",
+                        Reserved = "Đã có đơn hàng - Chờ thanh toán deposit",
+                        Sold = "Đã bán - Không thể mua nữa",
+                        Rejected = "Đã từ chối - Cần seller chỉnh sửa",
+                        Deleted = "Đã xóa"
+                    },
+                    Message = "Admin dashboard nên hiển thị: Reserved = 'Đã có đơn hàng', Draft = 'Chờ duyệt'"
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Get all statuses error: " + ex.Message);
+            }
+        }
+
+        [HttpPost("test-update-status/{productId}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult TestUpdateProductStatus(int productId, [FromBody] TestUpdateStatusRequest request)
+        {
+            try
+            {
+                var product = _productRepo.GetProductById(productId);
+                if (product == null)
+                {
+                    return NotFound($"Product with ID {productId} not found");
+                }
+
+                var oldStatus = product.Status;
+                product.Status = request.NewStatus;
+                var updatedProduct = _productRepo.UpdateProduct(product);
+
+                var response = new
+                {
+                    ProductId = updatedProduct.ProductId,
+                    Title = updatedProduct.Title,
+                    OldStatus = oldStatus,
+                    NewStatus = updatedProduct.Status,
+                    StatusDescription = GetStatusDescription(updatedProduct.Status, updatedProduct.VerificationStatus),
+                    UpdatedDate = DateTime.Now,
+                    Message = $"Product status updated from '{oldStatus}' to '{request.NewStatus}'"
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Test update error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("debug/status/{productId}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult DebugProductStatus(int productId)
+        {
+            try
+            {
+                var product = _productRepo.GetProductById(productId);
+                if (product == null)
+                {
+                    return NotFound($"Product with ID {productId} not found");
+                }
+
+                // Lấy thông tin Order liên quan
+                var orders = _orderRepo.GetAllOrders()
+                    .Where(o => o.ProductId == productId)
+                    .ToList();
+
+                var response = new
+                {
+                    ProductId = product.ProductId,
+                    Title = product.Title,
+                    Status = product.Status,
+                    VerificationStatus = product.VerificationStatus,
+                    StatusDescription = GetStatusDescription(product.Status, product.VerificationStatus),
+                    CreatedDate = product.CreatedDate,
+                    SellerId = product.SellerId,
+                    SellerName = product.Seller?.FullName,
+
+                    // Thông tin Order liên quan
+                    RelatedOrders = orders.Select(o => new
+                    {
+                        o.OrderId,
+                        o.Status,
+                        o.DepositStatus,
+                        o.FinalPaymentStatus,
+                        o.BuyerId,
+                        o.SellerId,
+                        o.CreatedDate
+                    }).ToList(),
+
+                    // Thông tin Payment liên quan
+                    RelatedPayments = orders.SelectMany(o => o.Payments ?? new List<Payment>()).Select(p => new
+                    {
+                        p.PaymentId,
+                        p.PaymentType,
+                        p.Status,
+                        p.Amount,
+                        p.CreatedDate,
+                        p.PayDate
+                    }).ToList(),
+
+                    DebugInfo = new
+                    {
+                        ExpectedStatus = "Reserved (có đơn hàng, chờ thanh toán)",
+                        ActualStatus = product.Status,
+                        IsCorrect = product.Status == "Reserved",
+                        ShouldShowAs = product.Status == "Reserved" ? "Đã có đơn hàng" : "Chờ duyệt"
+                    }
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Debug error: " + ex.Message);
+            }
+        }
+
+        [HttpGet("admin/status/{status}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult GetProductsByStatus(string status)
+        {
+            try
+            {
+                var products = _productRepo.GetAllProducts()
+                    .Where(p => p.Status != null && p.Status.ToLower() == status.ToLower())
+                    .ToList();
+
+                var response = products.Select(p => new
+                {
+                    p.ProductId,
+                    p.Title,
+                    p.Price,
+                    p.Status,
+                    p.VerificationStatus,
+                    p.CreatedDate,
+                    SellerName = p.Seller?.FullName,
+                    SellerId = p.SellerId,
+                    ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>(),
+                    // Thêm thông tin để phân biệt trạng thái
+                    StatusDescription = GetStatusDescription(p.Status, p.VerificationStatus)
+                }).ToList();
+
+                return Ok(new
+                {
+                    Status = status,
+                    Count = products.Count,
+                    Products = response
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        private string GetStatusDescription(string? status, string? verificationStatus)
+        {
+            return status?.ToLower() switch
+            {
+                "draft" => "Bản nháp - Chờ seller hoàn thiện",
+                "re-submit" => "Chờ duyệt lại - Seller đã chỉnh sửa",
+                "rejected" => "Đã từ chối - Cần seller chỉnh sửa",
+                "active" => "Đang bán - Có thể mua",
+                "reserved" => "Đã có đơn hàng - Chờ thanh toán deposit",
+                "sold" => "Đã bán - Không thể mua nữa",
+                "deleted" => "Đã xóa",
+                _ => $"Trạng thái không xác định: {status}"
+            };
         }
 
         [HttpGet("drafts")]
@@ -758,7 +952,6 @@ namespace BE.API.Controllers
 
 
         [HttpPut("vehicles/{id}")]
-        [Authorize(Policy = "MemberOnly")]
         public ActionResult UpdateVehicle(int id, [FromBody] VehicleRequest request)
         {
             try
@@ -771,10 +964,6 @@ namespace BE.API.Controllers
                 if (!string.Equals(existingProduct.ProductType, "Vehicle", StringComparison.OrdinalIgnoreCase))
                     return BadRequest("Product is not a vehicle.");
 
-                // Kiểm tra quyền sở hữu (chủ sản phẩm)
-                var userId = int.TryParse(User.FindFirst("UserId")?.Value, out var uid) ? uid : 0;
-                if (existingProduct.SellerId != userId && userId != 0)
-                    return Forbid();
 
                 // Kiểm tra định dạng biển số xe
                 if (!string.IsNullOrEmpty(request.LicensePlate))
@@ -820,7 +1009,6 @@ namespace BE.API.Controllers
         }
 
         [HttpPut("batteries/{id}")]
-        [Authorize(Policy = "MemberOnly")]
         public ActionResult UpdateBattery(int id, [FromBody] BatteryRequest request)
         {
             try
@@ -833,10 +1021,6 @@ namespace BE.API.Controllers
                 if (!string.Equals(existingProduct.ProductType, "Battery", StringComparison.OrdinalIgnoreCase))
                     return BadRequest("Product is not a battery.");
 
-                // Kiểm tra quyền sở hữu
-                var userId = int.TryParse(User.FindFirst("UserId")?.Value, out var uid) ? uid : 0;
-                if (existingProduct.SellerId != userId && userId != 0)
-                    return Forbid();
 
                 // Cập nhật dữ liệu
                 existingProduct.Title = request.Title;
@@ -1206,159 +1390,247 @@ namespace BE.API.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
-        
-[HttpPost("search")]
-[AllowAnonymous]
-public ActionResult SearchProducts([FromBody] ProductSearchRequest request)
-{
-    try
-    {
-        var products = _productRepo.GetAllProducts().AsQueryable();
 
-        // 🔍 1️⃣ Keyword search (case-insensitive)
-        if (!string.IsNullOrWhiteSpace(request.Keyword))
+        [HttpPost("search")]
+        [AllowAnonymous]
+        public ActionResult SearchProducts([FromBody] ProductSearchRequest request)
         {
-            var keyword = request.Keyword.ToLower();
-            products = products.Where(p =>
-                (p.Title != null && p.Title.ToLower().Contains(keyword)) ||
-                (p.Brand != null && p.Brand.ToLower().Contains(keyword)) ||
-                (p.Model != null && p.Model.ToLower().Contains(keyword))
-            );
+            try
+            {
+                var products = _productRepo.GetAllProducts().AsQueryable();
+
+                // 🔍 1️⃣ Keyword search (case-insensitive)
+                if (!string.IsNullOrWhiteSpace(request.Keyword))
+                {
+                    var keyword = request.Keyword.ToLower();
+                    products = products.Where(p =>
+                        (p.Title != null && p.Title.ToLower().Contains(keyword)) ||
+                        (p.Brand != null && p.Brand.ToLower().Contains(keyword)) ||
+                        (p.Model != null && p.Model.ToLower().Contains(keyword))
+                    );
+                }
+
+                // 🔍 2️⃣ ProductType (Vehicle / Battery)
+                if (!string.IsNullOrEmpty(request.ProductType))
+                {
+                    var type = request.ProductType.ToLower();
+                    products = products.Where(p => p.ProductType.ToLower() == type);
+                }
+
+                // 🔍 3️⃣ Brand, Model, Condition (case-insensitive)
+                if (!string.IsNullOrEmpty(request.Brand))
+                {
+                    var brand = request.Brand.ToLower();
+                    products = products.Where(p => p.Brand != null && p.Brand.ToLower().Contains(brand));
+                }
+
+                if (!string.IsNullOrEmpty(request.Model))
+                {
+                    var model = request.Model.ToLower();
+                    products = products.Where(p => p.Model != null && p.Model.ToLower().Contains(model));
+                }
+
+                if (!string.IsNullOrEmpty(request.Condition))
+                {
+                    var condition = request.Condition.ToLower();
+                    products = products.Where(p => p.Condition != null && p.Condition.ToLower().Contains(condition));
+                }
+
+                // 💰 4️⃣ Price Range
+                if (request.MinPrice.HasValue)
+                    products = products.Where(p => p.Price >= request.MinPrice.Value);
+                if (request.MaxPrice.HasValue)
+                    products = products.Where(p => p.Price <= request.MaxPrice.Value);
+
+                // 🚗 5️⃣ Vehicle-specific filters
+                if (!string.IsNullOrEmpty(request.VehicleType))
+                {
+                    var vtype = request.VehicleType.ToLower();
+                    products = products.Where(p => p.VehicleType != null && p.VehicleType.ToLower().Contains(vtype));
+                }
+
+                if (!string.IsNullOrEmpty(request.Transmission))
+                {
+                    var transmission = request.Transmission.ToLower();
+                    products = products.Where(p =>
+                        p.Transmission != null && p.Transmission.ToLower().Contains(transmission));
+                }
+
+                if (request.MinManufactureYear.HasValue)
+                    products = products.Where(p => p.ManufactureYear >= request.MinManufactureYear.Value);
+                if (request.MaxManufactureYear.HasValue)
+                    products = products.Where(p => p.ManufactureYear <= request.MaxManufactureYear.Value);
+
+                if (request.MaxMileage.HasValue)
+                    products = products.Where(p => p.Mileage <= request.MaxMileage.Value);
+
+                if (request.SeatCount.HasValue)
+                    products = products.Where(p => p.SeatCount == request.SeatCount.Value);
+
+                // 🔋 6️⃣ Battery-specific filters
+                if (!string.IsNullOrEmpty(request.BatteryType))
+                {
+                    var btype = request.BatteryType.ToLower();
+                    products = products.Where(p => p.BatteryType != null && p.BatteryType.ToLower().Contains(btype));
+                }
+
+                if (request.MinBatteryHealth.HasValue)
+                    products = products.Where(p => p.BatteryHealth >= request.MinBatteryHealth.Value);
+                if (request.MaxBatteryHealth.HasValue)
+                    products = products.Where(p => p.BatteryHealth <= request.MaxBatteryHealth.Value);
+
+                if (request.MinCapacity.HasValue)
+                    products = products.Where(p => p.Capacity >= request.MinCapacity.Value);
+                if (request.MaxCapacity.HasValue)
+                    products = products.Where(p => p.Capacity <= request.MaxCapacity.Value);
+
+                if (!string.IsNullOrEmpty(request.CellType))
+                {
+                    var cell = request.CellType.ToLower();
+                    products = products.Where(p => p.CellType != null && p.CellType.ToLower().Contains(cell));
+                }
+
+                if (!string.IsNullOrEmpty(request.BMS))
+                {
+                    var bms = request.BMS.ToLower();
+                    products = products.Where(p => p.BMS != null && p.BMS.ToLower().Contains(bms));
+                }
+
+                // ⚙️ 7️⃣ Status filters
+                if (!string.IsNullOrEmpty(request.Status))
+                {
+                    var status = request.Status.ToLower();
+                    products = products.Where(p => p.Status != null && p.Status.ToLower() == status);
+                }
+
+                if (!string.IsNullOrEmpty(request.VerificationStatus))
+                {
+                    var verStatus = request.VerificationStatus.ToLower();
+                    products = products.Where(p =>
+                        p.VerificationStatus != null && p.VerificationStatus.ToLower() == verStatus);
+                }
+
+                // ✅ 8️⃣ Map sang Response
+                var result = products.Select(p => new ProductResponse
+                {
+                    ProductId = p.ProductId,
+                    SellerId = p.SellerId,
+                    ProductType = p.ProductType,
+                    Title = p.Title,
+                    Brand = p.Brand,
+                    Model = p.Model,
+                    Condition = p.Condition,
+                    Price = p.Price,
+                    VehicleType = p.VehicleType,
+                    ManufactureYear = p.ManufactureYear,
+                    Mileage = p.Mileage,
+                    Transmission = p.Transmission,
+                    SeatCount = p.SeatCount,
+                    BatteryType = p.BatteryType,
+                    BatteryHealth = p.BatteryHealth,
+                    Capacity = p.Capacity,
+                    Voltage = p.Voltage,
+                    CellType = p.CellType,
+                    BMS = p.BMS,
+                    Status = p.Status,
+                    VerificationStatus = p.VerificationStatus,
+                    ImageUrls = p.ProductImages.Select(img => img.ImageData).ToList()
+                }).ToList();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
         }
 
-        // 🔍 2️⃣ ProductType (Vehicle / Battery)
-        if (!string.IsNullOrEmpty(request.ProductType))
+        [HttpPut("admin/update/{id}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult AdminUpdateProduct(int id, [FromBody] ProductRequest request)
         {
-            var type = request.ProductType.ToLower();
-            products = products.Where(p => p.ProductType.ToLower() == type);
+            try
+            {
+                var existingProduct = _productRepo.GetProductById(id);
+                if (existingProduct == null)
+                    return NotFound("Product not found.");
+
+                // ✅ Lưu lại trạng thái hiện tại
+                var currentStatus = existingProduct.Status;
+                var currentVerification = existingProduct.VerificationStatus;
+
+                // ✅ Cập nhật các trường được phép chỉnh sửa
+                existingProduct.Title = request.Title ?? existingProduct.Title;
+                existingProduct.Description = request.Description ?? existingProduct.Description;
+                existingProduct.Price = request.Price != 0 ? request.Price : existingProduct.Price;
+                existingProduct.Brand = request.Brand ?? existingProduct.Brand;
+                existingProduct.Model = request.Model ?? existingProduct.Model;
+                existingProduct.Condition = request.Condition ?? existingProduct.Condition;
+
+                // Nếu là xe
+                existingProduct.VehicleType = request.VehicleType ?? existingProduct.VehicleType;
+                existingProduct.ManufactureYear = request.ManufactureYear ?? existingProduct.ManufactureYear;
+                existingProduct.Mileage = request.Mileage ?? existingProduct.Mileage;
+                existingProduct.Transmission = request.Transmission ?? existingProduct.Transmission;
+                existingProduct.SeatCount = request.SeatCount ?? existingProduct.SeatCount;
+                existingProduct.LicensePlate = request.LicensePlate ?? existingProduct.LicensePlate;
+
+                // Nếu là pin
+                existingProduct.BatteryType = request.BatteryType ?? existingProduct.BatteryType;
+                existingProduct.BatteryHealth = request.BatteryHealth ?? existingProduct.BatteryHealth;
+                existingProduct.Capacity = request.Capacity ?? existingProduct.Capacity;
+                existingProduct.Voltage = request.Voltage ?? existingProduct.Voltage;
+                existingProduct.BMS = request.BMS ?? existingProduct.BMS;
+                existingProduct.CellType = request.CellType ?? existingProduct.CellType;
+                existingProduct.CycleCount = request.CycleCount ?? existingProduct.CycleCount;
+
+                // ✅ Giữ nguyên trạng thái
+                existingProduct.Status = currentStatus;
+                existingProduct.VerificationStatus = currentVerification;
+
+                var updatedProduct = _productRepo.UpdateProduct(existingProduct);
+
+                var response = new ProductResponse
+                {
+                    ProductId = updatedProduct.ProductId,
+                    SellerId = updatedProduct.SellerId,
+                    ProductType = updatedProduct.ProductType,
+                    Title = updatedProduct.Title,
+                    Description = updatedProduct.Description,
+                    Price = updatedProduct.Price,
+                    Brand = updatedProduct.Brand,
+                    Model = updatedProduct.Model,
+                    Condition = updatedProduct.Condition,
+                    VehicleType = updatedProduct.VehicleType,
+                    ManufactureYear = updatedProduct.ManufactureYear,
+                    Mileage = updatedProduct.Mileage,
+                    Transmission = updatedProduct.Transmission,
+                    SeatCount = updatedProduct.SeatCount,
+                    BatteryType = updatedProduct.BatteryType,
+                    BatteryHealth = updatedProduct.BatteryHealth,
+                    Capacity = updatedProduct.Capacity,
+                    Voltage = updatedProduct.Voltage,
+                    BMS = updatedProduct.BMS,
+                    CellType = updatedProduct.CellType,
+                    CycleCount = updatedProduct.CycleCount,
+                    LicensePlate = updatedProduct.LicensePlate,
+                    Status = updatedProduct.Status,
+                    VerificationStatus = updatedProduct.VerificationStatus,
+                    CreatedDate = updatedProduct.CreatedDate,
+                    ImageUrls = updatedProduct.ProductImages?.Select(img => img.ImageData).ToList() ??
+                                new List<string>()
+                };
+
+                return Ok(new
+                {
+                    Message = "Product updated successfully (admin edit, no status change).",
+                    Product = response
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
         }
-
-        // 🔍 3️⃣ Brand, Model, Condition (case-insensitive)
-        if (!string.IsNullOrEmpty(request.Brand))
-        {
-            var brand = request.Brand.ToLower();
-            products = products.Where(p => p.Brand != null && p.Brand.ToLower().Contains(brand));
-        }
-
-        if (!string.IsNullOrEmpty(request.Model))
-        {
-            var model = request.Model.ToLower();
-            products = products.Where(p => p.Model != null && p.Model.ToLower().Contains(model));
-        }
-
-        if (!string.IsNullOrEmpty(request.Condition))
-        {
-            var condition = request.Condition.ToLower();
-            products = products.Where(p => p.Condition != null && p.Condition.ToLower().Contains(condition));
-        }
-
-        // 💰 4️⃣ Price Range
-        if (request.MinPrice.HasValue)
-            products = products.Where(p => p.Price >= request.MinPrice.Value);
-        if (request.MaxPrice.HasValue)
-            products = products.Where(p => p.Price <= request.MaxPrice.Value);
-
-        // 🚗 5️⃣ Vehicle-specific filters
-        if (!string.IsNullOrEmpty(request.VehicleType))
-        {
-            var vtype = request.VehicleType.ToLower();
-            products = products.Where(p => p.VehicleType != null && p.VehicleType.ToLower().Contains(vtype));
-        }
-
-        if (!string.IsNullOrEmpty(request.Transmission))
-        {
-            var transmission = request.Transmission.ToLower();
-            products = products.Where(p => p.Transmission != null && p.Transmission.ToLower().Contains(transmission));
-        }
-
-        if (request.MinManufactureYear.HasValue)
-            products = products.Where(p => p.ManufactureYear >= request.MinManufactureYear.Value);
-        if (request.MaxManufactureYear.HasValue)
-            products = products.Where(p => p.ManufactureYear <= request.MaxManufactureYear.Value);
-
-        if (request.MaxMileage.HasValue)
-            products = products.Where(p => p.Mileage <= request.MaxMileage.Value);
-
-        if (request.SeatCount.HasValue)
-            products = products.Where(p => p.SeatCount == request.SeatCount.Value);
-
-        // 🔋 6️⃣ Battery-specific filters
-        if (!string.IsNullOrEmpty(request.BatteryType))
-        {
-            var btype = request.BatteryType.ToLower();
-            products = products.Where(p => p.BatteryType != null && p.BatteryType.ToLower().Contains(btype));
-        }
-
-        if (request.MinBatteryHealth.HasValue)
-            products = products.Where(p => p.BatteryHealth >= request.MinBatteryHealth.Value);
-        if (request.MaxBatteryHealth.HasValue)
-            products = products.Where(p => p.BatteryHealth <= request.MaxBatteryHealth.Value);
-
-        if (request.MinCapacity.HasValue)
-            products = products.Where(p => p.Capacity >= request.MinCapacity.Value);
-        if (request.MaxCapacity.HasValue)
-            products = products.Where(p => p.Capacity <= request.MaxCapacity.Value);
-
-        if (!string.IsNullOrEmpty(request.CellType))
-        {
-            var cell = request.CellType.ToLower();
-            products = products.Where(p => p.CellType != null && p.CellType.ToLower().Contains(cell));
-        }
-
-        if (!string.IsNullOrEmpty(request.BMS))
-        {
-            var bms = request.BMS.ToLower();
-            products = products.Where(p => p.BMS != null && p.BMS.ToLower().Contains(bms));
-        }
-
-        // ⚙️ 7️⃣ Status filters
-        if (!string.IsNullOrEmpty(request.Status))
-        {
-            var status = request.Status.ToLower();
-            products = products.Where(p => p.Status != null && p.Status.ToLower() == status);
-        }
-
-        if (!string.IsNullOrEmpty(request.VerificationStatus))
-        {
-            var verStatus = request.VerificationStatus.ToLower();
-            products = products.Where(p => p.VerificationStatus != null && p.VerificationStatus.ToLower() == verStatus);
-        }
-
-        // ✅ 8️⃣ Map sang Response
-        var result = products.Select(p => new ProductResponse
-        {
-            ProductId = p.ProductId,
-            SellerId = p.SellerId,
-            ProductType = p.ProductType,
-            Title = p.Title,
-            Brand = p.Brand,
-            Model = p.Model,
-            Condition = p.Condition,
-            Price = p.Price,
-            VehicleType = p.VehicleType,
-            ManufactureYear = p.ManufactureYear,
-            Mileage = p.Mileage,
-            Transmission = p.Transmission,
-            SeatCount = p.SeatCount,
-            BatteryType = p.BatteryType,
-            BatteryHealth = p.BatteryHealth,
-            Capacity = p.Capacity,
-            Voltage = p.Voltage,
-            CellType = p.CellType,
-            BMS = p.BMS,
-            Status = p.Status,
-            VerificationStatus = p.VerificationStatus,
-            ImageUrls = p.ProductImages.Select(img => img.ImageData).ToList()
-        }).ToList();
-
-        return Ok(result);
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, "Internal server error: " + ex.Message);
-    }
-}
-
-
     }
 }

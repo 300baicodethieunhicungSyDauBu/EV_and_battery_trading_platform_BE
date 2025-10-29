@@ -21,7 +21,8 @@ namespace BE.API.Controllers
         private readonly IProductRepo _productRepo;
         private readonly IVnPayService _vnPay;
 
-        public PaymentController(IPaymentRepo paymentRepo, IOrderRepo orderRepo, IProductRepo productRepo, IVnPayService vnPay)
+        public PaymentController(IPaymentRepo paymentRepo, IOrderRepo orderRepo, IProductRepo productRepo,
+            IVnPayService vnPay)
         {
             _paymentRepo = paymentRepo;
             _orderRepo = orderRepo;
@@ -41,9 +42,11 @@ namespace BE.API.Controllers
             if (string.IsNullOrEmpty(paymentType))
             {
                 // suy ra nếu FE không gửi
-                paymentType = (request.ProductId.HasValue && !request.OrderId.HasValue) ? "Verification"
-                             : (request.OrderId.HasValue ? "Deposit" : "");
+                paymentType = (request.ProductId.HasValue && !request.OrderId.HasValue)
+                    ? "Verification"
+                    : (request.OrderId.HasValue ? "Deposit" : "");
             }
+
             if (string.IsNullOrEmpty(paymentType)) return BadRequest("PaymentType is required.");
             if (request.Amount <= 0) return BadRequest("Amount must be > 0");
             if ((paymentType is "Deposit" or "FinalPayment") && (!request.OrderId.HasValue || request.OrderId <= 0))
@@ -101,14 +104,14 @@ namespace BE.API.Controllers
                 var payment = _paymentRepo.GetPaymentById(id);
                 if (payment == null)
                     return NotFound($"Payment with ID {id} not found");
-                
+
                 var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
-                
+
                 // Admin có thể xem tất cả, user chỉ xem payment của mình
                 if (userRole != "1" && payment.PayerId != userId)
                     return Forbid("You can only view your own payments");
-                
+
                 return Ok(payment);
             }
             catch (Exception ex)
@@ -142,7 +145,7 @@ namespace BE.API.Controllers
                 var userId = User.FindFirst("UserId")?.Value;
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
                 var userName = User.FindFirst(ClaimTypes.Name)?.Value;
-                
+
                 return Ok(new
                 {
                     message = "Payment API is working!",
@@ -193,17 +196,53 @@ namespace BE.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> VnPayReturn([FromQuery] Dictionary<string, string> query)
         {
+            // ❌ Trường hợp query không hợp lệ
             if (query is null || !query.ContainsKey("vnp_TxnRef") || !query.ContainsKey("vnp_SecureHash"))
-                return BadRequest("Invalid VNPay callback.");
-            if (!_vnPay.ValidateSignature(query)) return BadRequest("Invalid signature");
-            if (!int.TryParse(query["vnp_TxnRef"], out var paymentId)) return BadRequest("Invalid TxnRef");
+                return Content("<script>alert('Invalid VNPay callback');window.close();</script>",
+                    "text/html; charset=utf-8");
+
+            if (!_vnPay.ValidateSignature(query))
+                return Content("<script>alert('Invalid signature');window.close();</script>",
+                    "text/html; charset=utf-8");
+
+            if (!int.TryParse(query["vnp_TxnRef"], out var paymentId))
+                return Content("<script>alert('Invalid TxnRef');window.close();</script>", "text/html; charset=utf-8");
 
             var payment = await _paymentRepo.GetPaymentForUpdateAsync(paymentId);
-            if (payment is null) return NotFound("Payment not found");
-            if (await _paymentRepo.HasSuccessfulPaymentAsync(paymentId))
-                return Ok(new { message = "Payment already succeeded", paymentId });
+            if (payment is null)
+                return Content("<script>alert('Payment not found');window.close();</script>",
+                    "text/html; charset=utf-8");
 
-            // Lấy response (option: dùng PaymentExecute để map đầy đủ)
+            if (await _paymentRepo.HasSuccessfulPaymentAsync(paymentId))
+            {
+                string htmlAlready = $@"
+<!DOCTYPE html>
+<html lang='vi'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Đã thanh toán</title>
+</head>
+<body style='font-family:sans-serif;text-align:center;margin-top:80px;'>
+    <h2>💳 Thanh toán đã được ghi nhận trước đó!</h2>
+    <p>Bạn có thể đóng cửa sổ này.</p>
+    <script>
+        if (window.opener) {{
+            window.opener.postMessage({{
+                status: 'success',
+                paymentId: '{paymentId}',
+                message: 'already-paid'
+            }}, '*');
+            window.close();
+        }} else {{
+            document.body.innerHTML += '<p>Vui lòng đóng tab này thủ công.</p>';
+        }}
+    </script>
+</body>
+</html>";
+                return Content(htmlAlready, "text/html; charset=utf-8");
+            }
+
+            // ✅ Xử lý kết quả VNPay
             var resp = _vnPay.PaymentExecute(Request.Query);
             var responseCode = query.GetValueOrDefault("vnp_ResponseCode", "");
 
@@ -212,42 +251,219 @@ namespace BE.API.Controllers
             payment.CardType = query.GetValueOrDefault("vnp_CardType", "");
             payment.TransactionStatus = query.GetValueOrDefault("vnp_TransactionStatus", "");
             payment.ResponseCode = responseCode;
+
             var payDateRaw = query.GetValueOrDefault("vnp_PayDate", "");
             if (!string.IsNullOrWhiteSpace(payDateRaw) &&
-                DateTime.TryParseExact(payDateRaw, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var payDate))
+                DateTime.TryParseExact(payDateRaw, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.None,
+                    out var payDate))
             {
                 payment.PayDate = payDate;
             }
 
+            // ✅ Thành công
             if (responseCode == "00" && resp.Success)
             {
                 payment.Status = "Success";
                 await _paymentRepo.UpdatePaymentAsync(payment);
 
-                // Nghiệp vụ
+                // Nghiệp vụ theo loại thanh toán
                 if (payment.PaymentType == "Deposit" && payment.OrderId.HasValue)
                 {
                     var od = _orderRepo.GetOrderById(payment.OrderId.Value);
-                    if (od != null) { od.DepositStatus = "Paid"; od.Status = "Deposited"; _orderRepo.UpdateOrder(od); }
+                    if (od != null)
+                    {
+                        od.DepositStatus = "Paid";
+                        od.Status = "Deposited";
+                        _orderRepo.UpdateOrder(od);
+
+                        if (od.ProductId.HasValue)
+                        {
+                            var product = _productRepo.GetProductById(od.ProductId.Value);
+                            if (product != null && product.Status == "Active")
+                            {
+                                product.Status = "Reserved";
+                                _productRepo.UpdateProduct(product);
+                            }
+                        }
+                    }
                 }
                 else if (payment.PaymentType == "FinalPayment" && payment.OrderId.HasValue)
                 {
                     var od = _orderRepo.GetOrderById(payment.OrderId.Value);
-                    if (od != null) { od.FinalPaymentStatus = "Paid"; od.Status = "Completed"; od.CompletedDate = DateTime.Now; _orderRepo.UpdateOrder(od); }
+                    if (od != null)
+                    {
+                        od.FinalPaymentStatus = "Paid";
+                        od.Status = "Completed";
+                        od.CompletedDate = DateTime.Now;
+                        _orderRepo.UpdateOrder(od);
+
+                        if (od.ProductId.HasValue)
+                        {
+                            var product = _productRepo.GetProductById(od.ProductId.Value);
+                            if (product != null && product.Status == "Reserved")
+                            {
+                                product.Status = "Sold";
+                                _productRepo.UpdateProduct(product);
+                            }
+                        }
+                    }
                 }
                 else if (payment.PaymentType == "Verification" && payment.ProductId.HasValue)
                 {
                     var p = _productRepo.GetProductById(payment.ProductId.Value);
-                    if (p != null) { p.VerificationStatus = "Requested"; _productRepo.UpdateProduct(p); }
+                    if (p != null)
+                    {
+                        p.VerificationStatus = "Requested";
+                        _productRepo.UpdateProduct(p);
+                    }
                 }
 
-                return Ok(new { message = "Payment success", paymentId = payment.PaymentId, type = payment.PaymentType });
+                // ✅ HTML trả về cho tab VNPay
+                string htmlSuccess = $@"
+<!DOCTYPE html>
+<html lang='vi'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Thanh toán thành công</title>
+</head>
+<body style='font-family:sans-serif;text-align:center;margin-top:80px;'>
+    <h2>✅ Thanh toán thành công!</h2>
+    <p>Bạn có thể đóng cửa sổ này.</p>
+    <script>
+        try {{
+            if (window.opener) {{
+                window.opener.postMessage({{
+                    status: 'success',
+                    paymentId: '{payment.PaymentId}',
+                    type: '{payment.PaymentType}'
+                }}, '*');
+                window.close();
+            }} else {{
+                document.body.innerHTML += '<p>Vui lòng đóng tab này thủ công.</p>';
+            }}
+        }} catch (e) {{
+            document.body.innerHTML += '<p>Không thể tự đóng cửa sổ, vui lòng đóng thủ công.</p>';
+        }}
+    </script>
+</body>
+</html>";
+
+                return Content(htmlSuccess, "text/html; charset=utf-8");
             }
-            else
+
+            // ❌ Thất bại
+            payment.Status = "Failed";
+            await _paymentRepo.UpdatePaymentAsync(payment);
+
+            string htmlFail = $@"
+<!DOCTYPE html>
+<html lang='vi'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Thanh toán thất bại</title>
+</head>
+<body style='font-family:sans-serif;text-align:center;margin-top:80px;'>
+    <h2>❌ Thanh toán thất bại!</h2>
+    <p>Mã lỗi: {responseCode}</p>
+    <script>
+        if (window.opener) {{
+            window.opener.postMessage({{
+                status: 'failed',
+                paymentId: '{payment.PaymentId}',
+                code: '{responseCode}'
+            }}, '*');
+            window.close();
+        }} else {{
+            document.body.innerHTML += '<p>Vui lòng đóng tab này thủ công.</p>';
+        }}
+    </script>
+</body>
+</html>";
+            return Content(htmlFail, "text/html; charset=utf-8");
+        }
+
+
+        [HttpPost("test-callback")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> TestCallback([FromBody] TestCallbackRequest request)
+        {
+            try
             {
-                payment.Status = "Failed";
+                var payment = await _paymentRepo.GetPaymentForUpdateAsync(request.PaymentId);
+                if (payment == null) return NotFound("Payment not found");
+
+                // Simulate successful payment
+                payment.Status = "Success";
+                payment.ResponseCode = "00";
+                payment.TransactionNo = "TEST_" + DateTime.Now.Ticks;
+                payment.PayDate = DateTime.Now;
                 await _paymentRepo.UpdatePaymentAsync(payment);
-                return Ok(new { message = "Payment failed", paymentId = payment.PaymentId, code = responseCode });
+
+                // Apply business logic
+                if (payment.PaymentType == "Deposit" && payment.OrderId.HasValue)
+                {
+                    var od = _orderRepo.GetOrderById(payment.OrderId.Value);
+                    if (od != null)
+                    {
+                        od.DepositStatus = "Paid";
+                        od.Status = "Deposited";
+                        _orderRepo.UpdateOrder(od);
+
+                        // Cập nhật Product status thành "Reserved" khi có deposit thành công
+                        if (od.ProductId.HasValue)
+                        {
+                            var product = _productRepo.GetProductById(od.ProductId.Value);
+                            if (product != null && product.Status == "Active")
+                            {
+                                product.Status = "Reserved";
+                                _productRepo.UpdateProduct(product);
+                            }
+                        }
+                    }
+                }
+                else if (payment.PaymentType == "FinalPayment" && payment.OrderId.HasValue)
+                {
+                    var od = _orderRepo.GetOrderById(payment.OrderId.Value);
+                    if (od != null)
+                    {
+                        od.FinalPaymentStatus = "Paid";
+                        od.Status = "Completed";
+                        od.CompletedDate = DateTime.Now;
+                        _orderRepo.UpdateOrder(od);
+
+                        // Cập nhật Product status thành "Sold" khi order hoàn thành
+                        if (od.ProductId.HasValue)
+                        {
+                            var product = _productRepo.GetProductById(od.ProductId.Value);
+                            if (product != null && product.Status == "Reserved")
+                            {
+                                product.Status = "Sold";
+                                _productRepo.UpdateProduct(product);
+                            }
+                        }
+                    }
+                }
+                else if (payment.PaymentType == "Verification" && payment.ProductId.HasValue)
+                {
+                    var p = _productRepo.GetProductById(payment.ProductId.Value);
+                    if (p != null)
+                    {
+                        p.VerificationStatus = "Requested";
+                        _productRepo.UpdateProduct(p);
+                    }
+                }
+
+                return Ok(new
+                {
+                    message = "Test callback executed successfully",
+                    paymentId = payment.PaymentId,
+                    type = payment.PaymentType,
+                    timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Test callback error: {ex.Message}");
             }
         }
 
@@ -255,7 +471,8 @@ namespace BE.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> VnPayIpn([FromQuery] Dictionary<string, string> query)
         {
-            if (query is null || !query.ContainsKey("vnp_TxnRef") || !query.ContainsKey("vnp_SecureHash")) return Content("Fail");
+            if (query is null || !query.ContainsKey("vnp_TxnRef") || !query.ContainsKey("vnp_SecureHash"))
+                return Content("Fail");
             if (!_vnPay.ValidateSignature(query)) return Content("Fail");
             if (!int.TryParse(query["vnp_TxnRef"], out var paymentId)) return Content("Fail");
 
@@ -271,6 +488,265 @@ namespace BE.API.Controllers
 
             return Content("OK");
         }
+
+        [HttpPost("seller-confirm")]
+        [Authorize(Policy = "MemberOnly")]
+        public IActionResult SellerConfirmSale([FromBody] SellerConfirmWrapperRequest request)
+        {
+            try
+            {
+                // ✅ Authentication required: Chỉ user đã đăng nhập mới có thể gọi API
+                var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
+                if (!int.TryParse(userIdStr, out var userId) || userId <= 0)
+                    return Unauthorized("Invalid user authentication");
+
+                // Validate request
+                if (request?.Request == null)
+                    return BadRequest("Request data is required");
+
+                if (request.Request.ProductId <= 0)
+                    return BadRequest("Invalid product ID");
+
+                // Get the product to verify ownership and status
+                var product = _productRepo.GetProductById(request.Request.ProductId);
+                if (product == null)
+                    return NotFound("Product not found");
+
+                // ✅ Authorization check: Chỉ owner của sản phẩm mới có thể xác nhận bán
+                if (product.SellerId != userId)
+                    return Forbid("You can only confirm sales for your own products");
+
+                // ✅ Status validation: Chỉ cho phép xác nhận bán sản phẩm có status "Reserved"
+                if (product.Status != "Reserved")
+                    return BadRequest(
+                        $"Product must be in 'Reserved' status to confirm sale. Current status: {product.Status}");
+
+                // ✅ Logic nghiệp vụ: Cập nhật status từ "Reserved" → "Sold"
+                product.Status = "Sold";
+
+                // Update the product
+                var updatedProduct = _productRepo.UpdateProduct(product);
+                if (updatedProduct == null)
+                    return StatusCode(500, "Failed to update product status");
+
+                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                return Ok(new
+                {
+                    message = "Sale confirmed successfully",
+                    productId = updatedProduct.ProductId,
+                    sellerId = updatedProduct.SellerId,
+                    oldStatus = "Reserved",
+                    newStatus = updatedProduct.Status,
+                    createdDate = updatedProduct.CreatedDate,
+                    timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("admin-accept")]
+        [Authorize(Policy = "AdminOnly")]
+        public IActionResult AdminAcceptSale([FromBody] AdminAcceptWrapperRequest request)
+        {
+            try
+            {
+                // ✅ Authentication required: Chỉ admin đã đăng nhập mới có thể gọi API
+                var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
+                if (!int.TryParse(userIdStr, out var userId) || userId <= 0)
+                    return Unauthorized("Invalid user authentication");
+
+                // ✅ Authorization check: Chỉ admin mới có thể xác nhận
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+                if (userRole != "1") // Assuming "1" is admin role
+                    return Forbid("Only administrators can accept sales");
+
+                // Validate request
+                if (request?.Request == null)
+                    return BadRequest("Request data is required");
+
+                if (request.Request.ProductId <= 0)
+                    return BadRequest("Invalid product ID");
+
+                // Get the product to verify status
+                var product = _productRepo.GetProductById(request.Request.ProductId);
+                if (product == null)
+                    return NotFound("Product not found");
+
+                // ✅ Status validation: Chỉ cho phép admin xác nhận sản phẩm có status "Reserved"
+                if (product.Status != "Reserved")
+                    return BadRequest(
+                        $"Product must be in 'Reserved' status for admin acceptance. Current status: {product.Status}");
+
+                // ✅ Logic nghiệp vụ: Admin xác nhận và chuyển status từ "Reserved" → "Sold"
+                product.Status = "Sold";
+
+                // Update the product
+                var updatedProduct = _productRepo.UpdateProduct(product);
+                if (updatedProduct == null)
+                    return StatusCode(500, "Failed to update product status");
+
+                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                return Ok(new
+                {
+                    message = "Admin accepted sale successfully",
+                    productId = updatedProduct.ProductId,
+                    sellerId = updatedProduct.SellerId,
+                    adminId = userId,
+                    oldStatus = "Reserved",
+                    newStatus = updatedProduct.Status,
+                    createdDate = updatedProduct.CreatedDate,
+                    timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("admin-accept-test")]
+        [AllowAnonymous]
+        public IActionResult AdminAcceptTest([FromBody] AdminAcceptWrapperRequest request)
+        {
+            try
+            {
+                return Ok(new
+                {
+                    message = "Admin accept test endpoint working",
+                    receivedRequest = request,
+                    timestamp = DateTime.Now,
+                    debug = new
+                    {
+                        hasRequest = request != null,
+                        hasRequestData = request?.Request != null,
+                        productId = request?.Request?.ProductId
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Test error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("admin-accept-debug")]
+        [AllowAnonymous]
+        public IActionResult AdminAcceptDebug()
+        {
+            try
+            {
+                return Ok(new
+                {
+                    message = "Admin accept debug endpoint working",
+                    timestamp = DateTime.Now,
+                    availableEndpoints = new[]
+                    {
+                        "POST /api/Payment/admin-accept",
+                        "POST /api/Payment/admin-accept-test",
+                        "GET /api/Payment/admin-accept-debug"
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Debug error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("admin-accept-auth-test")]
+        [Authorize]
+        public IActionResult AdminAcceptAuthTest([FromBody] AdminAcceptWrapperRequest request)
+        {
+            try
+            {
+                var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+                var userName = User.FindFirst(ClaimTypes.Name)?.Value ?? "";
+
+                return Ok(new
+                {
+                    message = "Admin accept auth test endpoint working",
+                    authentication = new
+                    {
+                        userId = userIdStr,
+                        userRole = userRole,
+                        userName = userName,
+                        isAdmin = userRole == "1"
+                    },
+                    receivedRequest = request,
+                    timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Auth test error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("admin-confirm")]
+        [Authorize(Policy = "AdminOnly")]
+        public IActionResult AdminConfirmSale([FromBody] AdminAcceptWrapperRequest request)
+        {
+            try
+            {
+                // ✅ Authentication required: Chỉ admin đã đăng nhập mới có thể gọi API
+                var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
+                if (!int.TryParse(userIdStr, out var userId) || userId <= 0)
+                    return Unauthorized("Invalid user authentication");
+
+                // ✅ Authorization check: Chỉ admin mới có thể xác nhận
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+                if (userRole != "1") // Assuming "1" is admin role
+                    return Forbid("Only administrators can confirm sales");
+
+                // Validate request
+                if (request?.Request == null)
+                    return BadRequest("Request data is required");
+
+                if (request.Request.ProductId <= 0)
+                    return BadRequest("Invalid product ID");
+
+                // Get the product to verify status
+                var product = _productRepo.GetProductById(request.Request.ProductId);
+                if (product == null)
+                    return NotFound("Product not found");
+
+                // ✅ Status validation: Chỉ cho phép admin xác nhận sản phẩm có status "Reserved"
+                if (product.Status != "Reserved")
+                    return BadRequest(
+                        $"Product must be in 'Reserved' status for admin confirmation. Current status: {product.Status}");
+
+                // ✅ Logic nghiệp vụ: Admin xác nhận và chuyển status từ "Reserved" → "Sold"
+                product.Status = "Sold";
+
+                // Update the product
+                var updatedProduct = _productRepo.UpdateProduct(product);
+                if (updatedProduct == null)
+                    return StatusCode(500, "Failed to update product status");
+
+                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                return Ok(new
+                {
+                    message = "Admin confirmed sale successfully",
+                    productId = updatedProduct.ProductId,
+                    sellerId = updatedProduct.SellerId,
+                    adminId = userId,
+                    oldStatus = "Reserved",
+                    newStatus = updatedProduct.Status,
+                    createdDate = updatedProduct.CreatedDate,
+                    timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }
-    

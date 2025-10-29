@@ -10,6 +10,7 @@ using Microsoft.OpenApi.Models;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using BE.API.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 var cfg = builder.Configuration;
@@ -176,10 +177,27 @@ builder.Services.AddSingleton(new OpenAIOptions
 builder.Services.AddScoped<IAIChatService, OpenRouterChatService>();
 
 // =================== CORS ===================
-builder.Services.AddCors(o => o.AddPolicy("AllowAll",
-    p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+            policy
+                .WithOrigins(
+                    "http://localhost:5173",
+                    "https://evtrading-frontend.vercel.app"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials() // ✅ Cho phép gửi cookie/token và SignalR handshake
+    );
+});
+
+// Thêm SignalR
+builder.Services.AddSignalR();
 
 var app = builder.Build();
+
+// Map hub endpoint
+app.MapHub<ChatHub>("/chatHub");
 
 // =================== Pipeline ===================
 app.UseSwagger();
@@ -190,7 +208,7 @@ app.UseSwaggerUI(c =>
 });
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
