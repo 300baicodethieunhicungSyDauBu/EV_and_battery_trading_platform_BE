@@ -43,7 +43,19 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
     public virtual DbSet<Message> Messages { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer(GetConnectionString());
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            optionsBuilder.UseSqlServer(GetConnectionString(), sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorNumbersToAdd: null);
+                sqlOptions.CommandTimeout(60);
+            });
+        }
+    }
 
     private string GetConnectionString()
     {

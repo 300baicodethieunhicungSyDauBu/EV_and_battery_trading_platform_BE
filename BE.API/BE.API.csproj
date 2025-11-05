@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BE.REPOs\BE.REPOs.csproj" />
+    <ProjectReference Include="..\BE.BOs\BE.BOs.csproj" />
   </ItemGroup>
 
 </Project>
