@@ -231,14 +231,28 @@ namespace BE.API.Controllers
             var totalItems = users.Count();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-            var items = users.Skip((page - 1) * pageSize).Take(pageSize)
-                .Select(u => new AdminUserListItemResponse
+            var userList = users.Skip((page - 1) * pageSize).Take(pageSize)
+                .Select(u => new
+                {
+                    u.UserId,
+                    u.FullName,
+                    u.Email,
+                    u.AccountStatus,
+                    u.AccountStatusReason,
+                    u.CreatedDate,
+                    RoleName = u.Role != null ? u.Role.RoleName : null
+                })
+                .ToList();
+            
+            var items = userList.Select(u => new AdminUserListItemResponse
                 {
                     Id = u.UserId,
                     FullName = u.FullName,
                     Email = u.Email,
-                    Role = NormalizeRoleNameToUi(u.Role != null ? u.Role.RoleName : null),
+                    Role = NormalizeRoleNameToUi(u.RoleName),
                     Status = NormalizeDbStatusToUi(u.AccountStatus),
+                    AccountStatusReason = u.AccountStatusReason,
+                    Reason = u.AccountStatusReason ?? string.Empty,
                     CreatedAt = u.CreatedDate,
                     LastLoginAt = null
                 })
