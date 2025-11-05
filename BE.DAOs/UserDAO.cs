@@ -11,7 +11,7 @@ namespace BE.DAOs
     public class UserDAO
     {
         private static UserDAO? instance;
-        private static EvandBatteryTradingPlatformContext? dbcontext;
+        public static EvandBatteryTradingPlatformContext? dbcontext;
         private UserDAO()
         {
             dbcontext = new EvandBatteryTradingPlatformContext();

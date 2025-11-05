@@ -9,5 +9,6 @@ namespace BE.API.DTOs.Response
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public DateTime? CreatedDate { get; set; }
+        public bool IsRead { get; set; } = false;
     }
 }

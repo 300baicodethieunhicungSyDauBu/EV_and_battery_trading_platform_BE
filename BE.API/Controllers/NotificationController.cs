@@ -33,7 +33,8 @@ namespace BE.API.Controllers
                     NotificationType = notification.NotificationType ?? "",
                     Title = notification.Title,
                     Content = notification.Content ?? "",
-                    CreatedDate = notification.CreatedDate
+                    CreatedDate = notification.CreatedDate,
+                    IsRead = notification.IsRead
                 }).ToList();
 
                 return Ok(response);
@@ -63,7 +64,8 @@ namespace BE.API.Controllers
                     NotificationType = notification.NotificationType ?? "",
                     Title = notification.Title,
                     Content = notification.Content ?? "",
-                    CreatedDate = notification.CreatedDate
+                    CreatedDate = notification.CreatedDate,
+                    IsRead = notification.IsRead
                 };
 
                 return Ok(response);
@@ -88,7 +90,8 @@ namespace BE.API.Controllers
                     NotificationType = notification.NotificationType ?? "",
                     Title = notification.Title,
                     Content = notification.Content ?? "",
-                    CreatedDate = notification.CreatedDate
+                    CreatedDate = notification.CreatedDate,
+                    IsRead = notification.IsRead
                 }).ToList();
 
                 return Ok(response);
@@ -114,7 +117,8 @@ namespace BE.API.Controllers
                     NotificationType = notification.NotificationType ?? "",
                     Title = notification.Title,
                     Content = notification.Content ?? "",
-                    CreatedDate = notification.CreatedDate
+                    CreatedDate = notification.CreatedDate,
+                    IsRead = notification.IsRead
                 }).ToList();
 
                 return Ok(response);
@@ -159,7 +163,8 @@ namespace BE.API.Controllers
                     NotificationType = createdNotification.NotificationType ?? "",
                     Title = createdNotification.Title,
                     Content = createdNotification.Content ?? "",
-                    CreatedDate = createdNotification.CreatedDate
+                    CreatedDate = createdNotification.CreatedDate,
+                    IsRead = createdNotification.IsRead
                 };
 
                 return CreatedAtAction(nameof(GetNotificationById), new { id = createdNotification.NotificationId }, response);
@@ -201,10 +206,51 @@ namespace BE.API.Controllers
                     NotificationType = updatedNotification.NotificationType ?? "",
                     Title = updatedNotification.Title,
                     Content = updatedNotification.Content ?? "",
-                    CreatedDate = updatedNotification.CreatedDate
+                    CreatedDate = updatedNotification.CreatedDate,
+                    IsRead = updatedNotification.IsRead
                 };
 
                 return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        [HttpPut("{id}/read")]
+        [Authorize]
+        public ActionResult MarkNotificationAsRead(int id)
+        {
+            try
+            {
+                var userIdStr = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
+                {
+                    return Unauthorized("Invalid user token");
+                }
+
+                var notification = _notificationsRepo.GetNotificationById(id);
+                if (notification == null)
+                {
+                    return NotFound("Notification not found");
+                }
+
+                // Verify user owns this notification
+                if (notification.UserId != userId)
+                {
+                    return Forbid("You can only mark your own notifications as read");
+                }
+
+                var marked = _notificationsRepo.MarkNotificationAsRead(id);
+                if (marked)
+                {
+                    return Ok(new { message = "Notification marked as read" });
+                }
+                else
+                {
+                    return StatusCode(500, "Failed to mark notification as read");
+                }
             }
             catch (Exception ex)
             {

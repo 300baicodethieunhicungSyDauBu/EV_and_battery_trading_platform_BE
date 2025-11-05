@@ -66,6 +66,7 @@ namespace BE.DAOs
         {
             using var context = new EvandBatteryTradingPlatformContext();
             notification.CreatedDate = DateTime.Now;
+            notification.IsRead = false;
             context.Notifications.Add(notification);
             context.SaveChanges();
             return notification;
@@ -93,6 +94,19 @@ namespace BE.DAOs
             if (notification != null)
             {
                 context.Notifications.Remove(notification);
+                context.SaveChanges();
+                return true;
+            }
+            return false;
+        }
+
+        public bool MarkNotificationAsRead(int notificationId)
+        {
+            using var context = new EvandBatteryTradingPlatformContext();
+            var notification = context.Notifications.FirstOrDefault(n => n.NotificationId == notificationId);
+            if (notification != null)
+            {
+                notification.IsRead = true;
                 context.SaveChanges();
                 return true;
             }
