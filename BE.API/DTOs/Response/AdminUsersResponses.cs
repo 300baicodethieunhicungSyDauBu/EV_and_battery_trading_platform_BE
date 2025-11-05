@@ -9,8 +9,8 @@ namespace BE.API.DTOs.Response
         public string Email { get; set; } = string.Empty;
         public string Role { get; set; } = "user"; // user|sub_admin|admin
         public string Status { get; set; } = "active"; // active|suspended|deleted
-
-        public string Reason { get; set; } = string.Empty;
+        public string? AccountStatusReason { get; set; }
+        public string Reason { get; set; } = string.Empty; // Deprecated: use AccountStatusReason instead
         public System.DateTime? CreatedAt { get; set; }
         public System.DateTime? LastLoginAt { get; set; }
     }
