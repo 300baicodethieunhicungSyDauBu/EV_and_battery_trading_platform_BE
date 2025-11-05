@@ -2,6 +2,7 @@
 using BE.API.DTOs.Response;
 using BE.BOs.Models;
 using BE.REPOs.Interface;
+using Microsoft.EntityFrameworkCore;
 using BE.REPOs.Service;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
@@ -34,6 +35,53 @@ namespace BE.API.Controllers
             _cloudinary = cloudinaryService;
             _emailService = emailService;
             _otpService = otpService;
+        }
+
+        // ========== Admin: helpers ==========
+        private bool IsAdminOrSubAdminFromClaims()
+        {
+            var roleClaim = User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("role")?.Value;
+            if (string.IsNullOrEmpty(roleClaim)) return false;
+            // Accept numeric RoleId in token (1: Admin, 3: SubAdmin) or textual
+            if (int.TryParse(roleClaim, out var roleId))
+            {
+                return roleId == 1 || roleId == 3;
+            }
+            return roleClaim.Equals("Admin", StringComparison.OrdinalIgnoreCase)
+                || roleClaim.Equals("SubAdmin", StringComparison.OrdinalIgnoreCase)
+                || roleClaim.Equals("Moderator", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string NormalizeRoleNameToUi(string? roleName)
+        {
+            if (string.IsNullOrEmpty(roleName)) return "user";
+            if (roleName.Equals("Admin", StringComparison.OrdinalIgnoreCase)) return "admin";
+            if (roleName.Equals("SubAdmin", StringComparison.OrdinalIgnoreCase) || roleName.Equals("Moderator", StringComparison.OrdinalIgnoreCase)) return "sub_admin";
+            return "user";
+        }
+
+        private static string MapUiRoleToRoleName(string uiRole)
+        {
+            if (uiRole.Equals("admin", StringComparison.OrdinalIgnoreCase)) return "Admin";
+            if (uiRole.Equals("sub_admin", StringComparison.OrdinalIgnoreCase)) return "SubAdmin";
+            return "Member";
+        }
+
+        private static string MapUiStatusToDb(string uiStatus)
+        {
+            if (uiStatus.Equals("active", StringComparison.OrdinalIgnoreCase)) return "Active";
+            if (uiStatus.Equals("suspended", StringComparison.OrdinalIgnoreCase)) return "Suspended";
+            if (uiStatus.Equals("deleted", StringComparison.OrdinalIgnoreCase)) return "Deleted";
+            return uiStatus;
+        }
+
+        private static string NormalizeDbStatusToUi(string? dbStatus)
+        {
+            if (string.IsNullOrEmpty(dbStatus)) return "active";
+            if (dbStatus.Equals("Active", StringComparison.OrdinalIgnoreCase)) return "active";
+            if (dbStatus.Equals("Suspended", StringComparison.OrdinalIgnoreCase)) return "suspended";
+            if (dbStatus.Equals("Deleted", StringComparison.OrdinalIgnoreCase)) return "deleted";
+            return dbStatus.ToLower();
         }
 
         [HttpPost("login")]
@@ -128,6 +176,249 @@ namespace BE.API.Controllers
             {
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
+        }
+
+        // ========== Admin: Users List ==========
+        [HttpGet]
+        [Route("/api/admin/users")] // absolute route
+        [Authorize]
+        public ActionResult<PagedResponse<AdminUserListItemResponse>> AdminGetUsers([FromQuery] AdminUserListQuery query)
+        {
+            if (!IsAdminOrSubAdminFromClaims()) return Forbid();
+
+            using var context = new EvandBatteryTradingPlatformContext();
+            var users = context.Users.Include(u => u.Role).AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query.Search))
+            {
+                var s = query.Search.Trim().ToLower();
+                users = users.Where(u => (u.Email != null && u.Email.ToLower().Contains(s))
+                                         || (u.FullName != null && u.FullName.ToLower().Contains(s))
+                                         || (u.Phone != null && u.Phone.ToLower().Contains(s)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.Role))
+            {
+                var roleName = MapUiRoleToRoleName(query.Role);
+                users = users.Where(u => u.Role != null && u.Role.RoleName == roleName);
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.Status))
+            {
+                var status = MapUiStatusToDb(query.Status);
+                users = users.Where(u => u.AccountStatus != null && u.AccountStatus == status);
+            }
+
+            var sort = string.IsNullOrWhiteSpace(query.Sort) ? "createdAt:desc" : query.Sort;
+            foreach (var part in sort.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                var tokens = part.Split(':', StringSplitOptions.TrimEntries);
+                var field = tokens[0].ToLower();
+                var dir = tokens.Length > 1 ? tokens[1].ToLower() : "asc";
+                bool desc = dir == "desc";
+
+                users = (field) switch
+                {
+                    "createdat" => desc ? users.OrderByDescending(u => u.CreatedDate) : users.OrderBy(u => u.CreatedDate),
+                    "fullname" => desc ? users.OrderByDescending(u => u.FullName) : users.OrderBy(u => u.FullName),
+                    "email" => desc ? users.OrderByDescending(u => u.Email) : users.OrderBy(u => u.Email),
+                    _ => desc ? users.OrderByDescending(u => u.UserId) : users.OrderBy(u => u.UserId)
+                };
+            }
+
+            var page = query.Page < 1 ? 1 : query.Page;
+            var pageSize = query.PageSize < 1 ? 20 : (query.PageSize > 200 ? 200 : query.PageSize);
+            var totalItems = users.Count();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            var items = users.Skip((page - 1) * pageSize).Take(pageSize)
+                .Select(u => new AdminUserListItemResponse
+                {
+                    Id = u.UserId,
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    Role = NormalizeRoleNameToUi(u.Role != null ? u.Role.RoleName : null),
+                    Status = NormalizeDbStatusToUi(u.AccountStatus),
+                    CreatedAt = u.CreatedDate,
+                    LastLoginAt = null
+                })
+                .ToList();
+
+            return Ok(new PagedResponse<AdminUserListItemResponse>
+            {
+                Items = items,
+                Meta = new PageMeta { Page = page, PageSize = pageSize, TotalItems = totalItems, TotalPages = totalPages, Sort = sort.Split(',').ToList() }
+            });
+        }
+
+        // ========== Admin: User Detail ==========
+        [HttpGet]
+        [Route("/api/admin/users/{id}")]
+        [Authorize]
+        public ActionResult<AdminUserDetailResponse> AdminGetUserDetail([FromRoute] int id)
+        {
+            if (!IsAdminOrSubAdminFromClaims()) return Forbid();
+
+            using var context = new EvandBatteryTradingPlatformContext();
+            var user = context.Users.Include(u => u.Role).FirstOrDefault(u => u.UserId == id);
+            if (user == null) return NotFound();
+
+            var orderCount = context.Orders.Count(o => o.BuyerId == id || o.SellerId == id);
+            var listingCount = context.Products.Count(p => p.SellerId == id);
+            var violationCount = context.ReportedListings.Include(r => r.Product).Count(r => r.Product != null && r.Product.SellerId == id);
+
+            return Ok(new AdminUserDetailResponse
+            {
+                Id = user.UserId,
+                FullName = user.FullName,
+                Email = user.Email,
+                Phone = user.Phone,
+                Avatar = user.Avatar,
+                Role = NormalizeRoleNameToUi(user.Role != null ? user.Role.RoleName : null),
+                Status = NormalizeDbStatusToUi(user.AccountStatus),
+                AccountStatusReason = user.AccountStatusReason,
+                CreatedAt = user.CreatedDate,
+                LastLoginAt = null,
+                Stats = new AdminUserStats { OrderCount = orderCount, ListingCount = listingCount, ViolationCount = violationCount }
+            });
+        }
+
+        // ========== Admin: Update basic ==========
+        [HttpPut]
+        [Route("/api/admin/users/{id}")]
+        [Authorize]
+        public ActionResult<AdminUserDetailResponse> AdminUpdateBasic([FromRoute] int id, [FromBody] AdminUserUpdateRequest request)
+        {
+            if (!IsAdminOrSubAdminFromClaims()) return Forbid();
+
+            var user = _userRepo.GetUserById(id);
+            if (user == null) return NotFound();
+
+            if (!string.IsNullOrEmpty(request.Email)) user.Email = request.Email;
+            user.FullName = request.FullName;
+            user.Phone = request.Phone;
+            user.Avatar = request.Avatar;
+
+            var updated = _userRepo.UpdateUser(user);
+            updated = _userRepo.GetUserById(updated.UserId);
+
+            return Ok(new AdminUserDetailResponse
+            {
+                Id = updated.UserId,
+                FullName = updated.FullName,
+                Email = updated.Email,
+                Phone = updated.Phone,
+                Avatar = updated.Avatar,
+                Role = NormalizeRoleNameToUi(updated.Role != null ? updated.Role.RoleName : null),
+                Status = NormalizeDbStatusToUi(updated.AccountStatus),
+                CreatedAt = updated.CreatedDate,
+                LastLoginAt = null,
+                Stats = new AdminUserStats { OrderCount = 0, ListingCount = 0, ViolationCount = 0 }
+            });
+        }
+
+        // ========== Admin: Update role ==========
+        [HttpPut]
+        [Route("/api/admin/users/{id}/role")]
+        [Authorize]
+        public ActionResult<AdminUserDetailResponse> AdminUpdateRole([FromRoute] int id, [FromBody] AdminUserRoleRequest request)
+        {
+            if (!IsAdminOrSubAdminFromClaims()) return Forbid();
+
+            using var context = new EvandBatteryTradingPlatformContext();
+            var user = context.Users.Include(u => u.Role).FirstOrDefault(u => u.UserId == id);
+            if (user == null) return NotFound();
+
+            var targetRoleName = MapUiRoleToRoleName(request.Role);
+            var role = context.UserRoles.FirstOrDefault(r => r.RoleName == targetRoleName);
+            if (role == null)
+            {
+                return UnprocessableEntity(new { error = new { code = "INVALID_ROLE", message = "Role does not exist" } });
+            }
+
+            var isCurrentAdmin = user.Role != null && user.Role.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+            var isDowngradeFromAdmin = isCurrentAdmin && !targetRoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+            if (isDowngradeFromAdmin)
+            {
+                var adminCount = context.Users.Include(u => u.Role).Count(u => u.Role != null && u.Role.RoleName == "Admin");
+                if (adminCount <= 1)
+                {
+                    return Conflict(new { error = new { code = "LAST_ADMIN_DOWNGRADE_FORBIDDEN", message = "Cannot downgrade the last admin" } });
+                }
+            }
+
+            user.RoleId = role.RoleId;
+            context.Users.Update(user);
+            context.SaveChanges();
+
+            user = context.Users.Include(u => u.Role).First(u => u.UserId == id);
+            return Ok(new AdminUserDetailResponse
+            {
+                Id = user.UserId,
+                FullName = user.FullName,
+                Email = user.Email,
+                Phone = user.Phone,
+                Avatar = user.Avatar,
+                Role = NormalizeRoleNameToUi(user.Role != null ? user.Role.RoleName : null),
+                Status = NormalizeDbStatusToUi(user.AccountStatus),
+                CreatedAt = user.CreatedDate,
+                LastLoginAt = null,
+                Stats = new AdminUserStats { OrderCount = 0, ListingCount = 0, ViolationCount = 0 }
+            });
+        }
+
+        // ========== Admin: Update status ==========
+        [HttpPut]
+        [Route("/api/admin/users/{id}/status")]
+        [Authorize]
+        public ActionResult<AdminUserDetailResponse> AdminUpdateStatus([FromRoute] int id, [FromBody] AdminUserStatusRequest request)
+        {
+            if (!IsAdminOrSubAdminFromClaims()) return Forbid();
+
+            using var context = new EvandBatteryTradingPlatformContext();
+            var user = context.Users.Include(u => u.Role).FirstOrDefault(u => u.UserId == id);
+            if (user == null) return NotFound();
+
+            var newStatus = MapUiStatusToDb(request.Status);
+            user.AccountStatus = newStatus;
+            user.AccountStatusReason = request.Reason;
+            context.Users.Update(user);
+            context.SaveChanges();
+
+            user = context.Users.Include(u => u.Role).First(u => u.UserId == id);
+            return Ok(new AdminUserDetailResponse
+            {
+                Id = user.UserId,
+                FullName = user.FullName,
+                Email = user.Email,
+                Phone = user.Phone,
+                Avatar = user.Avatar,
+                Role = NormalizeRoleNameToUi(user.Role != null ? user.Role.RoleName : null),
+                Status = NormalizeDbStatusToUi(user.AccountStatus),
+                AccountStatusReason = user.AccountStatusReason,
+                CreatedAt = user.CreatedDate,
+                LastLoginAt = null,
+                Stats = new AdminUserStats { OrderCount = 0, ListingCount = 0, ViolationCount = 0 }
+              
+            })
+            ;
+        }
+
+        // ========== Admin: Audit ==========
+        [HttpGet]
+        [Route("/api/admin/users/{id}/audit")]
+        [Authorize]
+        public ActionResult<PagedResponse<AdminAuditItemResponse>> AdminGetAudit([FromRoute] int id, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            if (!IsAdminOrSubAdminFromClaims()) return Forbid();
+
+            var safePage = page < 1 ? 1 : page;
+            var safePageSize = pageSize < 1 ? 20 : (pageSize > 200 ? 200 : pageSize);
+            return Ok(new PagedResponse<AdminAuditItemResponse>
+            {
+                Items = new List<AdminAuditItemResponse>(),
+                Meta = new PageMeta { Page = safePage, PageSize = safePageSize, TotalItems = 0, TotalPages = 0, Sort = new List<string>() }
+            });
         }
 
         [HttpGet]

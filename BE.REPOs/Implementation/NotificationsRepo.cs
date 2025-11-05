@@ -40,5 +40,10 @@ namespace BE.REPOs.Implementation
         {
             return NotificationsDAO.Instance.DeleteNotification(notificationId);
         }
+
+        public bool MarkNotificationAsRead(int notificationId)
+        {
+            return NotificationsDAO.Instance.MarkNotificationAsRead(notificationId);
+        }
     }
 }
