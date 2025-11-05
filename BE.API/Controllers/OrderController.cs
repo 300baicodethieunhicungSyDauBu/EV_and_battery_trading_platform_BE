@@ -44,6 +44,7 @@ namespace BE.API.Controllers
                     o.PayoutStatus,
                     o.CreatedDate,
                     o.CompletedDate,
+                    o.CancellationReason,
                     BuyerName = o.Buyer?.FullName,
                     SellerName = o.Seller?.FullName,
                     Product = new
@@ -490,5 +491,50 @@ namespace BE.API.Controllers
                 return StatusCode(500, "Fix error: " + ex.Message);
             }
         }
+
+		[HttpPost("{id}/admin-reject")]
+		[Authorize(Policy = "AdminOnly")]
+		public ActionResult AdminRejectOrder(int id, [FromBody] AdminRejectOrderRequest request)
+		{
+			try
+			{
+				if (request == null || string.IsNullOrWhiteSpace(request.Reason) || request.Reason.Trim().Length < 3)
+					return BadRequest("Reason is required (min 3 characters).");
+
+				var order = _orderRepo.GetOrderById(id);
+				if (order == null) return NotFound("Order not found.");
+
+				if (string.Equals(order.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+					return BadRequest("Cannot reject a completed order.");
+
+				order.Status = "Cancelled";
+				order.CompletedDate = null;
+				order.CancellationReason = request.Reason;
+
+				var updated = _orderRepo.UpdateOrder(order);
+
+				if (order.ProductId.HasValue)
+				{
+					var product = _productRepo.GetProductById(order.ProductId.Value);
+					if (product != null && string.Equals(product.Status, "Reserved", StringComparison.OrdinalIgnoreCase))
+					{
+						product.Status = "Active";
+						_productRepo.UpdateProduct(product);
+					}
+				}
+
+				return Ok(new
+				{
+					updated.OrderId,
+					updated.Status,
+					Reason = request.Reason,
+					Message = "Order rejected successfully."
+				});
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, "Internal server error: " + ex.Message);
+			}
+		}
     }
 }
