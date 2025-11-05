@@ -21,6 +21,8 @@ public partial class User
 
     public string? AccountStatus { get; set; }
 
+		public string? AccountStatusReason { get; set; }
+
     public DateTime? CreatedDate { get; set; }
 
     public string? ResetPasswordToken { get; set; }

@@ -11,5 +11,6 @@ namespace BE.REPOs.Interface
         Notification CreateNotification(Notification notification);
         Notification UpdateNotification(Notification notification);
         bool DeleteNotification(int notificationId);
+        bool MarkNotificationAsRead(int notificationId);
     }
 }
