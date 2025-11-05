@@ -4,6 +4,7 @@ using BE.REPOs.Service;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;                  // CookieSecurePolicy, SameSiteMode
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -124,7 +125,17 @@ builder.Services.AddControllers()
     });
 
 // =================== DbContext ===================
-builder.Services.AddDbContext<BE.BOs.Models.EvandBatteryTradingPlatformContext>();
+builder.Services.AddDbContext<BE.BOs.Models.EvandBatteryTradingPlatformContext>(options =>
+{
+    options.UseSqlServer(cfg.GetConnectionString("DefaultConnectionString"), sqlOptions =>
+    {
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorNumbersToAdd: null);
+        sqlOptions.CommandTimeout(60);
+    });
+});
 
 // =================== DI (Repos/Services) ===================
 builder.Services.AddScoped<IUserRepo, UserRepo>();
