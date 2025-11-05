@@ -33,6 +33,8 @@ public partial class Order
 
     public DateTime? CompletedDate { get; set; }
 
+	public string? CancellationReason { get; set; }
+
     public virtual User? Buyer { get; set; }
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
