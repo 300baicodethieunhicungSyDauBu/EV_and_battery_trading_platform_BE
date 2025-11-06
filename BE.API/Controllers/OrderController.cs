@@ -93,6 +93,7 @@ namespace BE.API.Controllers
                     order.PayoutStatus,
                     order.CreatedDate,
                     order.CompletedDate,
+                    order.CancellationReason,
                     BuyerName = order.Buyer?.FullName,
                     SellerName = order.Seller?.FullName,
                     Product = new
@@ -322,6 +323,7 @@ namespace BE.API.Controllers
                     o.Status,
                     o.CreatedDate,
                     o.CompletedDate,
+                    o.CancellationReason,
                     PurchaseDate = o.CompletedDate ?? o.CreatedDate, // Use CompletedDate if available, otherwise CreatedDate
                     SellerName = o.Seller?.FullName ?? "N/A",
                     Product = o.Product != null ? new
@@ -373,6 +375,7 @@ namespace BE.API.Controllers
                     o.Status,
                     o.PayoutStatus,
                     o.CreatedDate,
+                    o.CancellationReason,
                     BuyerName = o.Buyer?.FullName,
                     Product = new
                     {
