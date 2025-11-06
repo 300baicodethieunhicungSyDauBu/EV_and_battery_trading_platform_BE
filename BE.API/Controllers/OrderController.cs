@@ -45,6 +45,7 @@ namespace BE.API.Controllers
                     o.CreatedDate,
                     o.CompletedDate,
                     o.CancellationReason,
+                    o.CancelledDate,
                     BuyerName = o.Buyer?.FullName,
                     SellerName = o.Seller?.FullName,
                     Product = new
@@ -94,6 +95,7 @@ namespace BE.API.Controllers
                     order.CreatedDate,
                     order.CompletedDate,
                     order.CancellationReason,
+                    order.CancelledDate,
                     BuyerName = order.Buyer?.FullName,
                     SellerName = order.Seller?.FullName,
                     Product = new
@@ -324,6 +326,7 @@ namespace BE.API.Controllers
                     o.CreatedDate,
                     o.CompletedDate,
                     o.CancellationReason,
+                    o.CancelledDate,
                     PurchaseDate = o.CompletedDate ?? o.CreatedDate, // Use CompletedDate if available, otherwise CreatedDate
                     SellerName = o.Seller?.FullName ?? "N/A",
                     Product = o.Product != null ? new
@@ -376,6 +379,7 @@ namespace BE.API.Controllers
                     o.PayoutStatus,
                     o.CreatedDate,
                     o.CancellationReason,
+                    o.CancelledDate,
                     BuyerName = o.Buyer?.FullName,
                     Product = new
                     {
@@ -513,6 +517,7 @@ namespace BE.API.Controllers
 				order.Status = "Cancelled";
 				order.CompletedDate = null;
 				order.CancellationReason = request.Reason;
+				order.CancelledDate = DateTime.Now;
 
 				var updated = _orderRepo.UpdateOrder(order);
 
@@ -531,6 +536,7 @@ namespace BE.API.Controllers
 					updated.OrderId,
 					updated.Status,
 					Reason = request.Reason,
+					CancelledDate = updated.CancelledDate,
 					Message = "Order rejected successfully."
 				});
 			}
