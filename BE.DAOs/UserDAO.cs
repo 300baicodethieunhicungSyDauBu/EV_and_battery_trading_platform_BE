@@ -41,11 +41,58 @@ namespace BE.DAOs
 
         public User Register(User user)
         {
-            user.CreatedDate = DateTime.Now;
-            user.AccountStatus = "Active";
-            dbcontext.Users.Add(user);
-            dbcontext.SaveChanges();
-            return user;
+            try
+            {
+                // Đảm bảo dbcontext không null
+                if (dbcontext == null)
+                {
+                    dbcontext = new EvandBatteryTradingPlatformContext();
+                }
+
+                // Kiểm tra email đã tồn tại chưa
+                if (dbcontext.Users.Any(u => u.Email == user.Email))
+                {
+                    throw new Exception($"Email '{user.Email}' đã được sử dụng. Vui lòng sử dụng email khác.");
+                }
+
+                // Kiểm tra RoleId có tồn tại không (nếu có giá trị)
+                if (user.RoleId.HasValue && !dbcontext.UserRoles.Any(r => r.RoleId == user.RoleId.Value))
+                {
+                    throw new Exception($"RoleId {user.RoleId.Value} không tồn tại trong hệ thống.");
+                }
+
+                user.CreatedDate = DateTime.Now;
+                user.AccountStatus = "Active";
+                
+                dbcontext.Users.Add(user);
+                dbcontext.SaveChanges();
+                
+                return user;
+            }
+            catch (DbUpdateException dbEx)
+            {
+                // Xử lý lỗi database cụ thể
+                if (dbEx.InnerException != null)
+                {
+                    var innerEx = dbEx.InnerException;
+                    if (innerEx.Message.Contains("UNIQUE KEY constraint") || innerEx.Message.Contains("duplicate key") || 
+                        innerEx.Message.Contains("IX_Users_Email") || innerEx.Message.Contains("Cannot insert duplicate key"))
+                    {
+                        throw new Exception($"Email '{user.Email}' đã được sử dụng. Vui lòng sử dụng email khác.");
+                    }
+                    if (innerEx.Message.Contains("FOREIGN KEY constraint") || innerEx.Message.Contains("FK_Users_UserRoles"))
+                    {
+                        throw new Exception($"RoleId {user.RoleId} không hợp lệ. Vui lòng kiểm tra lại.");
+                    }
+                }
+                throw new Exception("Lỗi khi lưu thông tin người dùng vào database: " + dbEx.Message + 
+                    (dbEx.InnerException != null ? " | Inner: " + dbEx.InnerException.Message : ""));
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Lỗi đăng ký người dùng: " + ex.Message + 
+                    (ex.InnerException != null ? " | Inner: " + ex.InnerException.Message : ""));
+            }
         }
 
         public List<User> GetAllUsers()

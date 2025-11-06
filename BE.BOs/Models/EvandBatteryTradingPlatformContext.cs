@@ -219,6 +219,9 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
         entity.HasIndex(e => e.Email).IsUnique();
 
         entity.Property(e => e.AccountStatus).HasMaxLength(20).HasDefaultValue("Active");
+        entity.Property(e => e.AccountStatusReason)
+            .HasColumnName("AccountStatusReason")
+            .HasColumnType("nvarchar(max)");
         entity.Property(e => e.Avatar).HasColumnType("nvarchar(max)");
         entity.Property(e => e.CreatedDate).HasDefaultValueSql("(getdate())");
         entity.Property(e => e.Email).HasMaxLength(255);
@@ -228,6 +231,7 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
         entity.Property(e => e.OAuthProvider).HasMaxLength(50);
         entity.Property(e => e.OAuthId).HasMaxLength(255);
         entity.Property(e => e.OAuthEmail).HasMaxLength(255);
+        entity.Property(e => e.ResetPasswordToken).HasColumnType("nvarchar(max)");
 
         entity.HasOne(d => d.Role).WithMany(p => p.Users)
             .HasForeignKey(d => d.RoleId);
