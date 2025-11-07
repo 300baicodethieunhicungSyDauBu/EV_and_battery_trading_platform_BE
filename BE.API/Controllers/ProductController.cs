@@ -284,17 +284,19 @@ namespace BE.API.Controllers
             {
                 var products = _productRepo.GetProductsBySellerId(sellerId);
 
-                var response = products.Select(p => new
-                {
-                    p.ProductId,
-                    p.ProductType,
-                    p.Title,
-                    p.Price,
-                    p.Status,
-                    p.CreatedDate,
-                    SellerName = p.Seller?.FullName,
-                    ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
-                }).ToList();
+                var response = products
+                    .OrderByDescending(p => p.CreatedDate) // ✅ Sort by CreatedDate descending (newest first)
+                    .Select(p => new
+                    {
+                        p.ProductId,
+                        p.ProductType,
+                        p.Title,
+                        p.Price,
+                        p.Status,
+                        p.CreatedDate,
+                        SellerName = p.Seller?.FullName,
+                        ImageUrls = p.ProductImages?.Select(img => img.ImageData).ToList() ?? new List<string>()
+                    }).ToList();
 
                 return Ok(response);
             }

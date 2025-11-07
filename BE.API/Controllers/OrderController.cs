@@ -318,7 +318,18 @@ namespace BE.API.Controllers
                 var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
                 var orders = _orderRepo.GetOrdersByBuyerId(userId);
 
-                var response = orders.Select(o => new
+                // ✅ FIX: Group by ProductId and keep only the most recent order for each product
+                // Priority: Completed orders first, then by CreatedDate descending
+                var uniqueOrders = orders
+                    .GroupBy(o => o.ProductId)
+                    .Select(g => g
+                        .OrderByDescending(o => o.Status == "Completed" ? 1 : 0) // Completed first
+                        .ThenByDescending(o => o.CompletedDate ?? o.CreatedDate) // Most recent first
+                        .First())
+                    .OrderByDescending(o => o.CompletedDate ?? o.CreatedDate) // ✅ Sort final list by date (newest first)
+                    .ToList();
+
+                var response = uniqueOrders.Select(o => new
                 {
                     o.OrderId,
                     o.TotalAmount,
