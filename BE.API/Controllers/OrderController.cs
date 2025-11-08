@@ -403,18 +403,33 @@ namespace BE.API.Controllers
                 var response = orders.Select(o => new
                 {
                     o.OrderId,
+                    ProductId = o.ProductId, // ✅ THÊM
                     o.TotalAmount,
+                    o.DepositAmount, // ✅ THÊM
                     o.Status,
+                    OrderStatus = o.Status, // ✅ THÊM (alias)
+                    o.DepositStatus, // ✅ THÊM
                     o.PayoutStatus,
                     o.CreatedDate,
+                    o.CompletedDate, // ✅ THÊM
                     o.CancellationReason,
                     o.CancelledDate,
                     BuyerName = o.Buyer?.FullName,
-                    Product = new
+                    BuyerId = o.BuyerId, // ✅ THÊM
+                    Product = o.Product != null ? new
                     {
-                        o.Product?.Title,
-                        o.Product?.Price
-                    }
+                        ProductId = o.Product.ProductId, // ✅ THÊM
+                        o.Product.Title,
+                        o.Product.Price,
+                        Status = o.Product.Status, // ✅ QUAN TRỌNG!
+                        ProductType = o.Product.ProductType ?? string.Empty,
+                        Brand = o.Product.Brand ?? string.Empty,
+                        Model = o.Product.Model,
+                        Condition = o.Product.Condition,
+                        VehicleType = o.Product.VehicleType,
+                        LicensePlate = o.Product.LicensePlate,
+                        ImageData = o.Product.ProductImages?.FirstOrDefault()?.ImageData // ✅ THÊM
+                    } : null
                 }).ToList();
 
                 return Ok(response);
