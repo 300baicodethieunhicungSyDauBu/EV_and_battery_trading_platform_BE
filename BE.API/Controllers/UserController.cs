@@ -142,20 +142,40 @@ namespace BE.API.Controllers
                     return BadRequest("Email and password are required");
                 }
 
+                // Validate email format
+                if (!request.Email.Contains("@") || !request.Email.Contains("."))
+                {
+                    return BadRequest("Email không hợp lệ");
+                }
+
+                // Validate password length
+                if (request.Password.Length < 6)
+                {
+                    return BadRequest("Mật khẩu phải có ít nhất 6 ký tự");
+                }
+
                 // ✅ Upload avatar nếu có
                 string? avatarUrl = null;
                 if (request.Avatar != null)
                 {
-                    avatarUrl = await _cloudinary.UploadImageAsync(request.Avatar);
+                    try
+                    {
+                        avatarUrl = await _cloudinary.UploadImageAsync(request.Avatar);
+                    }
+                    catch (Exception uploadEx)
+                    {
+                        // Log lỗi upload nhưng vẫn tiếp tục đăng ký
+                        Console.WriteLine($"Lỗi upload avatar: {uploadEx.Message}");
+                    }
                 }
 
                 // ✅ Tạo user mới
                 var user = new User
                 {
-                    Email = request.Email,
+                    Email = request.Email.Trim().ToLower(),
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                    FullName = request.FullName,
-                    Phone = request.Phone,
+                    FullName = request.FullName?.Trim(),
+                    Phone = request.Phone?.Trim(),
                     Avatar = avatarUrl,
                     RoleId = 2 // member mặc định
                 };
@@ -174,7 +194,13 @@ namespace BE.API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                // Trả về message lỗi cụ thể hơn
+                var errorMessage = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    errorMessage += " | Inner: " + ex.InnerException.Message;
+                }
+                return StatusCode(500, "Internal server error: " + errorMessage);
             }
         }
 

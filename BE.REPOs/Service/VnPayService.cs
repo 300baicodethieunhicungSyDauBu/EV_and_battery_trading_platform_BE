@@ -37,7 +37,10 @@ namespace BE.REPOs.Service
             pay.AddRequestData("vnp_Version", _configuration["VnPay:Version"]);
             pay.AddRequestData("vnp_Command", _configuration["VnPay:Command"]);
             pay.AddRequestData("vnp_TmnCode", _configuration["VnPay:TmnCode"]);
-            pay.AddRequestData("vnp_Amount", ((int)model.Amount * 100).ToString());
+            // ✅ Convert decimal amount to cents (VNPay requires amount in cents)
+            // Use long to avoid overflow for large amounts
+            var amountInCents = (long)(model.Amount * 100);
+            pay.AddRequestData("vnp_Amount", amountInCents.ToString());
             pay.AddRequestData("vnp_CreateDate", timeNow.ToString("yyyyMMddHHmmss"));
             pay.AddRequestData("vnp_CurrCode", _configuration["VnPay:CurrCode"]);
             pay.AddRequestData("vnp_IpAddr", pay.GetIpAddress(context));
