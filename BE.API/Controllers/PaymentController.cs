@@ -269,22 +269,33 @@ namespace BE.API.Controllers
                 // Nghiệp vụ theo loại thanh toán
                 if (payment.PaymentType == "Deposit" && payment.OrderId.HasValue)
                 {
-                    var od = _orderRepo.GetOrderById(payment.OrderId.Value);
-                    if (od != null)
+                    try
                     {
-                        od.DepositStatus = "Paid";
-                        od.Status = "Deposited";
-                        _orderRepo.UpdateOrder(od);
-
-                        if (od.ProductId.HasValue)
+                        var od = _orderRepo.GetOrderById(payment.OrderId.Value);
+                        if (od != null)
                         {
-                            var product = _productRepo.GetProductById(od.ProductId.Value);
-                            if (product != null && product.Status == "Active")
+                            // ✅ Cập nhật Order status và deposit status
+                            od.DepositStatus = "Paid";
+                            od.Status = "Deposited";
+                            var updatedOrder = _orderRepo.UpdateOrder(od);
+
+                            // ✅ Cập nhật Product status
+                            if (od.ProductId.HasValue)
                             {
-                                product.Status = "Reserved";
-                                _productRepo.UpdateProduct(product);
+                                var product = _productRepo.GetProductById(od.ProductId.Value);
+                                if (product != null && product.Status == "Active")
+                                {
+                                    product.Status = "Reserved";
+                                    _productRepo.UpdateProduct(product);
+                                }
                             }
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log error nhưng không throw để không ảnh hưởng payment callback
+                        // Có thể thêm logging service ở đây nếu cần
+                        System.Diagnostics.Debug.WriteLine($"Error updating order after deposit: {ex.Message}");
                     }
                 }
                 else if (payment.PaymentType == "FinalPayment" && payment.OrderId.HasValue)
@@ -721,6 +732,39 @@ namespace BE.API.Controllers
                     return BadRequest(
                         $"Product must be in 'Reserved' status for admin confirmation. Current status: {product.Status}");
 
+                // ✅ Tìm order theo ProductId, không phụ thuộc vào OrderStatus
+                var orders = _orderRepo.GetAllOrders();
+                var order = orders.FirstOrDefault(o => o.ProductId == request.Request.ProductId);
+
+                // ✅ Logging khi không tìm thấy order
+                if (order == null)
+                {
+                    return NotFound(new
+                    {
+                        message = "Order not found for this product",
+                        productId = request.Request.ProductId
+                    });
+                }
+
+                // ✅ Chỉ update nếu order chưa completed
+                if (order.Status?.ToLower() != "completed")
+                {
+                    order.Status = "Completed";
+                    order.CompletedDate = DateTime.Now;
+                    var updatedOrder = _orderRepo.UpdateOrder(order);
+                }
+                else
+                {
+                    // Order đã completed rồi, không cần update lại
+                    return Ok(new
+                    {
+                        message = "Order already completed",
+                        orderId = order.OrderId,
+                        orderStatus = order.Status,
+                        productId = request.Request.ProductId
+                    });
+                }
+
                 // ✅ Logic nghiệp vụ: Admin xác nhận và chuyển status từ "Reserved" → "Sold"
                 product.Status = "Sold";
 
@@ -738,6 +782,9 @@ namespace BE.API.Controllers
                     adminId = userId,
                     oldStatus = "Reserved",
                     newStatus = updatedProduct.Status,
+                    orderId = order.OrderId,
+                    orderStatus = order.Status,
+                    orderCompletedDate = order.CompletedDate,
                     createdDate = updatedProduct.CreatedDate,
                     timestamp = DateTime.Now
                 });

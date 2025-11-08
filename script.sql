@@ -308,6 +308,11 @@ INSERT INTO FeeSettings (FeeType, FeeValue, IsActive)
 VALUES ('VerificationFee', 50000.00, 1); -- 50k VND cho kiểm định
 
 ALTER TABLE [dbo].[Users] ADD [AccountStatusReason] NVARCHAR(MAX) NULL;
-Delete [AccountStatusReason] from Users
 
 ALTER TABLE [dbo].[Notifications] ADD [IsRead] BIT NOT NULL DEFAULT 0;
+
+ALTER TABLE [dbo].[Orders]
+ADD [CancellationReason] nvarchar(500) NULL;    
+
+ALTER TABLE [dbo].[Orders] 
+ADD [CancelledDate] datetime2 NULL;

@@ -321,27 +321,45 @@ namespace BE.API.Controllers
                 var response = orders.Select(o => new
                 {
                     o.OrderId,
+                    o.BuyerId,
                     o.TotalAmount,
+                    o.DepositAmount,
                     o.Status,
+                    OrderStatus = o.Status, // Alias for frontend compatibility
+                    o.DepositStatus,
+                    o.FinalPaymentStatus,
                     o.CreatedDate,
                     o.CompletedDate,
                     o.CancellationReason,
                     o.CancelledDate,
                     PurchaseDate = o.CompletedDate ?? o.CreatedDate, // Use CompletedDate if available, otherwise CreatedDate
                     SellerName = o.Seller?.FullName ?? "N/A",
+                    SellerId = o.SellerId,
                     Product = o.Product != null ? new
                     {
                         ProductId = (int?)o.Product.ProductId,
                         Title = o.Product.Title,
                         Price = o.Product.Price,
-                        Status = o.Product.Status,
+                        ProductType = o.Product.ProductType ?? string.Empty,
+                        Status = o.Product.Status ?? (string?)null,
+                        Brand = o.Product.Brand ?? string.Empty,
+                        Model = o.Product.Model,
+                        Condition = o.Product.Condition,
+                        VehicleType = o.Product.VehicleType,
+                        LicensePlate = o.Product.LicensePlate,
                         ImageData = o.Product.ProductImages?.FirstOrDefault()?.ImageData // Get first product image
                     } : new
                     {
                         ProductId = (int?)null,
                         Title = "Sản phẩm không tìm thấy",
                         Price = o.TotalAmount, // Use order amount as fallback
-                        Status = "Unknown",
+                        ProductType = string.Empty,
+                        Status = (string?)"Unknown",
+                        Brand = string.Empty,
+                        Model = (string?)null,
+                        Condition = (string?)null,
+                        VehicleType = (string?)null,
+                        LicensePlate = (string?)null,
                         ImageData = (string?)null
                     },
                     // Additional debug info
