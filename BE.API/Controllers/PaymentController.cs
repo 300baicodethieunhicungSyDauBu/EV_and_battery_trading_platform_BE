@@ -140,11 +140,32 @@ namespace BE.API.Controllers
                     return BadRequest(
                         $"Product must be in 'Reserved' status for admin confirmation. Current status: {product.Status}");
 
-                // ✅ Tìm Order liên quan đến ProductId này với status "Deposited" hoặc "Reserved"
+                // ✅ Tìm order theo ProductId, không phụ thuộc vào OrderStatus
                 var allOrders = _orderRepo.GetAllOrders();
-                var relatedOrder = allOrders.FirstOrDefault(o => 
-                    o.ProductId == request.Request.ProductId && 
-                    (o.Status == "Deposited" || o.Status == "Reserved" || o.Status == "DepositPaid"));
+                var relatedOrder = allOrders.FirstOrDefault(o => o.ProductId == request.Request.ProductId);
+
+                // ✅ Logging khi không tìm thấy order
+                if (relatedOrder == null)
+                {
+                    return NotFound(new
+                    {
+                        message = "Order not found for this product",
+                        productId = request.Request.ProductId
+                    });
+                }
+
+                // ✅ Chỉ update nếu order chưa completed
+                if (relatedOrder.Status?.ToLower() != "completed")
+                {
+                    relatedOrder.Status = "Completed";
+                    relatedOrder.CompletedDate = DateTime.Now;
+                    relatedOrder.FinalPaymentStatus = "Paid"; // Đánh dấu đã thanh toán đầy đủ
+                    _orderRepo.UpdateOrder(relatedOrder);
+                }
+                else
+                {
+                    // Order đã completed rồi, không cần update lại nhưng vẫn tiếp tục update product
+                }
 
                 // ✅ Logic nghiệp vụ: Admin xác nhận và chuyển status từ "Reserved" → "Sold"
                 product.Status = "Sold";
@@ -153,15 +174,6 @@ namespace BE.API.Controllers
                 var updatedProduct = _productRepo.UpdateProduct(product);
                 if (updatedProduct == null)
                     return StatusCode(500, "Failed to update product status");
-
-                // ✅ Cập nhật Order status thành "Completed" nếu tìm thấy Order
-                if (relatedOrder != null)
-                {
-                    relatedOrder.Status = "Completed";
-                    relatedOrder.CompletedDate = DateTime.Now;
-                    relatedOrder.FinalPaymentStatus = "Paid"; // Đánh dấu đã thanh toán đầy đủ
-                    _orderRepo.UpdateOrder(relatedOrder);
-                }
 
                 // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
                 return Ok(new
@@ -172,8 +184,10 @@ namespace BE.API.Controllers
                     adminId = userId,
                     oldStatus = "Reserved",
                     newStatus = updatedProduct.Status,
-                    orderId = relatedOrder?.OrderId,
-                    orderUpdated = relatedOrder != null,
+                    orderId = relatedOrder.OrderId,
+                    orderStatus = relatedOrder.Status,
+                    orderCompletedDate = relatedOrder.CompletedDate,
+                    orderUpdated = relatedOrder.Status?.ToLower() != "completed",
                     createdDate = updatedProduct.CreatedDate,
                     timestamp = DateTime.Now
                 });
@@ -601,7 +615,6 @@ namespace BE.API.Controllers
             }
         }
 
-<<<<<<< HEAD
         [HttpPost("admin-accept-test")]
         [AllowAnonymous]
         public IActionResult AdminAcceptTest([FromBody] AdminAcceptWrapperRequest request)
@@ -680,104 +693,5 @@ namespace BE.API.Controllers
                 return StatusCode(500, $"Auth test error: {ex.Message}");
             }
         }
-
-        [HttpPost("admin-confirm")]
-        [Authorize(Policy = "AdminOnly")]
-        public IActionResult AdminConfirmSale([FromBody] AdminAcceptWrapperRequest request)
-        {
-            try
-            {
-                // ✅ Authentication required: Chỉ admin đã đăng nhập mới có thể gọi API
-                var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
-                if (!int.TryParse(userIdStr, out var userId) || userId <= 0)
-                    return Unauthorized("Invalid user authentication");
-
-                // ✅ Authorization check: Chỉ admin mới có thể xác nhận
-                var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
-                if (userRole != "1") // Assuming "1" is admin role
-                    return Forbid("Only administrators can confirm sales");
-
-                // Validate request
-                if (request?.Request == null)
-                    return BadRequest("Request data is required");
-
-                if (request.Request.ProductId <= 0)
-                    return BadRequest("Invalid product ID");
-
-                // Get the product to verify status
-                var product = _productRepo.GetProductById(request.Request.ProductId);
-                if (product == null)
-                    return NotFound("Product not found");
-
-                // ✅ Status validation: Chỉ cho phép admin xác nhận sản phẩm có status "Reserved"
-                if (product.Status != "Reserved")
-                    return BadRequest(
-                        $"Product must be in 'Reserved' status for admin confirmation. Current status: {product.Status}");
-
-                // ✅ Tìm order theo ProductId, không phụ thuộc vào OrderStatus
-                var orders = _orderRepo.GetAllOrders();
-                var order = orders.FirstOrDefault(o => o.ProductId == request.Request.ProductId);
-
-                // ✅ Logging khi không tìm thấy order
-                if (order == null)
-                {
-                    return NotFound(new
-                    {
-                        message = "Order not found for this product",
-                        productId = request.Request.ProductId
-                    });
-                }
-
-                // ✅ Chỉ update nếu order chưa completed
-                if (order.Status?.ToLower() != "completed")
-                {
-                    order.Status = "Completed";
-                    order.CompletedDate = DateTime.Now;
-                    var updatedOrder = _orderRepo.UpdateOrder(order);
-                }
-                else
-                {
-                    // Order đã completed rồi, không cần update lại
-                    return Ok(new
-                    {
-                        message = "Order already completed",
-                        orderId = order.OrderId,
-                        orderStatus = order.Status,
-                        productId = request.Request.ProductId
-                    });
-                }
-
-                // ✅ Logic nghiệp vụ: Admin xác nhận và chuyển status từ "Reserved" → "Sold"
-                product.Status = "Sold";
-
-                // Update the product
-                var updatedProduct = _productRepo.UpdateProduct(product);
-                if (updatedProduct == null)
-                    return StatusCode(500, "Failed to update product status");
-
-                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
-                return Ok(new
-                {
-                    message = "Admin confirmed sale successfully",
-                    productId = updatedProduct.ProductId,
-                    sellerId = updatedProduct.SellerId,
-                    adminId = userId,
-                    oldStatus = "Reserved",
-                    newStatus = updatedProduct.Status,
-                    orderId = order.OrderId,
-                    orderStatus = order.Status,
-                    orderCompletedDate = order.CompletedDate,
-                    createdDate = updatedProduct.CreatedDate,
-                    timestamp = DateTime.Now
-                });
-            }
-            catch (Exception ex)
-            {
-                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-=======
->>>>>>> 6d74d06d5dd8053eb384b1e443451def0b44a84f
     }
 }
