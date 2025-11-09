@@ -36,6 +36,8 @@ public partial class Order
 	public string? CancellationReason { get; set; }
 
 	public DateTime? CancelledDate { get; set; }
+	
+	public string? ContractUrl { get; set; }
 
     public virtual User? Buyer { get; set; }
 
