@@ -84,6 +84,7 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", p => p.RequireClaim(ClaimTypes.Role, "1"));
     options.AddPolicy("MemberOnly", p => p.RequireClaim(ClaimTypes.Role, "2"));
+    options.AddPolicy("StaffOnly", p => p.RequireClaim(ClaimTypes.Role, "3"));
 });
 
 // =================== Swagger ===================

@@ -83,6 +83,7 @@ namespace BE.DAOs
             return dbcontext.Orders
                 .Include(o => o.Seller)
                 .Include(o => o.Product)
+                    .ThenInclude(p => p.ProductImages)
                 .Include(o => o.Payments)
                 .Where(o => o.BuyerId == buyerId)
                 .ToList();
@@ -93,6 +94,7 @@ namespace BE.DAOs
             return dbcontext.Orders
                 .Include(o => o.Buyer)
                 .Include(o => o.Product)
+                    .ThenInclude(p => p.ProductImages)
                 .Include(o => o.Payments)
                 .Where(o => o.SellerId == sellerId)
                 .ToList();

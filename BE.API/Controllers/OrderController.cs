@@ -1,6 +1,7 @@
 ﻿using BE.API.DTOs.Request;
 using BE.BOs.Models;
 using BE.REPOs.Interface;
+using BE.REPOs.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,12 +15,14 @@ namespace BE.API.Controllers
         private readonly IOrderRepo _orderRepo;
         private readonly IUserRepo _userRepo;
         private readonly IProductRepo _productRepo;
+        private readonly CloudinaryService _cloudinaryService;
 
-        public OrderController(IOrderRepo orderRepo, IUserRepo userRepo, IProductRepo productRepo)
+        public OrderController(IOrderRepo orderRepo, IUserRepo userRepo, IProductRepo productRepo,CloudinaryService cloudinaryService)
         {
             _orderRepo = orderRepo;
             _userRepo = userRepo;
             _productRepo = productRepo;
+            _cloudinaryService = cloudinaryService;
         }
 
         [HttpGet]
@@ -46,6 +49,7 @@ namespace BE.API.Controllers
                     o.CompletedDate,
                     o.CancellationReason,
                     o.CancelledDate,
+                    o.ContractUrl, 
                     BuyerName = o.Buyer?.FullName,
                     SellerName = o.Seller?.FullName,
                     Product = new
@@ -96,6 +100,7 @@ namespace BE.API.Controllers
                     order.CompletedDate,
                     order.CancellationReason,
                     order.CancelledDate,
+                    order.ContractUrl, 
                     BuyerName = order.Buyer?.FullName,
                     SellerName = order.Seller?.FullName,
                     Product = new
@@ -332,30 +337,48 @@ namespace BE.API.Controllers
                 var response = uniqueOrders.Select(o => new
                 {
                     o.OrderId,
+                    o.BuyerId,
                     o.TotalAmount,
+                    o.DepositAmount,
                     o.Status,
+                    OrderStatus = o.Status,
+                    o.DepositStatus,
+                    o.FinalPaymentStatus,
                     o.CreatedDate,
                     o.CompletedDate,
                     o.CancellationReason,
                     o.CancelledDate,
-                    PurchaseDate = o.CompletedDate ?? o.CreatedDate, // Use CompletedDate if available, otherwise CreatedDate
+                    o.ContractUrl, // ✅ thêm
+                    PurchaseDate = o.CompletedDate ?? o.CreatedDate,
                     SellerName = o.Seller?.FullName ?? "N/A",
+                    SellerId = o.SellerId,
                     Product = o.Product != null ? new
                     {
                         ProductId = (int?)o.Product.ProductId,
                         Title = o.Product.Title,
                         Price = o.Product.Price,
-                        Status = o.Product.Status,
-                        ImageData = o.Product.ProductImages?.FirstOrDefault()?.ImageData // Get first product image
+                        ProductType = o.Product.ProductType ?? string.Empty,
+                        Status = o.Product.Status ?? (string?)null,
+                        Brand = o.Product.Brand ?? string.Empty,
+                        Model = o.Product.Model,
+                        Condition = o.Product.Condition,
+                        VehicleType = o.Product.VehicleType,
+                        LicensePlate = o.Product.LicensePlate,
+                        ImageData = o.Product.ProductImages?.FirstOrDefault()?.ImageData
                     } : new
                     {
                         ProductId = (int?)null,
                         Title = "Sản phẩm không tìm thấy",
-                        Price = o.TotalAmount, // Use order amount as fallback
-                        Status = "Unknown",
+                        Price = o.TotalAmount,
+                        ProductType = string.Empty,
+                        Status = (string?)"Unknown",
+                        Brand = string.Empty,
+                        Model = (string?)null,
+                        Condition = (string?)null,
+                        VehicleType = (string?)null,
+                        LicensePlate = (string?)null,
                         ImageData = (string?)null
                     },
-                    // Additional debug info
                     DebugInfo = new
                     {
                         HasProduct = o.Product != null,
@@ -364,6 +387,7 @@ namespace BE.API.Controllers
                         IsCompleted = o.Status == "Completed"
                     }
                 }).ToList();
+
 
                 return Ok(response);
             }
@@ -385,18 +409,34 @@ namespace BE.API.Controllers
                 var response = orders.Select(o => new
                 {
                     o.OrderId,
+                    ProductId = o.ProductId,
                     o.TotalAmount,
+                    o.DepositAmount,
                     o.Status,
+                    OrderStatus = o.Status,
+                    o.DepositStatus,
                     o.PayoutStatus,
                     o.CreatedDate,
+                    o.CompletedDate,
                     o.CancellationReason,
                     o.CancelledDate,
+                    o.ContractUrl, // ✅ thêm
                     BuyerName = o.Buyer?.FullName,
-                    Product = new
+                    BuyerId = o.BuyerId,
+                    Product = o.Product != null ? new
                     {
-                        o.Product?.Title,
-                        o.Product?.Price
-                    }
+                        ProductId = o.Product.ProductId,
+                        o.Product.Title,
+                        o.Product.Price,
+                        Status = o.Product.Status,
+                        ProductType = o.Product.ProductType ?? string.Empty,
+                        Brand = o.Product.Brand ?? string.Empty,
+                        Model = o.Product.Model,
+                        Condition = o.Product.Condition,
+                        VehicleType = o.Product.VehicleType,
+                        LicensePlate = o.Product.LicensePlate,
+                        ImageData = o.Product.ProductImages?.FirstOrDefault()?.ImageData
+                    } : null
                 }).ToList();
 
                 return Ok(response);
@@ -556,5 +596,59 @@ namespace BE.API.Controllers
 				return StatusCode(500, "Internal server error: " + ex.Message);
 			}
 		}
+        
+        [HttpPost("{orderId}/upload-contract")]
+        [Authorize(Policy = "StaffOnly")]
+        public async Task<IActionResult> UploadContract(int orderId, IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return BadRequest(new { message = "Không có file được tải lên." });
+
+                var order = _orderRepo.GetOrderById(orderId);
+                if (order == null)
+                    return NotFound(new { message = $"Không tìm thấy đơn hàng với ID = {orderId}." });
+
+                // Nếu đơn hàng đã có hợp đồng trước đó → xóa khỏi Cloudinary
+                if (!string.IsNullOrEmpty(order.ContractUrl))
+                {
+                    try
+                    {
+                        // Cloudinary URL có dạng: https://res.cloudinary.com/.../contracts/abc123.pdf
+                        // publicId là phần sau folder, ví dụ "contracts/abc123"
+                        var uri = new Uri(order.ContractUrl);
+                        var fileName = Path.GetFileNameWithoutExtension(uri.AbsolutePath);
+                        var folderName = Path.GetDirectoryName(uri.AbsolutePath)?
+                            .Replace("/","/")
+                            .TrimStart('/');
+                        var publicId = $"{folderName}/{fileName}";
+                        await _cloudinaryService.DeleteImageAsync(publicId);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Không thể xóa file cũ: {ex.Message}");
+                    }
+                }
+
+                // Upload file mới lên Cloudinary
+                string contractUrl = await _cloudinaryService.UploadFileAsync(file, "contracts");
+
+                // Cập nhật vào DB
+                order.ContractUrl = contractUrl;
+                _orderRepo.UpdateOrder(order);
+
+                return Ok(new
+                {
+                    message = "Upload hợp đồng thành công.",
+                    orderId = order.OrderId,
+                    contractUrl
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi upload hợp đồng.", error = ex.Message });
+            }
+        }
     }
 }

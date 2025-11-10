@@ -140,11 +140,32 @@ namespace BE.API.Controllers
                     return BadRequest(
                         $"Product must be in 'Reserved' status for admin confirmation. Current status: {product.Status}");
 
-                // ✅ Tìm Order liên quan đến ProductId này với status "Deposited" hoặc "Reserved"
+                // ✅ Tìm order theo ProductId, không phụ thuộc vào OrderStatus
                 var allOrders = _orderRepo.GetAllOrders();
-                var relatedOrder = allOrders.FirstOrDefault(o => 
-                    o.ProductId == request.Request.ProductId && 
-                    (o.Status == "Deposited" || o.Status == "Reserved" || o.Status == "DepositPaid"));
+                var relatedOrder = allOrders.FirstOrDefault(o => o.ProductId == request.Request.ProductId);
+
+                // ✅ Logging khi không tìm thấy order
+                if (relatedOrder == null)
+                {
+                    return NotFound(new
+                    {
+                        message = "Order not found for this product",
+                        productId = request.Request.ProductId
+                    });
+                }
+
+                // ✅ Chỉ update nếu order chưa completed
+                if (relatedOrder.Status?.ToLower() != "completed")
+                {
+                    relatedOrder.Status = "Completed";
+                    relatedOrder.CompletedDate = DateTime.Now;
+                    relatedOrder.FinalPaymentStatus = "Paid"; // Đánh dấu đã thanh toán đầy đủ
+                    _orderRepo.UpdateOrder(relatedOrder);
+                }
+                else
+                {
+                    // Order đã completed rồi, không cần update lại nhưng vẫn tiếp tục update product
+                }
 
                 // ✅ Logic nghiệp vụ: Admin xác nhận và chuyển status từ "Reserved" → "Sold"
                 product.Status = "Sold";
@@ -153,15 +174,6 @@ namespace BE.API.Controllers
                 var updatedProduct = _productRepo.UpdateProduct(product);
                 if (updatedProduct == null)
                     return StatusCode(500, "Failed to update product status");
-
-                // ✅ Cập nhật Order status thành "Completed" nếu tìm thấy Order
-                if (relatedOrder != null)
-                {
-                    relatedOrder.Status = "Completed";
-                    relatedOrder.CompletedDate = DateTime.Now;
-                    relatedOrder.FinalPaymentStatus = "Paid"; // Đánh dấu đã thanh toán đầy đủ
-                    _orderRepo.UpdateOrder(relatedOrder);
-                }
 
                 // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
                 return Ok(new
@@ -172,8 +184,10 @@ namespace BE.API.Controllers
                     adminId = userId,
                     oldStatus = "Reserved",
                     newStatus = updatedProduct.Status,
-                    orderId = relatedOrder?.OrderId,
-                    orderUpdated = relatedOrder != null,
+                    orderId = relatedOrder.OrderId,
+                    orderStatus = relatedOrder.Status,
+                    orderCompletedDate = relatedOrder.CompletedDate,
+                    orderUpdated = relatedOrder.Status?.ToLower() != "completed",
                     createdDate = updatedProduct.CreatedDate,
                     timestamp = DateTime.Now
                 });
@@ -333,22 +347,33 @@ namespace BE.API.Controllers
                 // Nghiệp vụ theo loại thanh toán
                 if (payment.PaymentType == "Deposit" && payment.OrderId.HasValue)
                 {
-                    var od = _orderRepo.GetOrderById(payment.OrderId.Value);
-                    if (od != null)
+                    try
                     {
-                        od.DepositStatus = "Paid";
-                        od.Status = "Deposited";
-                        _orderRepo.UpdateOrder(od);
-
-                        if (od.ProductId.HasValue)
+                        var od = _orderRepo.GetOrderById(payment.OrderId.Value);
+                        if (od != null)
                         {
-                            var product = _productRepo.GetProductById(od.ProductId.Value);
-                            if (product != null && product.Status == "Active")
+                            // ✅ Cập nhật Order status và deposit status
+                            od.DepositStatus = "Paid";
+                            od.Status = "Deposited";
+                            var updatedOrder = _orderRepo.UpdateOrder(od);
+
+                            // ✅ Cập nhật Product status
+                            if (od.ProductId.HasValue)
                             {
-                                product.Status = "Reserved";
-                                _productRepo.UpdateProduct(product);
+                                var product = _productRepo.GetProductById(od.ProductId.Value);
+                                if (product != null && product.Status == "Active")
+                                {
+                                    product.Status = "Reserved";
+                                    _productRepo.UpdateProduct(product);
+                                }
                             }
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log error nhưng không throw để không ảnh hưởng payment callback
+                        // Có thể thêm logging service ở đây nếu cần
+                        System.Diagnostics.Debug.WriteLine($"Error updating order after deposit: {ex.Message}");
                     }
                 }
                 else if (payment.PaymentType == "FinalPayment" && payment.OrderId.HasValue)
@@ -590,5 +615,83 @@ namespace BE.API.Controllers
             }
         }
 
+        [HttpPost("admin-accept-test")]
+        [AllowAnonymous]
+        public IActionResult AdminAcceptTest([FromBody] AdminAcceptWrapperRequest request)
+        {
+            try
+            {
+                return Ok(new
+                {
+                    message = "Admin accept test endpoint working",
+                    receivedRequest = request,
+                    timestamp = DateTime.Now,
+                    debug = new
+                    {
+                        hasRequest = request != null,
+                        hasRequestData = request?.Request != null,
+                        productId = request?.Request?.ProductId
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Test error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("admin-accept-debug")]
+        [AllowAnonymous]
+        public IActionResult AdminAcceptDebug()
+        {
+            try
+            {
+                return Ok(new
+                {
+                    message = "Admin accept debug endpoint working",
+                    timestamp = DateTime.Now,
+                    availableEndpoints = new[]
+                    {
+                        "POST /api/Payment/admin-accept",
+                        "POST /api/Payment/admin-accept-test",
+                        "GET /api/Payment/admin-accept-debug"
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Debug error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("admin-accept-auth-test")]
+        [Authorize]
+        public IActionResult AdminAcceptAuthTest([FromBody] AdminAcceptWrapperRequest request)
+        {
+            try
+            {
+                var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+                var userName = User.FindFirst(ClaimTypes.Name)?.Value ?? "";
+
+                return Ok(new
+                {
+                    message = "Admin accept auth test endpoint working",
+                    authentication = new
+                    {
+                        userId = userIdStr,
+                        userRole = userRole,
+                        userName = userName,
+                        isAdmin = userRole == "1"
+                    },
+                    receivedRequest = request,
+                    timestamp = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Auth test error: {ex.Message}");
+            }
+        }
     }
 }
