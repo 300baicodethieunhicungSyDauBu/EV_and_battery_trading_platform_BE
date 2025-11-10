@@ -166,6 +166,7 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
         entity.Property(e => e.Title).HasMaxLength(255);
         entity.Property(e => e.VehicleType).HasMaxLength(50);
         entity.Property(e => e.LicensePlate).HasMaxLength(20).HasColumnType("nvarchar(20)");
+        entity.Property(e => e.WarrantyPeriod).HasMaxLength(100).HasColumnType("nvarchar(100)");
         entity.Property(e => e.VerificationStatus).HasMaxLength(20).HasDefaultValue("NotRequested");
         entity.Property(e => e.RejectionReason).HasMaxLength(500);
         entity.Property(e => e.Voltage).HasColumnType("decimal(8, 2)");

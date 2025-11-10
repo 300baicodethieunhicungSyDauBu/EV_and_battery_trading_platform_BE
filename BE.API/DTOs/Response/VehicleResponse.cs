@@ -19,6 +19,7 @@ namespace BE.API.DTOs.Response
         public string? Transmission { get; set; }
         public int? SeatCount { get; set; }
         public string? LicensePlate { get; set; }
+        public string? WarrantyPeriod { get; set; }
         
         // Thông tin cơ bản
         public string? Status { get; set; }

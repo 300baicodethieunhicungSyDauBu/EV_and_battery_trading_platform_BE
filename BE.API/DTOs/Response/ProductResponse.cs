@@ -45,6 +45,8 @@
 
         public string? LicensePlate { get; set; }
 
+        public string? WarrantyPeriod { get; set; }
+
     public string? Status { get; set; }
 
     public string? VerificationStatus { get; set; }

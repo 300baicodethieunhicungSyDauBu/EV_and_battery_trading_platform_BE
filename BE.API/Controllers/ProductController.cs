@@ -52,6 +52,7 @@ namespace BE.API.Controllers
                     CellType = p.CellType,
                     CycleCount = p.CycleCount,
                     LicensePlate = p.LicensePlate,
+                    WarrantyPeriod = p.WarrantyPeriod,
                     Status = p.Status,
                     VerificationStatus = p.VerificationStatus,
                     RejectionReason = p.RejectionReason,
@@ -100,6 +101,7 @@ namespace BE.API.Controllers
                     CellType = product.CellType,
                     CycleCount = product.CycleCount,
                     LicensePlate = product.LicensePlate,
+                    WarrantyPeriod = product.WarrantyPeriod,
                     Status = product.Status,
                     VerificationStatus = product.VerificationStatus,
                     RejectionReason = product.RejectionReason,
@@ -157,6 +159,7 @@ namespace BE.API.Controllers
                     CellType = request.CellType,
                     CycleCount = request.CycleCount,
                     LicensePlate = request.LicensePlate,
+                    WarrantyPeriod = request.WarrantyPeriod,
 
                     // ✅ Thêm các trạng thái mặc định
                     Status = "Draft",
@@ -230,6 +233,7 @@ namespace BE.API.Controllers
                 existingProduct.CellType = request.CellType;
                 existingProduct.CycleCount = request.CycleCount;
                 existingProduct.LicensePlate = request.LicensePlate;
+                existingProduct.WarrantyPeriod = request.WarrantyPeriod;
 
                 // ✅ Reset trạng thái về "Draft" để admin duyệt lại
                 existingProduct.Status = "Re-submit";
@@ -634,6 +638,7 @@ namespace BE.API.Controllers
                     Voltage = p.Voltage,
                     CycleCount = p.CycleCount,
                     LicensePlate = p.LicensePlate,
+                    WarrantyPeriod = p.WarrantyPeriod,
                     Status = p.Status,
                     VerificationStatus = p.VerificationStatus,
                     CreatedDate = p.CreatedDate,
@@ -680,6 +685,7 @@ namespace BE.API.Controllers
                     Voltage = product.Voltage,
                     CycleCount = product.CycleCount,
                     LicensePlate = product.LicensePlate,
+                    WarrantyPeriod = product.WarrantyPeriod,
                     Status = product.Status,
                     VerificationStatus = product.VerificationStatus,
                     CreatedDate = product.CreatedDate,
@@ -722,6 +728,7 @@ namespace BE.API.Controllers
                     Voltage = p.Voltage,
                     CycleCount = p.CycleCount,
                     LicensePlate = p.LicensePlate,
+                    WarrantyPeriod = p.WarrantyPeriod,
                     Status = p.Status,
                     VerificationStatus = p.VerificationStatus,
                     CreatedDate = p.CreatedDate,
@@ -761,6 +768,7 @@ namespace BE.API.Controllers
                     Transmission = p.Transmission,
                     SeatCount = p.SeatCount,
                     LicensePlate = p.LicensePlate,
+                    WarrantyPeriod = p.WarrantyPeriod,
                     Status = p.Status,
                     VerificationStatus = p.VerificationStatus,
                     CreatedDate = p.CreatedDate,
@@ -1136,6 +1144,7 @@ namespace BE.API.Controllers
                     Transmission = product.Transmission,
                     SeatCount = product.SeatCount,
                     LicensePlate = product.LicensePlate,
+                    WarrantyPeriod = product.WarrantyPeriod,
                     Status = product.Status,
                     VerificationStatus = product.VerificationStatus,
                     CreatedDate = product.CreatedDate,
@@ -1182,6 +1191,7 @@ namespace BE.API.Controllers
                     CellType = p.CellType,
                     CycleCount = p.CycleCount,
                     LicensePlate = p.LicensePlate,
+                    WarrantyPeriod = p.WarrantyPeriod,
                     Status = p.Status,
                     VerificationStatus = p.VerificationStatus,
                     RejectionReason = p.RejectionReason,
