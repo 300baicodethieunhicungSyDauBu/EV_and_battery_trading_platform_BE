@@ -46,6 +46,7 @@ namespace BE.DAOs
                 .Include(o => o.Buyer)
                 .Include(o => o.Seller)
                 .Include(o => o.Product)
+                    .ThenInclude(p => p.ProductImages)
                 .Include(o => o.Payments)
                 .FirstOrDefault(o => o.OrderId == id);
         }

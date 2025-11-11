@@ -55,7 +55,9 @@ namespace BE.API.Controllers
                     Product = new
                     {
                         o.Product?.Title,
-                        o.Product?.Price
+                        o.Product?.Price,
+                        o.Product?.Brand,
+                        o.Product?.Model
                     },
                     PaymentsCount = o.Payments?.Count ?? 0
                 }).ToList();
@@ -123,6 +125,57 @@ namespace BE.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Get order details with contract for admin
+        /// </summary>
+        [HttpGet("details/{id}")]
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult GetOrderDetails(int id)
+        {
+            try
+            {
+                var order = _orderRepo.GetOrderById(id);
+                if (order == null)
+                {
+                    return NotFound(new { message = "Không tìm thấy đơn hàng" });
+                }
+
+                var response = new
+                {
+                    orderId = order.OrderId,
+                    userId = order.BuyerId,
+                    productId = order.ProductId,
+                    productTitle = order.Product?.Title ?? "Unknown",
+                    productImages = order.Product?.ProductImages?.Select(pi => pi.ImageData).ToList() ?? new List<string>(),
+                    buyerName = order.Buyer?.FullName ?? "Unknown",
+                    buyerEmail = order.Buyer?.Email ?? "Unknown",
+                    buyerPhone = order.Buyer?.Phone ?? "Unknown",
+                    sellerId = order.SellerId ?? 0,
+                    sellerName = order.Seller?.FullName ?? "Unknown",
+                    sellerEmail = order.Seller?.Email ?? "Unknown",
+                    sellerPhone = order.Seller?.Phone ?? "Unknown",
+                    orderStatus = order.Status,
+                    depositAmount = order.DepositAmount,
+                    totalAmount = order.TotalAmount,
+                    contractUrl = order.ContractUrl,
+                    createdAt = order.CreatedDate,
+                    updatedAt = order.CreatedDate, // Using CreatedDate as fallback if no UpdatedDate field
+                    completedDate = order.CompletedDate,
+                    finalPaymentDueDate = order.FinalPaymentDueDate,
+                    depositStatus = order.DepositStatus,
+                    finalPaymentStatus = order.FinalPaymentStatus,
+                    cancellationReason = order.CancellationReason,
+                    cancelledDate = order.CancelledDate
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Có lỗi xảy ra khi lấy chi tiết đơn hàng", error = ex.Message });
             }
         }
 
