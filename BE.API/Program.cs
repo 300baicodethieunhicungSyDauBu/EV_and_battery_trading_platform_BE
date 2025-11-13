@@ -85,6 +85,13 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOnly", p => p.RequireClaim(ClaimTypes.Role, "1"));
     options.AddPolicy("MemberOnly", p => p.RequireClaim(ClaimTypes.Role, "2"));
     options.AddPolicy("StaffOnly", p => p.RequireClaim(ClaimTypes.Role, "3"));
+    // Policy cho phép cả Admin (RoleId = 1) và Staff (RoleId = 3)
+    options.AddPolicy("AdminOrStaff", p => 
+        p.RequireAssertion(context => 
+        {
+            var roleClaim = context.User.FindFirst(ClaimTypes.Role);
+            return roleClaim != null && (roleClaim.Value == "1" || roleClaim.Value == "3");
+        }));
 });
 
 // =================== Swagger ===================

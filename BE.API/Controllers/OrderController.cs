@@ -129,10 +129,10 @@ namespace BE.API.Controllers
         }
 
         /// <summary>
-        /// Get order details with contract for admin
+        /// Get order details with contract for admin and staff
         /// </summary>
         [HttpGet("details/{id}")]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "AdminOrStaff")]
         public ActionResult GetOrderDetails(int id)
         {
             try
