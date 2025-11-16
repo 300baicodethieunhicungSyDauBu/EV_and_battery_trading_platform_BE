@@ -84,23 +84,68 @@ namespace BE.API.Controllers
             return dbStatus.ToLower();
         }
 
+        private static bool IsAccountActive(User? user)
+        {
+            if (user == null) return false;
+            
+            // Lấy AccountStatus trực tiếp, không normalize trước
+            var accountStatus = user.AccountStatus;
+            
+            // Nếu AccountStatus là null hoặc empty, coi như active (backward compatibility)
+            // NHƯNG nếu đã được set rõ ràng là "Deleted" hoặc "Suspended" thì không cho phép
+            if (string.IsNullOrWhiteSpace(accountStatus))
+            {
+                return true; // Mặc định là active nếu chưa set
+            }
+            
+            // Kiểm tra trực tiếp với case-insensitive
+            var statusUpper = accountStatus.Trim().ToUpperInvariant();
+            
+            // Chỉ cho phép login nếu status là "ACTIVE"
+            // Tất cả các trạng thái khác (SUSPENDED, DELETED, hoặc bất kỳ giá trị nào) đều không cho phép login
+            return statusUpper == "ACTIVE";
+        }
+
         [HttpPost("login")]
         public ActionResult<LoginResponse> Login([FromBody] LoginRequest request)
         {
+            // GetAccountByEmailAndPassword đã verify password rồi, nếu trả về null thì email/password sai
             var user = _userRepo.GetAccountByEmailAndPassword(request.Email, request.Password);
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 return Unauthorized("Invalid email or password.");
             }
 
+            // QUAN TRỌNG: Reload user từ database để đảm bảo có AccountStatus mới nhất
+            // Vì có thể user object đã bị cached hoặc không được refresh
+            using var context = new EvandBatteryTradingPlatformContext();
+            var freshUser = context.Users.FirstOrDefault(u => u.UserId == user.UserId);
+            if (freshUser == null)
+            {
+                return Unauthorized("User not found.");
+            }
 
-            // Generate JWT Token
-            var token = GenerateJwtToken(user);
+            // Kiểm tra trạng thái tài khoản TRƯỚC KHI tạo token
+            // Đây là bước quan trọng để ngăn user bị deleted/suspended đăng nhập
+            if (!IsAccountActive(freshUser))
+            {
+                var status = NormalizeDbStatusToUi(freshUser.AccountStatus);
+                string message = status.Equals("deleted", StringComparison.OrdinalIgnoreCase)
+                    ? "Tài khoản đã bị xóa và không thể đăng nhập."
+                    : status.Equals("suspended", StringComparison.OrdinalIgnoreCase)
+                    ? "Tài khoản đã bị khóa và không thể đăng nhập."
+                    : "Tài khoản không thể đăng nhập do trạng thái không hợp lệ.";
+                
+                return Unauthorized(new { message = message, status = status });
+            }
+
+            // Chỉ tạo token khi tài khoản đang active
+            var token = GenerateJwtToken(freshUser);
             return Ok(new LoginResponse
             {
-                Role = user.RoleId?.ToString() ?? "Member",
+                Role = freshUser.RoleId?.ToString() ?? "Member",
                 Token = token,
-                AccountId = user.UserId.ToString()
+                AccountId = freshUser.UserId.ToString()
             });
         }
 
@@ -442,6 +487,50 @@ namespace BE.API.Controllers
               
             })
             ;
+        }
+
+        // ========== Admin: Check status ==========
+        [HttpGet]
+        [Route("/api/admin/users/{id}/status")]
+        [Authorize]
+        public ActionResult<AdminUserStatusResponse> AdminGetUserStatus([FromRoute] int id)
+        {
+            if (!IsAdminOrSubAdminFromClaims()) return Forbid();
+
+            using var context = new EvandBatteryTradingPlatformContext();
+            var user = context.Users.FirstOrDefault(u => u.UserId == id);
+            if (user == null) return NotFound(new { message = "User not found" });
+
+            var normalizedStatus = NormalizeDbStatusToUi(user.AccountStatus);
+            var canLogin = normalizedStatus.Equals("active", StringComparison.OrdinalIgnoreCase);
+            
+            string message;
+            if (canLogin)
+            {
+                message = "Tài khoản đang hoạt động bình thường và có thể đăng nhập.";
+            }
+            else if (normalizedStatus.Equals("suspended", StringComparison.OrdinalIgnoreCase))
+            {
+                message = "Tài khoản đã bị khóa (suspended) và không thể đăng nhập.";
+            }
+            else if (normalizedStatus.Equals("deleted", StringComparison.OrdinalIgnoreCase))
+            {
+                message = "Tài khoản đã bị xóa (deleted) và không thể đăng nhập.";
+            }
+            else
+            {
+                message = $"Tài khoản có trạng thái '{normalizedStatus}' và không thể đăng nhập.";
+            }
+
+            return Ok(new AdminUserStatusResponse
+            {
+                UserId = user.UserId,
+                Email = user.Email,
+                Status = normalizedStatus,
+                CanLogin = canLogin,
+                AccountStatusReason = user.AccountStatusReason,
+                Message = message
+            });
         }
 
         // ========== Admin: Audit ==========
@@ -808,16 +897,38 @@ namespace BE.API.Controllers
         {
             try
             {
+                using var context = new EvandBatteryTradingPlatformContext();
+                
                 // Check if user already exists with this OAuth account
                 var existingOAuthUser = _userRepo.GetUserByOAuth(provider, oauthId);
                 if (existingOAuthUser != null)
                 {
-                    var token = GenerateJwtToken(existingOAuthUser);
+                    // QUAN TRỌNG: Reload user từ database để đảm bảo có AccountStatus mới nhất
+                    var freshUser = context.Users.FirstOrDefault(u => u.UserId == existingOAuthUser.UserId);
+                    if (freshUser == null)
+                    {
+                        return Task.FromResult<IActionResult>(Unauthorized(new { message = "User not found." }));
+                    }
+
+                    // Kiểm tra trạng thái tài khoản
+                    if (!IsAccountActive(freshUser))
+                    {
+                        var status = NormalizeDbStatusToUi(freshUser.AccountStatus);
+                        string message = status.Equals("deleted", StringComparison.OrdinalIgnoreCase)
+                            ? "Tài khoản đã bị xóa và không thể đăng nhập."
+                            : status.Equals("suspended", StringComparison.OrdinalIgnoreCase)
+                            ? "Tài khoản đã bị khóa và không thể đăng nhập."
+                            : "Tài khoản không thể đăng nhập do trạng thái không hợp lệ.";
+                        
+                        return Task.FromResult<IActionResult>(Unauthorized(new { message = message, status = status }));
+                    }
+
+                    var token = GenerateJwtToken(freshUser);
                     return Task.FromResult<IActionResult>(Ok(new LoginResponse
                     {
-                        Role = existingOAuthUser.RoleId?.ToString() ?? "Member",
+                        Role = freshUser.RoleId?.ToString() ?? "Member",
                         Token = token,
-                        AccountId = existingOAuthUser.UserId.ToString()
+                        AccountId = freshUser.UserId.ToString()
                     }));
                 }
 
@@ -825,18 +936,46 @@ namespace BE.API.Controllers
                 var existingEmailUser = _userRepo.GetUserByEmail(email);
                 if (existingEmailUser != null)
                 {
-                    // Link OAuth account to existing user
-                    existingEmailUser.OAuthProvider = provider;
-                    existingEmailUser.OAuthId = oauthId;
-                    existingEmailUser.OAuthEmail = email;
-                    _userRepo.UpdateUser(existingEmailUser);
+                    // QUAN TRỌNG: Reload user từ database để đảm bảo có AccountStatus mới nhất
+                    var freshUser = context.Users.FirstOrDefault(u => u.UserId == existingEmailUser.UserId);
+                    if (freshUser == null)
+                    {
+                        return Task.FromResult<IActionResult>(Unauthorized(new { message = "User not found." }));
+                    }
 
-                    var token = GenerateJwtToken(existingEmailUser);
+                    // Kiểm tra trạng thái tài khoản
+                    if (!IsAccountActive(freshUser))
+                    {
+                        var status = NormalizeDbStatusToUi(freshUser.AccountStatus);
+                        string message = status.Equals("deleted", StringComparison.OrdinalIgnoreCase)
+                            ? "Tài khoản đã bị xóa và không thể đăng nhập."
+                            : status.Equals("suspended", StringComparison.OrdinalIgnoreCase)
+                            ? "Tài khoản đã bị khóa và không thể đăng nhập."
+                            : "Tài khoản không thể đăng nhập do trạng thái không hợp lệ.";
+                        
+                        return Task.FromResult<IActionResult>(Unauthorized(new { message = message, status = status }));
+                    }
+
+                    // Link OAuth account to existing user
+                    freshUser.OAuthProvider = provider;
+                    freshUser.OAuthId = oauthId;
+                    freshUser.OAuthEmail = email;
+                    context.Users.Update(freshUser);
+                    context.SaveChanges();
+
+                    // Reload lại sau khi update
+                    freshUser = context.Users.FirstOrDefault(u => u.UserId == freshUser.UserId);
+                    if (freshUser == null)
+                    {
+                        return Task.FromResult<IActionResult>(Unauthorized(new { message = "User not found after update." }));
+                    }
+
+                    var token = GenerateJwtToken(freshUser);
                     return Task.FromResult<IActionResult>(Ok(new LoginResponse
                     {
-                        Role = existingEmailUser.RoleId?.ToString() ?? "Member",
+                        Role = freshUser.RoleId?.ToString() ?? "Member",
                         Token = token,
-                        AccountId = existingEmailUser.UserId.ToString()
+                        AccountId = freshUser.UserId.ToString()
                     }));
                 }
 

@@ -65,6 +65,16 @@ namespace BE.API.DTOs.Response
         public List<T> Items { get; set; } = new List<T>();
         public PageMeta Meta { get; set; } = new PageMeta();
     }
+
+    public class AdminUserStatusResponse
+    {
+        public int UserId { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string Status { get; set; } = "active"; // active|suspended|deleted
+        public bool CanLogin { get; set; } = true; // true nếu status = active, false nếu suspended hoặc deleted
+        public string? AccountStatusReason { get; set; }
+        public string Message { get; set; } = string.Empty; // Thông báo về trạng thái
+    }
 }
 
 
