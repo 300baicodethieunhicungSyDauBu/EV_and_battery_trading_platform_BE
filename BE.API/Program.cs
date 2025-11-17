@@ -207,7 +207,7 @@ builder.Services.AddCors(options =>
             policy
                 .WithOrigins(
                     "http://localhost:5173",
-                    "https://evtrading-frontend.vercel.app",
+                    "https://swp-391-topic2-frontend-ver2.vercel.app",
                     "http://localhost:5174"
                 )
                 .AllowAnyHeader()
