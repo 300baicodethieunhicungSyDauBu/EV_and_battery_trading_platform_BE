@@ -56,9 +56,10 @@ namespace BE.API.Controllers
         {
             if (string.IsNullOrEmpty(roleName)) return "user";
             if (roleName.Equals("Admin", StringComparison.OrdinalIgnoreCase)) return "admin";
-            if (roleName.Equals("SubAdmin", StringComparison.OrdinalIgnoreCase) || roleName.Equals("Moderator", StringComparison.OrdinalIgnoreCase)) return "sub_admin";
+            if (roleName.Equals("Staff", StringComparison.OrdinalIgnoreCase)) return "staff";  
             return "user";
         }
+
 
         private static string MapUiRoleToRoleName(string uiRole)
         {
