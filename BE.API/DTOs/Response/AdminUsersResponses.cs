@@ -11,6 +11,7 @@ namespace BE.API.DTOs.Response
         public string Status { get; set; } = "active"; // active|suspended|deleted
         public string? AccountStatusReason { get; set; }
         public string Reason { get; set; } = string.Empty; // Deprecated: use AccountStatusReason instead
+        public System.DateTime? StatusChangedDate { get; set; }
         public System.DateTime? CreatedAt { get; set; }
         public System.DateTime? LastLoginAt { get; set; }
     }
@@ -32,6 +33,7 @@ namespace BE.API.DTOs.Response
         public string Role { get; set; } = "user";
         public string Status { get; set; } = "active";
         public string? AccountStatusReason { get; set; }
+        public System.DateTime? StatusChangedDate { get; set; }
         public System.DateTime? CreatedAt { get; set; }
         public System.DateTime? LastLoginAt { get; set; }
         public AdminUserStats Stats { get; set; } = new AdminUserStats();

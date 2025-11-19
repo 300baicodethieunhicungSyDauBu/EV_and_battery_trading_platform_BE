@@ -23,6 +23,8 @@ public partial class User
 
 		public string? AccountStatusReason { get; set; }
 
+		public DateTime? StatusChangedDate { get; set; }
+
     public DateTime? CreatedDate { get; set; }
 
     public string? ResetPasswordToken { get; set; }
