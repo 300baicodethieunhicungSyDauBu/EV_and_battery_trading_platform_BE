@@ -311,6 +311,7 @@ namespace BE.API.Controllers
                     u.Email,
                     u.AccountStatus,
                     u.AccountStatusReason,
+                    u.StatusChangedDate,
                     u.CreatedDate,
                     RoleName = u.Role != null ? u.Role.RoleName : null
                 })
@@ -325,6 +326,7 @@ namespace BE.API.Controllers
                     Status = NormalizeDbStatusToUi(u.AccountStatus),
                     AccountStatusReason = u.AccountStatusReason,
                     Reason = u.AccountStatusReason ?? string.Empty,
+                    StatusChangedDate = u.StatusChangedDate,
                     CreatedAt = u.CreatedDate,
                     LastLoginAt = null
                 })
@@ -363,6 +365,7 @@ namespace BE.API.Controllers
                 Role = NormalizeRoleNameToUi(user.Role != null ? user.Role.RoleName : null),
                 Status = NormalizeDbStatusToUi(user.AccountStatus),
                 AccountStatusReason = user.AccountStatusReason,
+                StatusChangedDate = user.StatusChangedDate,
                 CreatedAt = user.CreatedDate,
                 LastLoginAt = null,
                 Stats = new AdminUserStats { OrderCount = orderCount, ListingCount = listingCount, ViolationCount = violationCount }
@@ -397,6 +400,8 @@ namespace BE.API.Controllers
                 Avatar = updated.Avatar,
                 Role = NormalizeRoleNameToUi(updated.Role != null ? updated.Role.RoleName : null),
                 Status = NormalizeDbStatusToUi(updated.AccountStatus),
+                AccountStatusReason = updated.AccountStatusReason,
+                StatusChangedDate = updated.StatusChangedDate,
                 CreatedAt = updated.CreatedDate,
                 LastLoginAt = null,
                 Stats = new AdminUserStats { OrderCount = 0, ListingCount = 0, ViolationCount = 0 }
@@ -447,6 +452,8 @@ namespace BE.API.Controllers
                 Avatar = user.Avatar,
                 Role = NormalizeRoleNameToUi(user.Role != null ? user.Role.RoleName : null),
                 Status = NormalizeDbStatusToUi(user.AccountStatus),
+                AccountStatusReason = user.AccountStatusReason,
+                StatusChangedDate = user.StatusChangedDate,
                 CreatedAt = user.CreatedDate,
                 LastLoginAt = null,
                 Stats = new AdminUserStats { OrderCount = 0, ListingCount = 0, ViolationCount = 0 }
@@ -468,6 +475,7 @@ namespace BE.API.Controllers
             var newStatus = MapUiStatusToDb(request.Status);
             user.AccountStatus = newStatus;
             user.AccountStatusReason = request.Reason;
+            user.StatusChangedDate = DateTime.Now;
             context.Users.Update(user);
             context.SaveChanges();
 
@@ -482,6 +490,7 @@ namespace BE.API.Controllers
                 Role = NormalizeRoleNameToUi(user.Role != null ? user.Role.RoleName : null),
                 Status = NormalizeDbStatusToUi(user.AccountStatus),
                 AccountStatusReason = user.AccountStatusReason,
+                StatusChangedDate = user.StatusChangedDate,
                 CreatedAt = user.CreatedDate,
                 LastLoginAt = null,
                 Stats = new AdminUserStats { OrderCount = 0, ListingCount = 0, ViolationCount = 0 }
