@@ -32,6 +32,7 @@ namespace BE.API.DTOs.Request
     public class AdminRejectOrderRequest
     {
         public string Reason { get; set; } = string.Empty;
+        public string RefundOption { get; set; } = "refund"; // "refund" or "no_refund"
     }
 }
 

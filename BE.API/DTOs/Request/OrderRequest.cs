@@ -16,6 +16,8 @@
 
         public string? DepositStatus { get; set; }
 
+        public string? CancellationReason { get; set; }
+
         public string? FinalPaymentStatus { get; set; }
 
         public DateTime? FinalPaymentDueDate { get; set; }

@@ -16,13 +16,15 @@ namespace BE.API.Controllers
         private readonly IUserRepo _userRepo;
         private readonly IProductRepo _productRepo;
         private readonly CloudinaryService _cloudinaryService;
+        private readonly INotificationsRepo _notificationsRepo;
 
-        public OrderController(IOrderRepo orderRepo, IUserRepo userRepo, IProductRepo productRepo,CloudinaryService cloudinaryService)
+        public OrderController(IOrderRepo orderRepo, IUserRepo userRepo, IProductRepo productRepo, CloudinaryService cloudinaryService, INotificationsRepo notificationsRepo)
         {
             _orderRepo = orderRepo;
             _userRepo = userRepo;
             _productRepo = productRepo;
             _cloudinaryService = cloudinaryService;
+            _notificationsRepo = notificationsRepo;
         }
 
         [HttpGet]
@@ -642,6 +644,127 @@ namespace BE.API.Controllers
 					Reason = request.Reason,
 					CancelledDate = updated.CancelledDate,
 					Message = "Order rejected successfully."
+				});
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, "Internal server error: " + ex.Message);
+			}
+		}
+
+		[HttpPost("{id}/staff-reject")]
+		[Authorize(Policy = "AdminOrStaff")]
+		public ActionResult StaffRejectOrder(int id, [FromBody] AdminRejectOrderRequest request)
+		{
+			try
+			{
+				// ✅ Validate request
+				if (request == null || string.IsNullOrWhiteSpace(request.Reason) || request.Reason.Trim().Length < 3)
+					return BadRequest("Reason is required (min 3 characters).");
+
+				// ✅ Get current user
+				var userIdStr = User.FindFirst("UserId")?.Value;
+				if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
+					return Unauthorized("Invalid user token");
+
+				// ✅ Verify user is Staff or Admin
+				var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+				if (userRole != "3" && userRole != "1") // 3 = Staff, 1 = Admin
+					return Forbid("Only Staff and Admin can reject orders");
+
+				// ✅ Get order
+				var order = _orderRepo.GetOrderById(id);
+				if (order == null) 
+					return NotFound("Order not found.");
+
+				// ✅ Check if order can be rejected - CHỈ cho phép reject "Deposited"
+				if (!string.Equals(order.Status, "Deposited", StringComparison.OrdinalIgnoreCase))
+					return BadRequest($"Cannot reject order with status: {order.Status}. Only orders with status 'Deposited' can be rejected.");
+
+				// ✅ Update order status
+				order.Status = "Cancelled";
+				order.CompletedDate = null;
+                string refundNote = request.RefundOption == "refund"
+                                                        ? "\n\n✅ Thông tin hoàn tiền: Đơn hàng này sẽ được hoàn tiền. Số tiền cọc sẽ được chuyển về tài khoản của bạn trong vòng 3-5 ngày làm việc."
+                                                        : "\n\n⚠️ Thông tin hoàn tiền: Đơn hàng này không được hoàn tiền theo điều khoản hủy giao dịch.";
+                order.CancellationReason = request.Reason + refundNote;
+                order.CancelledDate = DateTime.Now;
+
+				var updated = _orderRepo.UpdateOrder(order);
+
+				// ✅ Update product status back to Active if it was Reserved
+				bool productStatusUpdated = false;
+				if (order.ProductId.HasValue)
+				{
+					var product = _productRepo.GetProductById(order.ProductId.Value);
+					if (product != null && string.Equals(product.Status, "Reserved", StringComparison.OrdinalIgnoreCase))
+					{
+						product.Status = "Active";
+						_productRepo.UpdateProduct(product);
+						productStatusUpdated = true;
+					}
+				}
+
+				// ✅ Calculate refund amount (xử lý ngoài hệ thống, chỉ trả về thông tin)
+				decimal refundAmount = 0;
+				if (request.RefundOption == "refund" && order.DepositAmount > 0)
+				{
+					refundAmount = order.DepositAmount;
+				}
+
+				// ✅ Send notifications to Buyer and Seller
+				try
+				{
+					// Notification cho Buyer
+					if (order.BuyerId.HasValue)
+					{
+						var buyerNotification = new Notification
+						{
+							UserId = order.BuyerId.Value,
+							NotificationType = "OrderCancelled",
+							Title = "Đơn hàng đã bị từ chối",
+							Content = $"Đơn hàng #{order.OrderId} đã bị từ chối bởi Staff. Lý do: {request.Reason}. " +
+							          (refundAmount > 0 ? $"Tiền cọc {refundAmount:N0} VND sẽ được hoàn lại." : ""),
+							CreatedDate = DateTime.Now,
+							IsRead = false
+						};
+						_notificationsRepo.CreateNotification(buyerNotification);
+					}
+
+					// Notification cho Seller
+					if (order.SellerId.HasValue)
+					{
+						var sellerNotification = new Notification
+						{
+							UserId = order.SellerId.Value,
+							NotificationType = "OrderCancelled",
+							Title = "Đơn hàng đã bị hủy",
+							Content = $"Đơn hàng #{order.OrderId} đã bị hủy bởi Staff. Lý do: {request.Reason}.",
+							CreatedDate = DateTime.Now,
+							IsRead = false
+						};
+						_notificationsRepo.CreateNotification(sellerNotification);
+					}
+				}
+				catch (Exception notifEx)
+				{
+					// Log error nhưng không throw để không ảnh hưởng việc reject order
+					System.Diagnostics.Debug.WriteLine($"Error sending notifications: {notifEx.Message}");
+				}
+
+				return Ok(new
+				{
+					orderId = updated.OrderId,
+					status = updated.Status,
+					reason = request.Reason,
+					cancelledDate = updated.CancelledDate,
+					refundAmount = refundAmount,
+					refundOption = request.RefundOption,
+					buyerId = order.BuyerId,
+					sellerId = order.SellerId,
+					productStatusUpdated = productStatusUpdated,
+					message = "Order rejected successfully by staff.",
+					note = refundAmount > 0 ? "Refund will be processed manually outside the system." : null
 				});
 			}
 			catch (Exception ex)
