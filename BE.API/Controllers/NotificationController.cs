@@ -77,10 +77,24 @@ namespace BE.API.Controllers
         }
 
         [HttpGet("user/{userId}")]
+        [Authorize]
         public ActionResult<IEnumerable<NotificationResponse>> GetNotificationsByUserId(int userId)
         {
             try
             {
+                var currentUserIdStr = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrEmpty(currentUserIdStr) || !int.TryParse(currentUserIdStr, out var currentUserId))
+                {
+                    return Unauthorized("Invalid user token");
+                }
+
+                // ✅ User chỉ xem được notification của mình, trừ khi là Admin
+                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+                if (currentUserId != userId && userRole != "1")
+                {
+                    return Forbid("You can only view your own notifications");
+                }
+
                 var notifications = _notificationsRepo.GetNotificationsByUserId(userId);
                 var response = notifications.Select(notification => new NotificationResponse
                 {
@@ -258,16 +272,72 @@ namespace BE.API.Controllers
             }
         }
 
+        [HttpPut("mark-all-read")]
+        [Authorize]
+        public ActionResult MarkAllNotificationsAsRead()
+        {
+            try
+            {
+                var userIdStr = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
+                {
+                    return Unauthorized("Invalid user token");
+                }
+
+                var notifications = _notificationsRepo.GetNotificationsByUserId(userId);
+                var unreadNotifications = notifications.Where(n => !n.IsRead).ToList();
+
+                if (!unreadNotifications.Any())
+                {
+                    return Ok(new { message = "No unread notifications", count = 0 });
+                }
+
+                int markedCount = 0;
+                foreach (var notification in unreadNotifications)
+                {
+                    if (_notificationsRepo.MarkNotificationAsRead(notification.NotificationId))
+                    {
+                        markedCount++;
+                    }
+                }
+
+                return Ok(new { message = "All notifications marked as read", count = markedCount });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
         [HttpDelete("{id}")]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize]
         public ActionResult DeleteNotification(int id)
         {
             try
             {
+                var userIdStr = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
+                {
+                    return Unauthorized("Invalid user token");
+                }
+
+                var notification = _notificationsRepo.GetNotificationById(id);
+                if (notification == null)
+                {
+                    return NotFound("Notification not found");
+                }
+
+                // ✅ User chỉ xóa được notification của mình, Admin xóa được tất cả
+                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+                if (notification.UserId != userId && userRole != "1")
+                {
+                    return Forbid("You can only delete your own notifications");
+                }
+
                 var result = _notificationsRepo.DeleteNotification(id);
                 if (!result)
                 {
-                    return NotFound("Notification not found");
+                    return StatusCode(500, "Failed to delete notification");
                 }
 
                 return NoContent();
