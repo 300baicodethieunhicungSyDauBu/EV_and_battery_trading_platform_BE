@@ -1,4 +1,5 @@
 ﻿using BE.API.DTOs.Request;
+using BE.API.DTOs.Response;
 using BE.BOs.Models;
 using BE.REPOs.Interface;
 using BE.REPOs.Service;
@@ -17,14 +18,16 @@ namespace BE.API.Controllers
         private readonly IProductRepo _productRepo;
         private readonly CloudinaryService _cloudinaryService;
         private readonly INotificationsRepo _notificationsRepo;
+        private readonly IPaymentRepo _paymentRepo;
 
-        public OrderController(IOrderRepo orderRepo, IUserRepo userRepo, IProductRepo productRepo, CloudinaryService cloudinaryService, INotificationsRepo notificationsRepo)
+        public OrderController(IOrderRepo orderRepo, IUserRepo userRepo, IProductRepo productRepo, CloudinaryService cloudinaryService, INotificationsRepo notificationsRepo, IPaymentRepo paymentRepo)
         {
             _orderRepo = orderRepo;
             _userRepo = userRepo;
             _productRepo = productRepo;
             _cloudinaryService = cloudinaryService;
             _notificationsRepo = notificationsRepo;
+            _paymentRepo = paymentRepo;
         }
 
         [HttpGet]
@@ -824,6 +827,85 @@ namespace BE.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Lỗi khi upload hợp đồng.", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Get revenue statistics for admin dashboard
+        /// Tính tổng doanh thu bao gồm:
+        /// 1. Doanh thu từ đơn hàng hoàn thành (Completed)
+        /// 2. Doanh thu từ phí kiểm định (Verification)
+        /// 3. Doanh thu từ đơn hàng bị hủy không hoàn tiền (Cancelled with no refund)
+        /// </summary>
+        [HttpGet("revenue-statistics")]
+        [Authorize(Policy = "AdminOrStaff")]
+        public ActionResult<RevenueStatisticsResponse> GetRevenueStatistics()
+        {
+            try
+            {
+                // 1. Doanh thu từ đơn hàng hoàn thành (Completed orders)
+                var completedOrders = _orderRepo.GetAllOrders()
+                    .Where(o => string.Equals(o.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                
+                var completedOrdersRevenue = completedOrders.Sum(o => o.DepositAmount);
+                var completedOrdersCount = completedOrders.Count;
+
+                // 2. Doanh thu từ phí kiểm định (Verification payments)
+                var verificationPayments = _paymentRepo.GetAllPayments()
+                    .Where(p => string.Equals(p.PaymentType, "Verification", StringComparison.OrdinalIgnoreCase) 
+                                && string.Equals(p.Status, "Success", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                
+                var verificationRevenue = verificationPayments.Sum(p => p.Amount);
+                var verificationPaymentsCount = verificationPayments.Count;
+
+                // 3. Doanh thu từ đơn hàng bị hủy không hoàn tiền (Cancelled orders with no refund)
+                // Logic: Đơn hàng có status = "Cancelled" và CancellationReason chứa "không được hoàn tiền"
+                var cancelledOrders = _orderRepo.GetAllOrders()
+                    .Where(o => string.Equals(o.Status, "Cancelled", StringComparison.OrdinalIgnoreCase)
+                                && !string.IsNullOrEmpty(o.CancellationReason)
+                                && o.CancellationReason.Contains("không được hoàn tiền", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                var cancelledNoRefundRevenue = cancelledOrders.Sum(o => o.DepositAmount);
+                var cancelledNoRefundCount = cancelledOrders.Count;
+
+                // Chi tiết các đơn hàng bị hủy không hoàn tiền
+                var cancelledNoRefundDetails = cancelledOrders.Select(o => new CancelledNoRefundOrderDetail
+                {
+                    OrderId = o.OrderId,
+                    DepositAmount = o.DepositAmount,
+                    CancelledDate = o.CancelledDate,
+                    CancellationReason = o.CancellationReason,
+                    BuyerId = o.BuyerId,
+                    BuyerName = o.Buyer?.FullName,
+                    SellerId = o.SellerId,
+                    SellerName = o.Seller?.FullName,
+                    ProductId = o.ProductId,
+                    ProductTitle = o.Product?.Title
+                }).ToList();
+
+                // Tổng doanh thu
+                var totalRevenue = completedOrdersRevenue + verificationRevenue + cancelledNoRefundRevenue;
+
+                var response = new RevenueStatisticsResponse
+                {
+                    CompletedOrdersRevenue = completedOrdersRevenue,
+                    VerificationRevenue = verificationRevenue,
+                    CancelledNoRefundRevenue = cancelledNoRefundRevenue,
+                    TotalRevenue = totalRevenue,
+                    CompletedOrdersCount = completedOrdersCount,
+                    VerificationPaymentsCount = verificationPaymentsCount,
+                    CancelledNoRefundCount = cancelledNoRefundCount,
+                    CancelledNoRefundOrders = cancelledNoRefundDetails
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi tính toán doanh thu", error = ex.Message });
             }
         }
     }
