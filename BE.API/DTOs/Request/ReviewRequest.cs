@@ -5,6 +5,6 @@ namespace BE.API.DTOs.Request
         public int OrderId { get; set; }
         public int RevieweeId { get; set; }
         public int Rating { get; set; }
-        public string Content { get; set; }
+        public string Content { get; set; } = string.Empty;
     }
 }
