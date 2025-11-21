@@ -688,8 +688,8 @@ namespace BE.API.Controllers
 				order.Status = "Cancelled";
 				order.CompletedDate = null;
                 string refundNote = request.RefundOption == "refund"
-                                                        ? "\n\n✅ Thông tin hoàn tiền: Đơn hàng này sẽ được hoàn tiền. Số tiền cọc sẽ được chuyển về tài khoản của bạn trong vòng 3-5 ngày làm việc."
-                                                        : "\n\n⚠️ Thông tin hoàn tiền: Đơn hàng này không được hoàn tiền theo điều khoản hủy giao dịch.";
+                                                        ? "\n\nThông tin hoàn tiền: Đơn hàng này sẽ được hoàn tiền. Số tiền cọc sẽ được chuyển về tài khoản của người mua trong vòng 3-5 ngày làm việc."
+                                                        : "\n\nThông tin hoàn tiền: Đơn hàng này không được hoàn tiền theo điều khoản hủy giao dịch.";
                 order.CancellationReason = request.Reason + refundNote;
                 order.CancelledDate = DateTime.Now;
 
