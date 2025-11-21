@@ -3,7 +3,7 @@ using BE.REPOs.Interface;
 using BE.REPOs.Service;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http;                  // CookieSecurePolicy, SameSiteMode
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -19,11 +19,10 @@ var builder = WebApplication.CreateBuilder(args);
 var cfg = builder.Configuration;
 
 // =================== Authentication ===================
-var auth = builder.Services.AddAuthentication(options =>
+builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    // options.DefaultSignInScheme = "External"; // chỉ cần nếu bạn dùng cookie ngoài
 })
 .AddJwtBearer(options =>
 {
@@ -38,46 +37,7 @@ var auth = builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(cfg["JWT:SecretKey"] ?? "default-secret-key"))
     };
-})
-// Cookie scheme dùng cho OAuth external
-.AddCookie("External", options =>
-{
-    options.Cookie.Name = "EVTrading.External";
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // đổi thành Always khi deploy HTTPS
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.IsEssential = true;
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
 });
-
-// Đăng ký Google/Facebook **chỉ khi** có client id/secret
-var googleId = cfg["OAuth:Google:ClientId"];
-var googleSecret = cfg["OAuth:Google:ClientSecret"];
-if (!string.IsNullOrWhiteSpace(googleId) && !string.IsNullOrWhiteSpace(googleSecret))
-{
-    auth.AddGoogle(options =>
-    {
-        options.ClientId = googleId!;
-        options.ClientSecret = googleSecret!;
-        options.CallbackPath = "/api/User/google-callback";
-        options.SignInScheme = "External";
-        options.SaveTokens = false;
-    });
-}
-
-var fbId = cfg["OAuth:Facebook:AppId"];
-var fbSecret = cfg["OAuth:Facebook:AppSecret"];
-if (!string.IsNullOrWhiteSpace(fbId) && !string.IsNullOrWhiteSpace(fbSecret))
-{
-    auth.AddFacebook(options =>
-    {
-        options.AppId = fbId!;
-        options.AppSecret = fbSecret!;
-        options.CallbackPath = "/api/User/facebook-callback";
-        options.SignInScheme = "External";
-        options.SaveTokens = false;
-    });
-}
 
 // =================== Authorization ===================
 builder.Services.AddAuthorization(options =>
