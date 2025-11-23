@@ -12,5 +12,6 @@ namespace BE.REPOs.Interface
         FeeSetting UpdateFeeSetting(FeeSetting feeSetting);
         bool DeleteFeeSetting(int feeId);
         decimal GetActiveFeeValue(string feeType);
+        FeeSetting? GetSingleFeeByType(string feeType);
     }
 }

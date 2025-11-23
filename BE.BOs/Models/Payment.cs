@@ -37,6 +37,8 @@ public partial class Payment
     public string? TransactionStatus { get; set; }
 
     public string? SecureHash { get; set; }
+    
+    public int? PostCredits { get; set; }
 
     public virtual Order? Order { get; set; }
     public virtual Product? Product { get; set; }

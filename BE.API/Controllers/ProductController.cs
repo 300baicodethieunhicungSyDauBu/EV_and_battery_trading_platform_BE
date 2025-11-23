@@ -13,11 +13,13 @@ namespace BE.API.Controllers
     {
         private readonly IProductRepo _productRepo;
         private readonly IOrderRepo _orderRepo;
+        private readonly IUserRepo _userRepo;
 
-        public ProductController(IProductRepo productRepo, IOrderRepo orderRepo)
+        public ProductController(IProductRepo productRepo, IOrderRepo orderRepo,IUserRepo userRepo)
         {
             _productRepo = productRepo;
             _orderRepo = orderRepo;
+            _userRepo = userRepo;
         }
 
         [HttpGet]
@@ -118,75 +120,94 @@ namespace BE.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "MemberOnly")]
-        public ActionResult CreateProduct([FromBody] ProductRequest request)
+[Authorize(Policy = "MemberOnly")]
+public ActionResult CreateProduct([FromBody] ProductRequest request)
+{
+    try
+    {
+        // ✅ Lấy userId từ token
+        var userId = int.TryParse(User.FindFirst("UserId")?.Value, out var uid) ? uid : 0;
+        if (userId <= 0) return Unauthorized("Invalid user");
+
+        // ✅ Lấy thông tin user
+        var user = _userRepo.GetUserById(userId);
+        if (user == null) return Unauthorized("User not found");
+
+        // ✅ Check post credit
+        if (user.PostCredits <= 0)
         {
-            try
+            return BadRequest("You do not have enough post credits. Please purchase more credits to post.");
+        }
+
+        // ✅ Validate license plate format for vehicles
+        if (!string.IsNullOrEmpty(request.LicensePlate) &&
+            (request.ProductType?.ToLower().Contains("vehicle") == true ||
+             request.ProductType?.ToLower().Contains("xe") == true))
+        {
+            if (!IsValidLicensePlate(request.LicensePlate))
             {
-                // ✅ Validate license plate format for vehicles
-                if (!string.IsNullOrEmpty(request.LicensePlate) &&
-                    (request.ProductType?.ToLower().Contains("vehicle") == true ||
-                     request.ProductType?.ToLower().Contains("xe") == true))
-                {
-                    if (!IsValidLicensePlate(request.LicensePlate))
-                    {
-                        return BadRequest(
-                            "Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
-                    }
-                }
-
-                // ✅ Tạo mới product và gán đầy đủ field
-                var product = new Product
-                {
-                    SellerId = int.TryParse(User.FindFirst("UserId")?.Value, out var userId) ? userId : 0,
-                    ProductType = request.ProductType,
-                    Title = request.Title,
-                    Description = request.Description,
-                    Price = request.Price,
-                    Brand = request.Brand,
-                    Model = request.Model,
-                    Condition = request.Condition,
-                    VehicleType = request.VehicleType,
-                    ManufactureYear = request.ManufactureYear,
-                    Mileage = request.Mileage,
-                    Transmission = request.Transmission,
-                    SeatCount = request.SeatCount,
-                    BatteryHealth = request.BatteryHealth,
-                    BatteryType = request.BatteryType,
-                    Capacity = request.Capacity,
-                    Voltage = request.Voltage,
-                    BMS = request.BMS,
-                    CellType = request.CellType,
-                    CycleCount = request.CycleCount,
-                    LicensePlate = request.LicensePlate,
-                    WarrantyPeriod = request.WarrantyPeriod,
-
-                    // ✅ Thêm các trạng thái mặc định
-                    Status = "Draft",
-                    VerificationStatus = "NotRequested",
-                    RejectionReason = null,
-                    CreatedDate = DateTime.UtcNow
-                };
-
-                var createdProduct = _productRepo.CreateProduct(product);
-
-                var response = new
-                {
-                    createdProduct.ProductId,
-                    createdProduct.Title,
-                    createdProduct.Price,
-                    createdProduct.Status,
-                    createdProduct.VerificationStatus,
-                    createdProduct.CreatedDate
-                };
-
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                return BadRequest(
+                    "Invalid license plate format. Please use Vietnamese license plate format (e.g., 30A-12345, 51G-12345)");
             }
         }
+
+        // ✅ Tạo mới product
+        var product = new Product
+        {
+            SellerId = userId,
+            ProductType = request.ProductType,
+            Title = request.Title,
+            Description = request.Description,
+            Price = request.Price,
+            Brand = request.Brand,
+            Model = request.Model,
+            Condition = request.Condition,
+            VehicleType = request.VehicleType,
+            ManufactureYear = request.ManufactureYear,
+            Mileage = request.Mileage,
+            Transmission = request.Transmission,
+            SeatCount = request.SeatCount,
+            BatteryHealth = request.BatteryHealth,
+            BatteryType = request.BatteryType,
+            Capacity = request.Capacity,
+            Voltage = request.Voltage,
+            BMS = request.BMS,
+            CellType = request.CellType,
+            CycleCount = request.CycleCount,
+            LicensePlate = request.LicensePlate,
+            WarrantyPeriod = request.WarrantyPeriod,
+
+            Status = "Draft",
+            VerificationStatus = "NotRequested",
+            RejectionReason = null,
+            CreatedDate = DateTime.UtcNow
+        };
+
+        var createdProduct = _productRepo.CreateProduct(product);
+
+        // ✅ Trừ post credit 1 lượt
+        user.PostCredits -= 1;
+        _userRepo.UpdateUser(user);
+
+        var response = new
+        {
+            createdProduct.ProductId,
+            createdProduct.Title,
+            createdProduct.Price,
+            createdProduct.Status,
+            createdProduct.VerificationStatus,
+            createdProduct.CreatedDate,
+            remainingPostCredits = user.PostCredits
+        };
+
+        return Ok(response);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, "Internal server error: " + ex.Message);
+    }
+}
+
 
         [HttpPut("{id}")]
         public ActionResult UpdateProduct(int id, [FromBody] ProductRequest request)
