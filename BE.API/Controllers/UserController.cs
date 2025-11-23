@@ -972,5 +972,37 @@ namespace BE.API.Controllers
                 return StatusCode(500, new { message = "Lỗi tạo admin: " + ex.Message });
             }
         }
+        
+        [HttpGet("{id}/listings/count")]
+        [Authorize]
+        public ActionResult GetUserListingCount([FromRoute] int id)
+        {
+            try
+            {
+                using var context = new EvandBatteryTradingPlatformContext();
+
+                // Kiểm tra user tồn tại
+                var user = context.Users.FirstOrDefault(u => u.UserId == id);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found" });
+                }
+
+                // Đếm số bài đăng (Products) theo UserId
+                
+
+                return Ok(new
+                {
+                    UserId = id,
+                    Email = user.Email,
+                    FullName = user.FullName,
+                    PostCredits = user.PostCredits
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error: " + ex.Message });
+            }
+        }
     }
 }

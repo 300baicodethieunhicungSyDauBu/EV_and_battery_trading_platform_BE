@@ -21,75 +21,81 @@ namespace BE.API.Controllers
         private readonly IOrderRepo _orderRepo;
         private readonly IProductRepo _productRepo;
         private readonly IVnPayService _vnPay;
-
+        private readonly IUserRepo _userRepo;
         public PaymentController(IPaymentRepo paymentRepo, IOrderRepo orderRepo, IProductRepo productRepo,
-            IVnPayService vnPay)
+            IVnPayService vnPay,IUserRepo userRepo)
         {
             _paymentRepo = paymentRepo;
             _orderRepo = orderRepo;
             _productRepo = productRepo;
             _vnPay = vnPay;
+            _userRepo = userRepo;
         }
 
         [HttpPost]
-        [Authorize(Policy = "MemberOnly")]
-        public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request)
-        {
-            var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
-            if (!int.TryParse(userIdStr, out var userId) || userId <= 0) return Unauthorized("Invalid user");
+[Authorize(Policy = "MemberOnly")]
+public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request)
+{
+    var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
+    if (!int.TryParse(userIdStr, out var userId) || userId <= 0) return Unauthorized("Invalid user");
 
-            // Xác định loại thanh toán
-            var paymentType = request.PaymentType?.Trim();
-            if (string.IsNullOrEmpty(paymentType))
-            {
-                // suy ra nếu FE không gửi
-                paymentType = (request.ProductId.HasValue && !request.OrderId.HasValue)
-                    ? "Verification"
-                    : (request.OrderId.HasValue ? "Deposit" : "");
-            }
+    var paymentType = request.PaymentType?.Trim();
+    if (string.IsNullOrEmpty(paymentType))
+    {
+        paymentType = (request.ProductId.HasValue && !request.OrderId.HasValue)
+            ? "Verification"
+            : (request.OrderId.HasValue ? "Deposit" : "");
+    }
+    if (string.IsNullOrEmpty(paymentType)) return BadRequest("PaymentType is required.");
 
-            if (string.IsNullOrEmpty(paymentType)) return BadRequest("PaymentType is required.");
-            
-            // ✅ VNPay validation: Amount must be between 5,000 and 999,999,999 VND
-            const decimal VNPAY_MIN_AMOUNT = 5000m;
-            const decimal VNPAY_MAX_AMOUNT = 999999999m; // Under 1 billion
-            
-            if (request.Amount <= 0) return BadRequest("Amount must be > 0");
-            if (request.Amount < VNPAY_MIN_AMOUNT)
-                return BadRequest($"Số tiền thanh toán phải tối thiểu {VNPAY_MIN_AMOUNT:N0} VND");
-            if (request.Amount > VNPAY_MAX_AMOUNT)
-                return BadRequest($"Số tiền thanh toán không được vượt quá {VNPAY_MAX_AMOUNT:N0} VND. Vui lòng liên hệ admin để xử lý.");
-            
-            if ((paymentType is "Deposit" or "FinalPayment") && (!request.OrderId.HasValue || request.OrderId <= 0))
-                return BadRequest($"{paymentType} requires a valid OrderId.");
-            if (paymentType == "Verification" && (!request.ProductId.HasValue || request.ProductId <= 0))
-                return BadRequest("Verification requires a valid ProductId.");
+    // Validation số tiền
+    const decimal VNPAY_MIN_AMOUNT = 5000m;
+    const decimal VNPAY_MAX_AMOUNT = 999999999m;
+    if (request.Amount <= 0) return BadRequest("Amount must be > 0");
+    if (request.Amount < VNPAY_MIN_AMOUNT)
+        return BadRequest($"Số tiền thanh toán phải tối thiểu {VNPAY_MIN_AMOUNT:N0} VND");
+    if (request.Amount > VNPAY_MAX_AMOUNT)
+        return BadRequest($"Số tiền thanh toán không được vượt quá {VNPAY_MAX_AMOUNT:N0} VND.");
 
-            var payment = new Payment
-            {
-                OrderId = request.OrderId > 0 ? request.OrderId : null,
-                ProductId = request.ProductId > 0 ? request.ProductId : null,
-                PayerId = userId,
-                PaymentType = paymentType,
-                Amount = request.Amount,
-                PaymentMethod = "VNPAY",
-                Status = "Pending",
-                CreatedDate = DateTime.Now
-            };
+    // Validation theo loại payment
+    if ((paymentType is "Deposit" or "FinalPayment") && (!request.OrderId.HasValue || request.OrderId <= 0))
+        return BadRequest($"{paymentType} requires a valid OrderId.");
+    if (paymentType == "Verification" && (!request.ProductId.HasValue || request.ProductId <= 0))
+        return BadRequest("Verification requires a valid ProductId.");
+    if (paymentType == "PostCredit" && (!request.PostCredits.HasValue || request.PostCredits <= 0))
+        return BadRequest("PostCredits is required for PostCredit payment.");
+    
+    var postCreditsToAdd = paymentType == "PostCredit" ? request.PostCredits.Value : 0;
 
-            var created = await _paymentRepo.CreatePaymentAsync(payment);
+    // Tạo payment
+    var payment = new Payment
+    {
+        OrderId = request.OrderId > 0 ? request.OrderId : null,
+        ProductId = request.ProductId > 0 ? request.ProductId : null,
+        PayerId = userId,
+        PaymentType = paymentType,
+        Amount = request.Amount,
+        PaymentMethod = "VNPAY",
+        Status = "Pending",
+        CreatedDate = DateTime.Now,
+        PostCredits = postCreditsToAdd
+    };
 
-            var info = new PaymentInformationModel
-            {
-                OrderType = "other",
-                Amount = created.Amount,
-                OrderDescription = $"Thanh toán {paymentType.ToLower()} - ID: {created.PaymentId}",
-                Name = created.PaymentId.ToString() // dùng làm vnp_TxnRef
-            };
+    HttpContext.Items["PostCredits"] = postCreditsToAdd;
+    var created = await _paymentRepo.CreatePaymentAsync(payment);
 
-            var paymentUrl = _vnPay.CreatePaymentUrl(info, HttpContext);
-            return Ok(new { PaymentId = created.PaymentId, PaymentUrl = paymentUrl });
-        }
+    var info = new PaymentInformationModel
+    {
+        OrderType = "other",
+        Amount = created.Amount,
+        OrderDescription = $"Thanh toán {paymentType.ToLower()} - ID: {created.PaymentId}",
+        Name = created.PaymentId.ToString() // dùng làm vnp_TxnRef
+    };
+
+    var paymentUrl = _vnPay.CreatePaymentUrl(info, HttpContext);
+    return Ok(new { PaymentId = created.PaymentId, PaymentUrl = paymentUrl });
+}
+
 
         [HttpGet]
         [Authorize(Policy = "AdminOnly")]
@@ -404,6 +410,15 @@ namespace BE.API.Controllers
                     {
                         p.VerificationStatus = "Requested";
                         _productRepo.UpdateProduct(p);
+                    }
+                }
+                else if (payment.PaymentType == "PostCredit" && payment.PostCredits.HasValue && payment.PostCredits.Value > 0)
+                {
+                    var user = _userRepo.GetUserById(payment.PayerId.Value);
+                    if (user != null)
+                    {
+                        user.PostCredits += payment.PostCredits.Value;
+                        _userRepo.UpdateUser(user);
                     }
                 }
 

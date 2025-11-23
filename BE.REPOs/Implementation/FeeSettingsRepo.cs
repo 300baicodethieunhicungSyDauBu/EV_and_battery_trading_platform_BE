@@ -48,5 +48,12 @@ namespace BE.REPOs.Implementation
                 .FirstOrDefault(f => f.FeeType == feeType && f.IsActive == true);
             return fee?.FeeValue ?? 0m;
         }
+        
+        public FeeSetting? GetSingleFeeByType(string feeType)
+        {
+            using var ctx = new EvandBatteryTradingPlatformContext();
+            return ctx.FeeSettings
+                .FirstOrDefault(f => f.FeeType == feeType && f.IsActive == true);
+        }
     }
 }
