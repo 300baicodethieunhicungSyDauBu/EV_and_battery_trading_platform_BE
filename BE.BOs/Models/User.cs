@@ -21,9 +21,9 @@ public partial class User
 
     public string? AccountStatus { get; set; }
 
-		public string? AccountStatusReason { get; set; }
+    public string? AccountStatusReason { get; set; }
 
-		public DateTime? StatusChangedDate { get; set; }
+    public DateTime? StatusChangedDate { get; set; }
 
     public DateTime? CreatedDate { get; set; }
 
@@ -37,6 +37,8 @@ public partial class User
     public string? OAuthId { get; set; } // External OAuth ID
 
     public string? OAuthEmail { get; set; } // Email from OAuth provider
+
+    public int PostCredits { get; set; } = 0;
 
     public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
 
