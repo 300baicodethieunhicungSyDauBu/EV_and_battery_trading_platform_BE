@@ -7,7 +7,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "OPENAI_API_BASE": "https://openrouter.ai/api",
-        "OPENAI_API_KEY": "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",
+        "OPENAI_API_KEY": "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",
         "OPENAI_MODEL": "openai/gpt-oss-20b:free"
       },
       "dotnetRunMessages": true,
