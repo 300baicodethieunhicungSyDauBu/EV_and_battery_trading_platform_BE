@@ -69,6 +69,8 @@ namespace BE.DAOs
                 existingFeeSetting.FeeType = feeSetting.FeeType;
                 existingFeeSetting.FeeValue = feeSetting.FeeValue;
                 existingFeeSetting.IsActive = feeSetting.IsActive;
+                existingFeeSetting.PackageName = feeSetting.PackageName;
+                existingFeeSetting.Description = feeSetting.Description;
                 context.SaveChanges();
                 return existingFeeSetting;
             }

@@ -159,12 +159,14 @@ namespace BE.API.Controllers
 
 
         /// <summary>
-        /// ✅ 2. Cập nhật thông tin gói (tên gói, giá, số lượt đăng, mô tả)
+        /// ✅ 2. Cập nhật thông tin gói (CHỈ cho phép sửa: tên, mô tả, trạng thái)
         /// PUT /api/admin/credit-packages/{feeId}
-        /// Body: { "credits": 10, "price": 85000, "packageName": "Gói Phổ Biến", "description": "Tiết kiệm 15%", "isActive": true }
+        /// Body: { "packageName": "Gói Hot", "description": "Ưu đãi đặc biệt", "isActive": true }
+        /// 
+        /// LƯU Ý: KHÔNG cho phép sửa giá và số lượt để đảm bảo công bằng cho người đã mua
         /// </summary>
         [HttpPut("{feeId}")]
-        public ActionResult<CreditPackageResponse> UpdatePackage(int feeId, [FromBody] CreditPackageRequest request)
+        public ActionResult<CreditPackageResponse> UpdatePackage(int feeId, [FromBody] UpdateCreditPackageRequest request)
         {
             try
             {
@@ -173,48 +175,34 @@ namespace BE.API.Controllers
                 if (feeSetting == null || !feeSetting.FeeType.StartsWith("PostCredit_"))
                     return NotFound("Không tìm thấy gói credit");
 
-                if (request.Price <= 0)
-                    return BadRequest("Giá gói phải lớn hơn 0");
-
-                if (request.Credits <= 0)
-                    return BadRequest("Số lượt đăng phải lớn hơn 0");
-
-                // Get current credits
+                // Get current credits from FeeType (không cho phép thay đổi)
                 var creditsStr = feeSetting.FeeType.Replace("PostCredit_", "");
-                if (!int.TryParse(creditsStr, out var currentCredits))
+                if (!int.TryParse(creditsStr, out var credits))
                     return BadRequest("Định dạng gói không hợp lệ");
 
-                // If credits changed, update FeeType
-                if (request.Credits != currentCredits)
-                {
-                    var newPackageId = $"PostCredit_{request.Credits}";
-                    var existing = _feeSettingsRepo.GetSingleFeeByType(newPackageId);
-                    
-                    if (existing != null && existing.FeeId != feeId)
-                        return Conflict($"Gói {request.Credits} lượt đăng đã tồn tại");
-                    
-                    feeSetting.FeeType = newPackageId;
-                }
-
-                // Update fields
-                feeSetting.FeeValue = request.Price;
-                feeSetting.IsActive = request.IsActive;
+                // ✅ CHỈ CHO PHÉP SỬA 3 FIELDS NÀY:
                 feeSetting.PackageName = request.PackageName;
                 feeSetting.Description = request.Description;
+                feeSetting.IsActive = request.IsActive;
+
+                // ❌ KHÔNG CHO PHÉP SỬA:
+                // - feeSetting.FeeValue (giá gói)
+                // - feeSetting.FeeType (số lượt)
+                // Lý do: Đảm bảo công bằng cho người đã mua, tránh sai số liệu
 
                 var updated = _feeSettingsRepo.UpdateFeeSetting(feeSetting);
-                var pricePerCredit = request.Credits > 0 ? request.Price / request.Credits : 0;
+                var pricePerCredit = credits > 0 ? updated.FeeValue / credits : 0;
 
                 // Get statistics
                 var totalSold = _context.Payments
                     .Where(p => p.PaymentType == "PostCredit" 
-                             && p.PostCredits == request.Credits 
+                             && p.PostCredits == credits 
                              && p.Status == "Success")
                     .Count();
 
                 var totalRevenue = _context.Payments
                     .Where(p => p.PaymentType == "PostCredit" 
-                             && p.PostCredits == request.Credits 
+                             && p.PostCredits == credits 
                              && p.Status == "Success")
                     .Sum(p => (decimal?)p.Amount) ?? 0;
 
@@ -222,7 +210,7 @@ namespace BE.API.Controllers
                 {
                     FeeId = updated.FeeId,
                     PackageId = updated.FeeType,
-                    Credits = request.Credits,
+                    Credits = credits,
                     Price = updated.FeeValue,
                     PricePerCredit = pricePerCredit,
                     IsActive = updated.IsActive ?? false,
