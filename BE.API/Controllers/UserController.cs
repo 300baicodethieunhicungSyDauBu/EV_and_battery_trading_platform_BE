@@ -563,16 +563,22 @@ namespace BE.API.Controllers
             try
             {
                 var users = _userRepo.GetAllUsers();
+                
+                if (users == null)
+                {
+                    return Ok(new List<UserResponse>());
+                }
+                
                 var response = users.Select(user => new UserResponse
                 {
                     UserId = user.UserId,
                     Role = user.Role?.RoleName ?? "Unknown",
-                    Email = user.Email,
+                    Email = user.Email ?? "",
                     FullName = user.FullName,
                     Phone = user.Phone,
                     Avatar = user.Avatar,
-                    AccountStatus = user.AccountStatus,
-                    CreatedDate = user.CreatedDate
+                    AccountStatus = user.AccountStatus ?? "Active",
+                    CreatedDate = user.CreatedDate ?? DateTime.Now
                 }).ToList();
 
                 return Ok(response);

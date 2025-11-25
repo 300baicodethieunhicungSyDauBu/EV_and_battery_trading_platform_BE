@@ -14,4 +14,6 @@ public partial class FeeSetting
     public bool? IsActive { get; set; }
 
     public DateTime? CreatedDate { get; set; }
+
+    public string? Description { get; set; }
 }

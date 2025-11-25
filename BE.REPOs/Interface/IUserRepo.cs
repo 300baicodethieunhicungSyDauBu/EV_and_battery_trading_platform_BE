@@ -21,9 +21,5 @@ namespace BE.REPOs.Interface
         bool UpdateResetPasswordToken(string email, string token, DateTime expiry);
         User? GetUserByResetToken(string token);
         bool ResetPassword(string token, string newPassword);
-        
-        // OAuth Methods
-        User? GetUserByOAuth(string provider, string oauthId);
-        User CreateOAuthUser(string provider, string oauthId, string email, string fullName, string? avatar = null);
     }
 }

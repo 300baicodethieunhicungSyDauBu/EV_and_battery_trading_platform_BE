@@ -110,33 +110,6 @@ namespace BE.DAOs
             return dbcontext.Users.Include(u => u.Role).FirstOrDefault(u => u.Email == email);
         }
 
-        // OAuth methods
-        public User? GetUserByOAuth(string provider, string oauthId)
-        {
-            return dbcontext.Users.Include(u => u.Role).FirstOrDefault(u => u.OAuthProvider == provider && u.OAuthId == oauthId);
-        }
-
-        public User CreateOAuthUser(string provider, string oauthId, string email, string fullName, string? avatar = null)
-        {
-            var user = new User
-            {
-                OAuthProvider = provider,
-                OAuthId = oauthId,
-                OAuthEmail = email,
-                Email = email,
-                FullName = fullName,
-                Avatar = avatar,
-                PasswordHash = "", // OAuth users don't need password
-                AccountStatus = "Active",
-                CreatedDate = DateTime.Now,
-                RoleId = 2 // Default role for members
-            };
-
-            dbcontext.Users.Add(user);
-            dbcontext.SaveChanges();
-            return user;
-        }
-
         // Update User
         public User UpdateUser(User updatedUser)
         {

@@ -14,12 +14,18 @@ namespace BE.API.Controllers
         private readonly IProductRepo _productRepo;
         private readonly IOrderRepo _orderRepo;
         private readonly IUserRepo _userRepo;
+        private readonly ICreditHistoryRepo _creditHistoryRepo;
 
-        public ProductController(IProductRepo productRepo, IOrderRepo orderRepo,IUserRepo userRepo)
+        public ProductController(
+            IProductRepo productRepo, 
+            IOrderRepo orderRepo,
+            IUserRepo userRepo,
+            ICreditHistoryRepo creditHistoryRepo)
         {
             _productRepo = productRepo;
             _orderRepo = orderRepo;
             _userRepo = userRepo;
+            _creditHistoryRepo = creditHistoryRepo;
         }
 
         [HttpGet]
@@ -185,9 +191,23 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
 
         var createdProduct = _productRepo.CreateProduct(product);
 
-        // ✅ Trừ post credit 1 lượt
+        // ✅ TRỪ CREDIT NGAY KHI ĐĂNG BÀI
+        var creditsBefore = user.PostCredits;
         user.PostCredits -= 1;
         _userRepo.UpdateUser(user);
+
+        // ✅ LOG CREDIT USAGE
+        _creditHistoryRepo.LogCreditChange(new CreditHistory
+        {
+            UserId = user.UserId,
+            ProductId = createdProduct.ProductId,
+            ChangeType = "Use",
+            CreditsBefore = creditsBefore,
+            CreditsChanged = -1,
+            CreditsAfter = user.PostCredits,
+            Reason = $"Posted product: {createdProduct.Title}",
+            CreatedDate = DateTime.Now
+        }).Wait();
 
         var response = new
         {
@@ -197,7 +217,8 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
             createdProduct.Status,
             createdProduct.VerificationStatus,
             createdProduct.CreatedDate,
-            remainingPostCredits = user.PostCredits
+            remainingPostCredits = user.PostCredits,
+            message = "Product created successfully. 1 credit deducted. Credit will be refunded if rejected by admin."
         };
 
         return Ok(response);
@@ -210,10 +231,15 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
 
 
         [HttpPut("{id}")]
-        public ActionResult UpdateProduct(int id, [FromBody] ProductRequest request)
+        [Authorize(Policy = "MemberOnly")]
+        public async Task<ActionResult> UpdateProduct(int id, [FromBody] ProductRequest request)
         {
             try
             {
+                // ✅ Lấy userId từ token
+                var userId = int.TryParse(User.FindFirst("UserId")?.Value, out var uid) ? uid : 0;
+                if (userId <= 0) return Unauthorized("Invalid user");
+
                 // ✅ Validate license plate format for vehicles
                 if (!string.IsNullOrEmpty(request.LicensePlate) &&
                     (request.ProductType?.ToLower().Contains("vehicle") == true ||
@@ -232,8 +258,46 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     return NotFound("Product not found");
                 }
 
+                // ✅ Kiểm tra quyền sở hữu
+                if (existingProduct.SellerId != userId)
+                {
+                    return Forbid("You can only update your own products");
+                }
 
-                // ✅ Cập nhật toàn bộ các trường tương tự CreateProduct
+                // ✅ Kiểm tra xem có phải đang resubmit bài bị reject không
+                bool isResubmit = existingProduct.Status == "Rejected";
+
+                // ✅ Nếu resubmit, kiểm tra credit
+                if (isResubmit)
+                {
+                    var user = _userRepo.GetUserById(userId);
+                    if (user == null) return Unauthorized("User not found");
+
+                    if (user.PostCredits <= 0)
+                    {
+                        return BadRequest("You do not have enough post credits to resubmit. Please purchase more credits.");
+                    }
+
+                    // ✅ TRỪ CREDIT KHI RESUBMIT
+                    var creditsBefore = user.PostCredits;
+                    user.PostCredits -= 1;
+                    _userRepo.UpdateUser(user);
+
+                    // ✅ LOG CREDIT USAGE
+                    await _creditHistoryRepo.LogCreditChange(new CreditHistory
+                    {
+                        UserId = user.UserId,
+                        ProductId = existingProduct.ProductId,
+                        ChangeType = "Use",
+                        CreditsBefore = creditsBefore,
+                        CreditsChanged = -1,
+                        CreditsAfter = user.PostCredits,
+                        Reason = $"Resubmitted product after rejection: {existingProduct.Title}",
+                        CreatedDate = DateTime.Now
+                    });
+                }
+
+                // ✅ Cập nhật toàn bộ các trường
                 existingProduct.ProductType = request.ProductType;
                 existingProduct.Title = request.Title;
                 existingProduct.Description = request.Description;
@@ -256,13 +320,14 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                 existingProduct.LicensePlate = request.LicensePlate;
                 existingProduct.WarrantyPeriod = request.WarrantyPeriod;
 
-                // ✅ Reset trạng thái về "Draft" để admin duyệt lại
+                // ✅ Reset trạng thái để admin duyệt lại
                 existingProduct.Status = "Re-submit";
                 existingProduct.VerificationStatus = "NotRequested";
                 existingProduct.RejectionReason = null;
 
                 var updatedProduct = _productRepo.UpdateProduct(existingProduct);
 
+                var user2 = _userRepo.GetUserById(userId);
                 var response = new
                 {
                     updatedProduct.ProductId,
@@ -270,6 +335,12 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     updatedProduct.Price,
                     updatedProduct.Status,
                     updatedProduct.VerificationStatus,
+                    isResubmit = isResubmit,
+                    creditDeducted = isResubmit ? 1 : 0,
+                    remainingPostCredits = user2?.PostCredits ?? 0,
+                    message = isResubmit 
+                        ? "Product resubmitted successfully. 1 credit deducted." 
+                        : "Product updated successfully. No credit deducted (not a resubmission)."
                 };
 
                 return Ok(response);
@@ -576,6 +647,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     return NotFound("Product not found.");
                 }
 
+                // ✅ Approve product (credit đã bị trừ khi đăng bài rồi)
                 var approved = _productRepo.ApproveProduct(id);
                 if (approved == null)
                 {
@@ -599,7 +671,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
 
         [HttpPut("reject/{id}")]
         [Authorize(Policy = "AdminOnly")]
-        public ActionResult RejectProduct(int id, [FromBody] RejectProductRequest? request = null)
+        public async Task<ActionResult> RejectProduct(int id, [FromBody] RejectProductRequest? request = null)
         {
             try
             {
@@ -609,11 +681,42 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     return NotFound("Product not found.");
                 }
 
+                // ✅ Lấy thông tin seller để hoàn credit
+                if (!product.SellerId.HasValue)
+                {
+                    return BadRequest("Product has no seller.");
+                }
+                
+                var seller = _userRepo.GetUserById(product.SellerId.Value);
+                if (seller == null)
+                {
+                    return BadRequest("Seller not found.");
+                }
+
+                // ✅ Reject product
                 var rejected = _productRepo.RejectProduct(id, request?.RejectionReason);
                 if (rejected == null)
                 {
                     return StatusCode(500, "Failed to reject product.");
                 }
+
+                // ✅ HOÀN LẠI CREDIT KHI TỪ CHỐI
+                var creditsBefore = seller.PostCredits;
+                seller.PostCredits += 1;
+                _userRepo.UpdateUser(seller);
+
+                // ✅ LOG CREDIT REFUND
+                await _creditHistoryRepo.LogCreditChange(new CreditHistory
+                {
+                    UserId = seller.UserId,
+                    ProductId = rejected.ProductId,
+                    ChangeType = "Refund",
+                    CreditsBefore = creditsBefore,
+                    CreditsChanged = 1,
+                    CreditsAfter = seller.PostCredits,
+                    Reason = $"Product rejected: {rejected.Title}. Reason: {rejected.RejectionReason ?? "No reason provided"}",
+                    CreatedDate = DateTime.Now
+                });
 
                 return Ok(new
                 {
@@ -622,7 +725,9 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     rejected.Status,
                     rejected.VerificationStatus,
                     rejected.RejectionReason,
-                    Message = "Product rejected successfully."
+                    sellerId = seller.UserId,
+                    sellerCreditsAfterRefund = seller.PostCredits,
+                    Message = "Product rejected successfully. 1 credit refunded to seller."
                 });
             }
             catch (Exception ex)
