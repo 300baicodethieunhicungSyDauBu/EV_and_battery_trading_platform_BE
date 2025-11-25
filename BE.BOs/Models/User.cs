@@ -31,13 +31,6 @@ public partial class User
 
     public DateTime? ResetPasswordTokenExpiry { get; set; }
 
-    // OAuth fields
-    public string? OAuthProvider { get; set; } // "Google", "Facebook", null for regular users
-
-    public string? OAuthId { get; set; } // External OAuth ID
-
-    public string? OAuthEmail { get; set; } // Email from OAuth provider
-
     public int PostCredits { get; set; } = 0;
 
     public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();

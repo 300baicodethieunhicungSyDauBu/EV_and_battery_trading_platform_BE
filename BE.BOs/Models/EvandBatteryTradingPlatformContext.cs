@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -41,6 +41,8 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
     public virtual DbSet<Chat> Chats { get; set; }
 
     public virtual DbSet<Message> Messages { get; set; }
+
+    public virtual DbSet<CreditHistory> CreditHistories { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -89,6 +91,7 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
         entity.Property(e => e.FeeType).HasMaxLength(50);
         entity.Property(e => e.FeeValue).HasColumnType("decimal(10, 4)");
         entity.Property(e => e.IsActive).HasDefaultValue(true);
+        entity.Property(e => e.Description).HasMaxLength(500);
     });
 
     modelBuilder.Entity<Notification>(entity =>
@@ -229,9 +232,6 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
         entity.Property(e => e.FullName).HasMaxLength(200);
         entity.Property(e => e.PasswordHash).HasMaxLength(255);
         entity.Property(e => e.Phone).HasMaxLength(20);
-        entity.Property(e => e.OAuthProvider).HasMaxLength(50);
-        entity.Property(e => e.OAuthId).HasMaxLength(255);
-        entity.Property(e => e.OAuthEmail).HasMaxLength(255);
         entity.Property(e => e.ResetPasswordToken).HasColumnType("nvarchar(max)");
 
         entity.HasOne(d => d.Role).WithMany(p => p.Users)
@@ -264,6 +264,31 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
             .HasForeignKey(d => d.ChatId);
         entity.HasOne(d => d.Sender).WithMany()
             .HasForeignKey(d => d.SenderId);
+    });
+
+    modelBuilder.Entity<CreditHistory>(entity =>
+    {
+        entity.ToTable("CreditHistory"); // Map to singular table name
+        entity.HasKey(e => e.HistoryId).HasName("PK__CreditHi__4D7B4ADD9C8E5A12");
+        entity.Property(e => e.ChangeType).HasMaxLength(20);
+        entity.Property(e => e.Reason).HasMaxLength(500);
+        entity.Property(e => e.CreatedDate).HasDefaultValueSql("(getdate())");
+
+        entity.HasOne(d => d.User).WithMany()
+            .HasForeignKey(d => d.UserId)
+            .HasConstraintName("FK_CreditHistory_User");
+
+        entity.HasOne(d => d.Payment).WithMany()
+            .HasForeignKey(d => d.PaymentId)
+            .HasConstraintName("FK_CreditHistory_Payment");
+
+        entity.HasOne(d => d.Product).WithMany()
+            .HasForeignKey(d => d.ProductId)
+            .HasConstraintName("FK_CreditHistory_Product");
+
+        entity.HasOne(d => d.CreatedByUser).WithMany()
+            .HasForeignKey(d => d.CreatedBy)
+            .HasConstraintName("FK_CreditHistory_CreatedBy");
     });
 
     OnModelCreatingPartial(modelBuilder);
