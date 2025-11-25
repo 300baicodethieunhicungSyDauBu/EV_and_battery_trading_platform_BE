@@ -18,6 +18,11 @@ namespace BE.API.DTOs.Response
         public decimal CancelledNoRefundRevenue { get; set; }
 
         /// <summary>
+        /// Doanh thu từ bán gói credit (Credit packages)
+        /// </summary>
+        public decimal CreditPackagesRevenue { get; set; }
+
+        /// <summary>
         /// Tổng doanh thu (Total revenue)
         /// </summary>
         public decimal TotalRevenue { get; set; }
@@ -36,6 +41,11 @@ namespace BE.API.DTOs.Response
         /// Số lượng đơn hàng bị hủy không hoàn tiền
         /// </summary>
         public int CancelledNoRefundCount { get; set; }
+
+        /// <summary>
+        /// Số lượng gói credit đã bán
+        /// </summary>
+        public int CreditPackagesSoldCount { get; set; }
 
         /// <summary>
         /// Chi tiết các đơn hàng bị hủy không hoàn tiền

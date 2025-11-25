@@ -220,7 +220,8 @@ namespace BE.API.Controllers
                     FullName = request.FullName?.Trim(),
                     Phone = request.Phone?.Trim(),
                     Avatar = avatarUrl,
-                    RoleId = 2 // member mặc định
+                    RoleId = 2, // member mặc định
+                    PostCredits = 3 // 🎁 Tặng 3 lượt đăng tin miễn phí cho người dùng mới
                 };
 
                 var registeredUser = _userRepo.Register(user);
@@ -232,7 +233,9 @@ namespace BE.API.Controllers
                     registeredUser.FullName,
                     registeredUser.Phone,
                     registeredUser.Avatar,
-                    registeredUser.RoleId
+                    registeredUser.RoleId,
+                    postCredits = registeredUser.PostCredits,
+                    message = "🎉 Đăng ký thành công! Bạn đã nhận 3 lượt đăng tin miễn phí."
                 });
             }
             catch (Exception ex)
