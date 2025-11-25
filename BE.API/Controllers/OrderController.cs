@@ -836,6 +836,7 @@ namespace BE.API.Controllers
         /// 1. Doanh thu từ đơn hàng hoàn thành (Completed)
         /// 2. Doanh thu từ phí kiểm định (Verification)
         /// 3. Doanh thu từ đơn hàng bị hủy không hoàn tiền (Cancelled with no refund)
+        /// 4. Doanh thu từ bán gói credit (PostCredit)
         /// </summary>
         [HttpGet("revenue-statistics")]
         [Authorize(Policy = "AdminOrStaff")]
@@ -861,7 +862,6 @@ namespace BE.API.Controllers
                 var verificationPaymentsCount = verificationPayments.Count;
 
                 // 3. Doanh thu từ đơn hàng bị hủy không hoàn tiền (Cancelled orders with no refund)
-                // Logic: Đơn hàng có status = "Cancelled" và CancellationReason chứa "không được hoàn tiền"
                 var cancelledOrders = _orderRepo.GetAllOrders()
                     .Where(o => string.Equals(o.Status, "Cancelled", StringComparison.OrdinalIgnoreCase)
                                 && !string.IsNullOrEmpty(o.CancellationReason)
@@ -870,6 +870,15 @@ namespace BE.API.Controllers
 
                 var cancelledNoRefundRevenue = cancelledOrders.Sum(o => o.DepositAmount);
                 var cancelledNoRefundCount = cancelledOrders.Count;
+
+                // 4. Doanh thu từ bán gói credit (PostCredit packages)
+                var creditPackagePayments = _paymentRepo.GetAllPayments()
+                    .Where(p => string.Equals(p.PaymentType, "PostCredit", StringComparison.OrdinalIgnoreCase)
+                                && string.Equals(p.Status, "Success", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                
+                var creditPackagesRevenue = creditPackagePayments.Sum(p => p.Amount);
+                var creditPackagesSoldCount = creditPackagePayments.Count;
 
                 // Chi tiết các đơn hàng bị hủy không hoàn tiền
                 var cancelledNoRefundDetails = cancelledOrders.Select(o => new CancelledNoRefundOrderDetail
@@ -886,18 +895,20 @@ namespace BE.API.Controllers
                     ProductTitle = o.Product?.Title
                 }).ToList();
 
-                // Tổng doanh thu
-                var totalRevenue = completedOrdersRevenue + verificationRevenue + cancelledNoRefundRevenue;
+                // Tổng doanh thu (bao gồm cả gói credit)
+                var totalRevenue = completedOrdersRevenue + verificationRevenue + cancelledNoRefundRevenue + creditPackagesRevenue;
 
                 var response = new RevenueStatisticsResponse
                 {
                     CompletedOrdersRevenue = completedOrdersRevenue,
                     VerificationRevenue = verificationRevenue,
                     CancelledNoRefundRevenue = cancelledNoRefundRevenue,
+                    CreditPackagesRevenue = creditPackagesRevenue,
                     TotalRevenue = totalRevenue,
                     CompletedOrdersCount = completedOrdersCount,
                     VerificationPaymentsCount = verificationPaymentsCount,
                     CancelledNoRefundCount = cancelledNoRefundCount,
+                    CreditPackagesSoldCount = creditPackagesSoldCount,
                     CancelledNoRefundOrders = cancelledNoRefundDetails
                 };
 

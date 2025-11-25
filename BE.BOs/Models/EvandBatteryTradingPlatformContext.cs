@@ -91,6 +91,7 @@ public partial class EvandBatteryTradingPlatformContext : DbContext
         entity.Property(e => e.FeeType).HasMaxLength(50);
         entity.Property(e => e.FeeValue).HasColumnType("decimal(10, 4)");
         entity.Property(e => e.IsActive).HasDefaultValue(true);
+        entity.Property(e => e.PackageName).HasMaxLength(100);
         entity.Property(e => e.Description).HasMaxLength(500);
     });
 

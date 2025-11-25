@@ -15,5 +15,7 @@ public partial class FeeSetting
 
     public DateTime? CreatedDate { get; set; }
 
+    public string? PackageName { get; set; }
+
     public string? Description { get; set; }
 }

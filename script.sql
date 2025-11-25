@@ -440,10 +440,80 @@ IF NOT EXISTS (SELECT * FROM FeeSettings WHERE FeeType = 'PostCredit_5')
 BEGIN
     INSERT INTO FeeSettings (FeeType, FeeValue, IsActive, Description)
     VALUES 
-        ('PostCredit_5', 50000.00, 1, 'Starter Package - 5 post credits'),
-        ('PostCredit_10', 90000.00, 1, 'Popular Package - 10 post credits (Save 10%)'),
-        ('PostCredit_20', 160000.00, 1, 'Value Package - 20 post credits (Save 20%)'),
-        ('PostCredit_50', 350000.00, 1, 'Premium Package - 50 post credits (Save 30%)');
+        ('PostCredit_5', 50000.00, 1, 'Starter Package - 5 lượt đăng'),
+        ('PostCredit_10', 90000.00, 1, 'Popular Package - 10 lượt đăng (Tiết kiệm 10%)'),
+        ('PostCredit_20', 160000.00, 1, 'Value Package - 20 lượt đăng (Tiết kiệm 20%)'),
+        ('PostCredit_50', 350000.00, 1, 'Premium Package - 50 lượt đăng (Tiết kiệm 30%)');
 END
 GO
+
+
+
+-- ================================================
+-- ADD PackageName COLUMN TO FeeSettings
+-- ================================================
+IF NOT EXISTS (
+    SELECT * FROM sys.columns 
+    WHERE object_id = OBJECT_ID(N'[FeeSettings]') 
+    AND name = 'PackageName'
+)
+BEGIN
+    ALTER TABLE [FeeSettings] 
+    ADD [PackageName] nvarchar(100) NULL;
+    
+    PRINT 'Added PackageName column to FeeSettings table';
+END
+ELSE
+BEGIN
+    PRINT 'PackageName column already exists in FeeSettings table';
+END
+GO
+
+-- Update existing packages with default names
+UPDATE [FeeSettings] 
+SET [PackageName] = 
+    CASE 
+        WHEN FeeType = 'PostCredit_5' THEN N'Gói Khởi Đầu'
+        WHEN FeeType = 'PostCredit_10' THEN N'Gói Phổ Biến'
+        WHEN FeeType = 'PostCredit_20' THEN N'Gói Tiết Kiệm'
+        WHEN FeeType = 'PostCredit_50' THEN N'Gói Premium'
+        ELSE N'Gói Credit'
+    END
+WHERE FeeType LIKE 'PostCredit_%' AND PackageName IS NULL;
+GO
+
+
+-- ================================================
+-- ADD PackageName COLUMN TO FeeSettings
+-- ================================================
+IF NOT EXISTS (
+    SELECT * FROM sys.columns 
+    WHERE object_id = OBJECT_ID(N'[FeeSettings]') 
+    AND name = 'PackageName'
+)
+BEGIN
+    ALTER TABLE [FeeSettings] 
+    ADD [PackageName] nvarchar(100) NULL;
+    
+    PRINT 'Added PackageName column to FeeSettings table';
+END
+ELSE
+BEGIN
+    PRINT 'PackageName column already exists in FeeSettings table';
+END
+GO
+
+-- Update existing packages with default names
+UPDATE [FeeSettings] 
+SET [PackageName] = 
+    CASE 
+        WHEN FeeType = 'PostCredit_5' THEN N'Gói Khởi Đầu'
+        WHEN FeeType = 'PostCredit_10' THEN N'Gói Phổ Biến'
+        WHEN FeeType = 'PostCredit_20' THEN N'Gói Tiết Kiệm'
+        WHEN FeeType = 'PostCredit_50' THEN N'Gói Premium'
+        ELSE N'Gói Credit'
+    END
+WHERE FeeType LIKE 'PostCredit_%' AND PackageName IS NULL;
+GO
+
 
