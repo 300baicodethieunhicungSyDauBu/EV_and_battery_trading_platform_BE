@@ -515,5 +515,3 @@ SET [PackageName] =
     END
 WHERE FeeType LIKE 'PostCredit_%' AND PackageName IS NULL;
 GO
-
-

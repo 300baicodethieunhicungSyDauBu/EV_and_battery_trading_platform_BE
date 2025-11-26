@@ -297,7 +297,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     });
                 }
 
-                // ✅ Cập nhật toàn bộ các trường
+                // Cập nhật toàn bộ các trường
                 existingProduct.ProductType = request.ProductType;
                 existingProduct.Title = request.Title;
                 existingProduct.Description = request.Description;
