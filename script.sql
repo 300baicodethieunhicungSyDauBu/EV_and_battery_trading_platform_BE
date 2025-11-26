@@ -431,7 +431,7 @@ IF NOT EXISTS (SELECT * FROM FeeSettings WHERE FeeType = 'DepositPercentage')
 
 IF NOT EXISTS (SELECT * FROM FeeSettings WHERE FeeType = 'VerificationFee')
     INSERT INTO FeeSettings (FeeType, FeeValue, IsActive, Description)
-    VALUES ('VerificationFee', 50000.00, 1, 'Product verification fee');
+    VALUES ('VerificationFee', 100000.00, 1, 'Product verification fee');
 
 GO
 
@@ -440,10 +440,10 @@ IF NOT EXISTS (SELECT * FROM FeeSettings WHERE FeeType = 'PostCredit_5')
 BEGIN
     INSERT INTO FeeSettings (FeeType, FeeValue, IsActive, Description)
     VALUES 
-        ('PostCredit_5', 50000.00, 1, 'Starter Package - 5 lượt đăng'),
-        ('PostCredit_10', 90000.00, 1, 'Popular Package - 10 lượt đăng (Tiết kiệm 10%)'),
-        ('PostCredit_20', 160000.00, 1, 'Value Package - 20 lượt đăng (Tiết kiệm 20%)'),
-        ('PostCredit_50', 350000.00, 1, 'Premium Package - 50 lượt đăng (Tiết kiệm 30%)');
+        ('PostCredit_5', 50000.00, 1, N'Starter Package - 5 lượt đăng'),
+        ('PostCredit_10', 90000.00, 1, N'Popular Package - 10 lượt đăng (Tiết kiệm 10%)'),
+        ('PostCredit_20', 160000.00, 1, N'Value Package - 20 lượt đăng (Tiết kiệm 20%)'),
+        ('PostCredit_50', 350000.00, 1, N'Premium Package - 50 lượt đăng (Tiết kiệm 30%)');
 END
 GO
 
