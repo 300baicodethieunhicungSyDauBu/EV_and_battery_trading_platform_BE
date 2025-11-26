@@ -205,7 +205,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
             CreditsBefore = creditsBefore,
             CreditsChanged = -1,
             CreditsAfter = user.PostCredits,
-            Reason = $"Posted product: {createdProduct.Title}",
+            Reason = $"Đã đăng sản phẩm: {createdProduct.Title}",
             CreatedDate = DateTime.Now
         }).Wait();
 
@@ -292,7 +292,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                         CreditsBefore = creditsBefore,
                         CreditsChanged = -1,
                         CreditsAfter = user.PostCredits,
-                        Reason = $"Resubmitted product after rejection: {existingProduct.Title}",
+                        Reason = $"Đăng lại sau khi bị từ chối: {existingProduct.Title}",
                         CreatedDate = DateTime.Now
                     });
                 }
@@ -714,7 +714,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     CreditsBefore = creditsBefore,
                     CreditsChanged = 1,
                     CreditsAfter = seller.PostCredits,
-                    Reason = $"Product rejected: {rejected.Title}. Reason: {rejected.RejectionReason ?? "No reason provided"}",
+                    Reason = $"Sản phẩm bị từ chối: {rejected.Title}. Lý do: {rejected.RejectionReason ?? "Không có lý do"}",
                     CreatedDate = DateTime.Now
                 });
 

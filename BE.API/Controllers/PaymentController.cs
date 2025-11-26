@@ -1,4 +1,4 @@
-﻿using BE.API.DTOs.Request;
+using BE.API.DTOs.Request;
 using BE.BOs.Models;
 using BE.BOs.VnPayModels;
 using BE.REPOs.Interface;
@@ -478,7 +478,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
                                 CreditsBefore = creditsBefore,
                                 CreditsChanged = payment.PostCredits.Value,
                                 CreditsAfter = user.PostCredits,
-                                Reason = $"Purchased {payment.PostCredits} credits package for {payment.Amount:N0} VND",
+                                Reason = $"Đã mua gói credit: {payment.PostCredits} credits với giá {payment.Amount:N0} VND",
                                 CreatedDate = DateTime.Now
                             });
                             
@@ -955,7 +955,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
                         CreditsBefore = creditsBefore,
                         CreditsChanged = request.CreditsChange,
                         CreditsAfter = user.PostCredits,
-                        Reason = $"[{request.AdjustmentType}] {request.Reason} (by {admin.FullName})",
+                        Reason = $"[{request.AdjustmentType}] {request.Reason} (bởi {admin.FullName})",
                         CreatedBy = adminId,
                         CreatedDate = DateTime.Now
                     });
