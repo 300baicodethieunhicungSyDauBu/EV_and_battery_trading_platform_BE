@@ -30,13 +30,18 @@ namespace BE.API.Controllers
             _paymentRepo = paymentRepo;
         }
 
+        // 📋 XEM TẤT CẢ ĐỚN HÀNG (Admin/Staff)
+        // Output: Danh sách tất cả orders với thông tin buyer, seller, product
         [HttpGet]
         //[Authorize(Policy = "AdminOnly")]
         public ActionResult GetAllOrders()
         {
             try
             {
+                // 1️⃣ Lấy tất cả orders từ database
                 var orders = _orderRepo.GetAllOrders();
+                
+                // 2️⃣ Map sang response với thông tin đầy đủ
                 var response = orders.Select(o => new
                 {
                     o.OrderId,
@@ -75,18 +80,23 @@ namespace BE.API.Controllers
             }
         }
 
+        // 🔍 XEM CHI TIẾT ĐƠN HÀNG (Buyer/Seller/Admin)
+        // Input: orderId
+        // Output: Order detail với payments, buyer, seller, product info
+        // Auth: Chỉ buyer, seller hoặc admin mới xem được
         [HttpGet("{id}")]
         public ActionResult GetOrderById(int id)
         {
             try
             {
+                // 1️⃣ Lấy order by ID
                 var order = _orderRepo.GetOrderById(id);
                 if (order == null)
                 {
                     return NotFound();
                 }
 
-                // Verify if user has access to this order
+                // 2️⃣ Kiểm tra quyền truy cập (chỉ buyer, seller hoặc admin)
                 var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
                 if (order.BuyerId != userId && order.SellerId != userId && !User.IsInRole("1"))
                 {
@@ -184,13 +194,17 @@ namespace BE.API.Controllers
             }
         }
 
+        // ➕ TẠO ĐƠN HÀNG MỚI (Member only - Buyer)
+        // Input: { sellerId, productId, totalAmount, depositAmount }
+        // Output: Order info
+        // Flow: Tạo order → Product status = "Reserved" → Buyer thanh toán deposit
         [HttpPost]
         [Authorize(Policy = "MemberOnly")]
         public ActionResult CreateOrder([FromBody] OrderRequest request)
         {
             try
             {
-                // Validation
+                // 1️⃣ Validation input
                 if (request.SellerId <= 0)
                     return BadRequest("Valid SellerId is required.");
                 if (request.ProductId <= 0)

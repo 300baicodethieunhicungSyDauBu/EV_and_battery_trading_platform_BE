@@ -28,14 +28,17 @@ namespace BE.API.Controllers
             _creditHistoryRepo = creditHistoryRepo;
         }
 
+        // 📦 XEM TẤT CẢ SẢN PHẨM (Public - không cần đăng nhập)
+        // Output: Danh sách tất cả products với đầy đủ thông tin
         [HttpGet]
         public ActionResult GetAllProducts()
         {
             try
             {
+                // 1️⃣ Lấy tất cả products từ database
                 var products = _productRepo.GetAllProducts();
 
-                // ✅ Map toàn bộ thông tin cần thiết sang ProductResponse
+                // 2️⃣ Map sang ProductResponse (bao gồm images)
                 var response = products.Select(p => new ProductResponse
                 {
                     ProductId = p.ProductId,
@@ -76,11 +79,15 @@ namespace BE.API.Controllers
             }
         }
 
+        // 🔍 XEM CHI TIẾT SẢN PHẨM (Public)
+        // Input: productId
+        // Output: Product detail với đầy đủ thông tin + images
         [HttpGet("{id}")]
         public ActionResult GetProductById(int id)
         {
             try
             {
+                // 1️⃣ Lấy product by ID
                 var product = _productRepo.GetProductById(id);
                 if (product == null)
                     return NotFound();
@@ -125,27 +132,31 @@ namespace BE.API.Controllers
             }
         }
 
+        // ➕ ĐĂNG SẢN PHẨM MỚI (Member only)
+        // Input: Product info (title, price, brand, model, etc.)
+        // Output: Product info + remaining credits
+        // ⚠️ TRỪ 1 CREDIT NGAY KHI ĐĂNG (không phải khi approve)
         [HttpPost]
 [Authorize(Policy = "MemberOnly")]
 public ActionResult CreateProduct([FromBody] ProductRequest request)
 {
     try
     {
-        // ✅ Lấy userId từ token
+        // 1️⃣ Lấy userId từ JWT token
         var userId = int.TryParse(User.FindFirst("UserId")?.Value, out var uid) ? uid : 0;
         if (userId <= 0) return Unauthorized("Invalid user");
 
-        // ✅ Lấy thông tin user
+        // 2️⃣ Lấy thông tin user để check credits
         var user = _userRepo.GetUserById(userId);
         if (user == null) return Unauthorized("User not found");
 
-        // ✅ Check post credit
+        // 3️⃣ KIỂM TRA CREDIT (phải có ít nhất 1 credit)
         if (user.PostCredits <= 0)
         {
             return BadRequest("You do not have enough post credits. Please purchase more credits to post.");
         }
 
-        // ✅ Validate license plate format for vehicles
+        // 4️⃣ Validate license plate format (nếu là xe)
         if (!string.IsNullOrEmpty(request.LicensePlate) &&
             (request.ProductType?.ToLower().Contains("vehicle") == true ||
              request.ProductType?.ToLower().Contains("xe") == true))
@@ -157,7 +168,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
             }
         }
 
-        // ✅ Tạo mới product
+        // 5️⃣ Tạo product mới với status = "Draft"
         var product = new Product
         {
             SellerId = userId,
@@ -183,20 +194,20 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
             LicensePlate = request.LicensePlate,
             WarrantyPeriod = request.WarrantyPeriod,
 
-            Status = "Draft",
-            VerificationStatus = "NotRequested",
+            Status = "Draft",                      // Trạng thái: Nháp
+            VerificationStatus = "NotRequested",   // Chưa yêu cầu duyệt
             RejectionReason = null,
             CreatedDate = DateTime.UtcNow
         };
 
         var createdProduct = _productRepo.CreateProduct(product);
 
-        // ✅ TRỪ CREDIT NGAY KHI ĐĂNG BÀI
+        // 6️⃣ TRỪ 1 CREDIT NGAY LẬP TỨC (không đợi approve)
         var creditsBefore = user.PostCredits;
         user.PostCredits -= 1;
         _userRepo.UpdateUser(user);
 
-        // ✅ LOG CREDIT USAGE
+        // 7️⃣ LOG CREDIT USAGE vào CreditHistory
         _creditHistoryRepo.LogCreditChange(new CreditHistory
         {
             UserId = user.UserId,
@@ -230,17 +241,21 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
 }
 
 
+        // ✏️ CẬP NHẬT SẢN PHẨM (Member only - chỉ owner)
+        // Input: productId + updated product info
+        // Output: Updated product + credit info
+        // ⚠️ Nếu resubmit sau khi bị reject → TRỪ 1 CREDIT
         [HttpPut("{id}")]
         [Authorize(Policy = "MemberOnly")]
         public async Task<ActionResult> UpdateProduct(int id, [FromBody] ProductRequest request)
         {
             try
             {
-                // ✅ Lấy userId từ token
+                // 1️⃣ Lấy userId từ JWT token
                 var userId = int.TryParse(User.FindFirst("UserId")?.Value, out var uid) ? uid : 0;
                 if (userId <= 0) return Unauthorized("Invalid user");
 
-                // ✅ Validate license plate format for vehicles
+                // 2️⃣ Validate license plate format
                 if (!string.IsNullOrEmpty(request.LicensePlate) &&
                     (request.ProductType?.ToLower().Contains("vehicle") == true ||
                      request.ProductType?.ToLower().Contains("xe") == true))
@@ -252,38 +267,40 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     }
                 }
 
+                // 3️⃣ Lấy product hiện tại
                 var existingProduct = _productRepo.GetProductById(id);
                 if (existingProduct == null)
                 {
                     return NotFound("Product not found");
                 }
 
-                // ✅ Kiểm tra quyền sở hữu
+                // 4️⃣ Kiểm tra ownership (chỉ owner mới update được)
                 if (existingProduct.SellerId != userId)
                 {
                     return Forbid("You can only update your own products");
                 }
 
-                // ✅ Kiểm tra xem có phải đang resubmit bài bị reject không
+                // 5️⃣ Kiểm tra xem có phải RESUBMIT sau khi bị reject không
                 bool isResubmit = existingProduct.Status == "Rejected";
 
-                // ✅ Nếu resubmit, kiểm tra credit
+                // 6️⃣ Nếu resubmit → phải trả thêm 1 credit
                 if (isResubmit)
                 {
                     var user = _userRepo.GetUserById(userId);
                     if (user == null) return Unauthorized("User not found");
 
+                    // Kiểm tra credit
                     if (user.PostCredits <= 0)
                     {
                         return BadRequest("You do not have enough post credits to resubmit. Please purchase more credits.");
                     }
 
-                    // ✅ TRỪ CREDIT KHI RESUBMIT
+                    // TRỪ 1 CREDIT khi resubmit
                     var creditsBefore = user.PostCredits;
                     user.PostCredits -= 1;
                     _userRepo.UpdateUser(user);
 
-                    // ✅ LOG CREDIT USAGE
+                    // Log credit usage
                     await _creditHistoryRepo.LogCreditChange(new CreditHistory
                     {
                         UserId = user.UserId,
@@ -635,25 +652,32 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
             }
         }
 
+        // ✅ ADMIN: DUYỆT SẢN PHẨM (Admin only)
+        // Input: productId
+        // Output: Approved product info
+        // ⚠️ KHÔNG hoàn credit (vì đã approve)
         [HttpPut("approve/{id}")]
         [Authorize(Policy = "AdminOnly")]
         public ActionResult ApproveProduct(int id)
         {
             try
             {
+                // 1️⃣ Lấy product by ID
                 var product = _productRepo.GetProductById(id);
                 if (product == null)
                 {
                     return NotFound("Product not found.");
                 }
 
-                // ✅ Approve product (credit đã bị trừ khi đăng bài rồi)
+                // 2️⃣ Approve product (set Status = "Active", VerificationStatus = "Approved")
+                // Credit đã bị trừ khi đăng bài rồi, KHÔNG hoàn lại
                 var approved = _productRepo.ApproveProduct(id);
                 if (approved == null)
                 {
                     return StatusCode(500, "Failed to approve product.");
                 }
 
+                // 3️⃣ Trả về thông tin product đã approve
                 return Ok(new
                 {
                     approved.ProductId,
@@ -669,19 +693,24 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
             }
         }
 
+        // ❌ ADMIN: TỪ CHỐI SẢN PHẨM (Admin only)
+        // Input: productId + rejectionReason
+        // Output: Rejected product info + seller credits after refund
+        // ⚠️ HOÀN LẠI 1 CREDIT cho seller
         [HttpPut("reject/{id}")]
         [Authorize(Policy = "AdminOnly")]
         public async Task<ActionResult> RejectProduct(int id, [FromBody] RejectProductRequest? request = null)
         {
             try
             {
+                // 1️⃣ Lấy product by ID
                 var product = _productRepo.GetProductById(id);
                 if (product == null)
                 {
                     return NotFound("Product not found.");
                 }
 
-                // ✅ Lấy thông tin seller để hoàn credit
+                // 2️⃣ Lấy thông tin seller để hoàn credit
                 if (!product.SellerId.HasValue)
                 {
                     return BadRequest("Product has no seller.");
@@ -693,19 +722,19 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     return BadRequest("Seller not found.");
                 }
 
-                // ✅ Reject product
+                // 3️⃣ Reject product (set Status = "Rejected", lưu rejection reason)
                 var rejected = _productRepo.RejectProduct(id, request?.RejectionReason);
                 if (rejected == null)
                 {
                     return StatusCode(500, "Failed to reject product.");
                 }
 
-                // ✅ HOÀN LẠI CREDIT KHI TỪ CHỐI
+                // 4️⃣ HOÀN LẠI 1 CREDIT cho seller (vì bị reject)
                 var creditsBefore = seller.PostCredits;
                 seller.PostCredits += 1;
                 _userRepo.UpdateUser(seller);
 
-                // ✅ LOG CREDIT REFUND
+                // 5️⃣ LOG CREDIT REFUND vào CreditHistory
                 await _creditHistoryRepo.LogCreditChange(new CreditHistory
                 {
                     UserId = seller.UserId,

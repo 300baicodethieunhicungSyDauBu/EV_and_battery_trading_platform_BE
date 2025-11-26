@@ -73,18 +73,23 @@ namespace BE.API.Controllers
             }
         }
 
+        // ❤️ THÊM SẢN PHẨM VÀO YÊU THÍCH (Member only)
+        // Input: { userId, productId }
+        // Output: Favorite info
         [HttpPost]
         [Authorize(Policy = "MemberOnly")]
         public ActionResult CreateFavorite([FromBody] FavoriteRequest request)
         {
             try
             {
+                // 1️⃣ Tạo favorite mới
                 var favorite = new Favorite
                 {
                     UserId = request.UserId,
                     ProductId = request.ProductId
                 };
 
+                // 2️⃣ Lưu vào database
                 var createdFavorite = _favoriteRepo.CreateFavorite(favorite);
 
                 var response = new
@@ -144,12 +149,16 @@ namespace BE.API.Controllers
             }
         }
 
+        // 🗑️ XÓA SẢN PHẨM KHỎI YÊU THÍCH (Member only)
+        // Input: favoriteId
+        // Output: Success/NotFound
         [HttpDelete("{id}")]
         [Authorize(Policy = "MemberOnly")]
         public ActionResult DeleteFavorite(int id)
         {
             try
             {
+                // 1️⃣ Xóa favorite
                 var result = _favoriteRepo.DeleteFavorite(id);
                 if (!result)
                 {
@@ -163,13 +172,17 @@ namespace BE.API.Controllers
             }
         }
 
+        // 📋 XEM DANH SÁCH YÊU THÍCH CỦA USER (Member only)
+        // Input: userId
+        // Output: Danh sách favorites của user đó
+        // Auth: Chỉ xem được favorites của chính mình (trừ admin)
         [HttpGet("user/{userId}")]
         [Authorize(Policy = "MemberOnly")]
         public ActionResult GetFavoritesByUserId(int userId)
         {
             try
             {
-                // Verify user can only access their own favorites (unless admin)
+                // 1️⃣ Kiểm tra quyền (chỉ xem được favorites của mình)
                 var currentUserId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
                 var isAdmin = User.IsInRole("1");
                 
@@ -178,6 +191,7 @@ namespace BE.API.Controllers
                     return Forbid("You can only access your own favorites");
                 }
 
+                // 2️⃣ Lấy danh sách favorites
                 var favorites = _favoriteRepo.GetFavoritesByUserId(userId);
                 var response = favorites.Select(f => new
                 {

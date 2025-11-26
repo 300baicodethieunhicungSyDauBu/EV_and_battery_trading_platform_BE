@@ -19,11 +19,14 @@ namespace BE.API.Controllers
             _reviewsRepo = reviewsRepo;
         }
 
+        // ⭐ XEM TẤT CẢ ĐÁNH GIÁ (Public)
+        // Output: Danh sách tất cả reviews
         [HttpGet]
         public ActionResult<IEnumerable<ReviewResponse>> GetAllReviews()
         {
             try
             {
+                // 1️⃣ Lấy tất cả reviews từ database
                 var reviews = _reviewsRepo.GetAllReviews();
                 var response = reviews.Select(review => new ReviewResponse
                 {
@@ -78,11 +81,15 @@ namespace BE.API.Controllers
             }
         }
 
+        // 📊 XEM ĐÁNH GIÁ CỦA 1 USER (người được đánh giá)
+        // Input: revieweeId (userId của người được đánh giá)
+        // Output: Danh sách reviews về user đó
         [HttpGet("reviewee/{revieweeId}")]
         public ActionResult<IEnumerable<ReviewResponse>> GetReviewsByRevieweeId(int revieweeId)
         {
             try
             {
+                // 1️⃣ Lấy tất cả reviews về user này
                 var reviews = _reviewsRepo.GetReviewsByRevieweeId(revieweeId);
                 var response = reviews.Select(review => new ReviewResponse
                 {

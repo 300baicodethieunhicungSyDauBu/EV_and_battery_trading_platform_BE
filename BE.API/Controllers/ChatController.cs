@@ -21,13 +21,18 @@ public class ChatController : ControllerBase
         _messageRepo = messageRepo;
     }
 
+    // 💬 XEM TẤT CẢ CHAT CỦA USER (Member only)
+    // Output: Danh sách chats với last message và unread count
     [HttpGet]
     [Authorize(Policy = "MemberOnly")]
     public ActionResult<List<ChatResponse>> GetAllChats()
     {
         try
         {
+            // 1️⃣ Lấy userId từ token
             var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            
+            // 2️⃣ Lấy tất cả chats của user này
             var chats = _chatRepo.GetChatsByUserId(userId);
             
             var chatResponses = chats.Select(chat => new ChatResponse
@@ -73,13 +78,20 @@ public class ChatController : ControllerBase
         }
     }
 
+    // 🔍 XEM CHI TIẾT 1 CHAT (Member only)
+    // Input: chatId
+    // Output: Chat detail với messages
+    // Auth: Chỉ 2 người trong chat mới xem được
     [HttpGet("{id}")]
     [Authorize(Policy = "MemberOnly")]
     public ActionResult<ChatResponse> GetChatById(int id)
     {
         try
         {
+            // 1️⃣ Lấy userId từ token
             var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            
+            // 2️⃣ Lấy chat by ID
             var chat = _chatRepo.GetChatById(id);
             
             if (chat == null)
@@ -87,7 +99,7 @@ public class ChatController : ControllerBase
                 return NotFound("Chat not found.");
             }
 
-            // Verify user is part of this chat
+            // 3️⃣ Kiểm tra quyền (chỉ 2 người trong chat mới xem được)
             if (chat.User1Id != userId && chat.User2Id != userId)
             {
                 return Forbid("You can only access your own chats.");

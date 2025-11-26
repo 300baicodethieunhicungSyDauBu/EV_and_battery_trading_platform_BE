@@ -63,7 +63,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
     }
     if (string.IsNullOrEmpty(paymentType)) return BadRequest("PaymentType is required.");
 
-    // ✅ VALIDATION THEO LOẠI PAYMENT
+    // VALIDATION THEO LOẠI PAYMENT
     if ((paymentType is "Deposit" or "FinalPayment") && (!request.OrderId.HasValue || request.OrderId <= 0))
         return BadRequest($"{paymentType} requires a valid OrderId.");
     if (paymentType == "Verification" && (!request.ProductId.HasValue || request.ProductId <= 0))
@@ -73,7 +73,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
     
     var postCreditsToAdd = paymentType == "PostCredit" ? request.PostCredits.Value : 0;
 
-    // ✅ VALIDATE GIÁ TỪ DATABASE (Không tin client)
+    // VALIDATE GIÁ TỪ DATABASE (Không tin client)
     if (paymentType == "PostCredit")
     {
         var packageFeeType = $"PostCredit_{request.PostCredits.Value}";
@@ -147,19 +147,19 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
             }
         }
 
-        // ✅ Admin confirm endpoint - must be before generic {id} route
+        // Admin confirm endpoint - must be before generic {id} route
         [HttpPost("admin-confirm")]
         [Authorize(Policy = "AdminOnly")]
         public IActionResult AdminConfirmSale([FromBody] AdminAcceptWrapperRequest request)
         {
             try
             {
-                // ✅ Authentication required: Chỉ admin đã đăng nhập mới có thể gọi API
+                // Authentication required: Chỉ admin đã đăng nhập mới có thể gọi API
                 var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
                 if (!int.TryParse(userIdStr, out var userId) || userId <= 0)
                     return Unauthorized("Invalid user authentication");
 
-                // ✅ Authorization check: Chỉ admin mới có thể xác nhận
+                // Authorization check: Chỉ admin mới có thể xác nhận
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
                 if (userRole != "1") // Assuming "1" is admin role
                     return Forbid("Only administrators can confirm sales");
@@ -176,16 +176,16 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
                 if (product == null)
                     return NotFound("Product not found");
 
-                // ✅ Status validation: Chỉ cho phép admin xác nhận sản phẩm có status "Reserved"
+                // Status validation: Chỉ cho phép admin xác nhận sản phẩm có status "Reserved"
                 if (product.Status != "Reserved")
                     return BadRequest(
                         $"Product must be in 'Reserved' status for admin confirmation. Current status: {product.Status}");
 
-                // ✅ Tìm order theo ProductId, không phụ thuộc vào OrderStatus
+                // Tìm order theo ProductId, không phụ thuộc vào OrderStatus
                 var allOrders = _orderRepo.GetAllOrders();
                 var relatedOrder = allOrders.FirstOrDefault(o => o.ProductId == request.Request.ProductId);
 
-                // ✅ Logging khi không tìm thấy order
+                // Logging khi không tìm thấy order
                 if (relatedOrder == null)
                 {
                     return NotFound(new
@@ -195,7 +195,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
                     });
                 }
 
-                // ✅ Chỉ update nếu order chưa completed
+                // Chỉ update nếu order chưa completed
                 if (relatedOrder.Status?.ToLower() != "completed")
                 {
                     relatedOrder.Status = "Completed";
@@ -208,7 +208,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
                     // Order đã completed rồi, không cần update lại nhưng vẫn tiếp tục update product
                 }
 
-                // ✅ Logic nghiệp vụ: Admin xác nhận và chuyển status từ "Reserved" → "Sold"
+                // Logic nghiệp vụ: Admin xác nhận và chuyển status từ "Reserved" → "Sold"
                 product.Status = "Sold";
 
                 // Update the product
@@ -216,7 +216,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
                 if (updatedProduct == null)
                     return StatusCode(500, "Failed to update product status");
 
-                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                // Error handling: Xử lý các trường hợp lỗi một cách chi tiết
                 return Ok(new
                 {
                     message = "Admin confirmed sale successfully",
@@ -235,7 +235,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
             }
             catch (Exception ex)
             {
-                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                // Error handling: Xử lý các trường hợp lỗi một cách chi tiết
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -315,7 +315,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
         [AllowAnonymous]
         public async Task<IActionResult> VnPayReturn([FromQuery] Dictionary<string, string> query)
         {
-            // ❌ Trường hợp query không hợp lệ
+            // Trường hợp query không hợp lệ
             if (query is null || !query.ContainsKey("vnp_TxnRef") || !query.ContainsKey("vnp_SecureHash"))
                 return Content("<script>alert('Invalid VNPay callback');window.close();</script>",
                     "text/html; charset=utf-8");
@@ -544,7 +544,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
                 }
             }
 
-            // ❌ Thất bại
+            // Thất bại
             payment.Status = "Failed";
             await _paymentRepo.UpdatePaymentAsync(payment);
 
@@ -605,7 +605,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
         {
             try
             {
-                // ✅ Authentication required: Chỉ user đã đăng nhập mới có thể gọi API
+                // Authentication required: Chỉ user đã đăng nhập mới có thể gọi API
                 var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
                 if (!int.TryParse(userIdStr, out var userId) || userId <= 0)
                     return Unauthorized("Invalid user authentication");
@@ -622,16 +622,16 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
                 if (product == null)
                     return NotFound("Product not found");
 
-                // ✅ Authorization check: Chỉ owner của sản phẩm mới có thể xác nhận bán
+                // Authorization check: Chỉ owner của sản phẩm mới có thể xác nhận bán
                 if (product.SellerId != userId)
                     return Forbid("You can only confirm sales for your own products");
 
-                // ✅ Status validation: Chỉ cho phép xác nhận bán sản phẩm có status "Reserved"
+                // Status validation: Chỉ cho phép xác nhận bán sản phẩm có status "Reserved"
                 if (product.Status != "Reserved")
                     return BadRequest(
                         $"Product must be in 'Reserved' status to confirm sale. Current status: {product.Status}");
 
-                // ✅ Logic nghiệp vụ: Cập nhật status từ "Reserved" → "Sold"
+                // Logic nghiệp vụ: Cập nhật status từ "Reserved" → "Sold"
                 product.Status = "Sold";
 
                 // Update the product
@@ -639,7 +639,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
                 if (updatedProduct == null)
                     return StatusCode(500, "Failed to update product status");
 
-                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                // Error handling: Xử lý các trường hợp lỗi một cách chi tiết
                 return Ok(new
                 {
                     message = "Sale confirmed successfully",
@@ -653,7 +653,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
             }
             catch (Exception ex)
             {
-                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                // Error handling: Xử lý các trường hợp lỗi một cách chi tiết
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
@@ -664,12 +664,12 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
         {
             try
             {
-                // ✅ Authentication required: Chỉ admin đã đăng nhập mới có thể gọi API
+                // Authentication required: Chỉ admin đã đăng nhập mới có thể gọi API
                 var userIdStr = User.FindFirst("UserId")?.Value ?? "0";
                 if (!int.TryParse(userIdStr, out var userId) || userId <= 0)
                     return Unauthorized("Invalid user authentication");
 
-                // ✅ Authorization check: Chỉ admin mới có thể xác nhận
+                // Authorization check: Chỉ admin mới có thể xác nhận
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
                 if (userRole != "1") // Assuming "1" is admin role
                     return Forbid("Only administrators can accept sales");
@@ -686,12 +686,12 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
                 if (product == null)
                     return NotFound("Product not found");
 
-                // ✅ Status validation: Chỉ cho phép admin xác nhận sản phẩm có status "Reserved"
+                // Status validation: Chỉ cho phép admin xác nhận sản phẩm có status "Reserved"
                 if (product.Status != "Reserved")
                     return BadRequest(
                         $"Product must be in 'Reserved' status for admin acceptance. Current status: {product.Status}");
 
-                // ✅ Logic nghiệp vụ: Admin xác nhận và chuyển status từ "Reserved" → "Sold"
+                // Logic nghiệp vụ: Admin xác nhận và chuyển status từ "Reserved" → "Sold"
                 product.Status = "Sold";
 
                 // Update the product
@@ -699,7 +699,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
                 if (updatedProduct == null)
                     return StatusCode(500, "Failed to update product status");
 
-                // ✅ Error handling: Xử lý các trường hợp lỗi một cách chi tiết
+                // Error handling: Xử lý các trường hợp lỗi một cách chi tiết
                 return Ok(new
                 {
                     message = "Admin accepted sale successfully",
@@ -798,7 +798,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
             }
         }
 
-        // ✅ NEW ENDPOINTS FOR CREDIT SYSTEM
+        // NEW ENDPOINTS FOR CREDIT SYSTEM
 
         /// <summary>
         /// Get available PostCredit packages
@@ -936,7 +936,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
                 if (newCredits < 0)
                     return BadRequest($"Cannot subtract {Math.Abs(request.CreditsChange)} credits. User only has {user.PostCredits} credits.");
                 
-                // ✅ START TRANSACTION
+                // START TRANSACTION
                 using var transaction = await _context.Database.BeginTransactionAsync();
                 
                 try

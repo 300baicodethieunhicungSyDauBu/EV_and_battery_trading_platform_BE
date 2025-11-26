@@ -117,7 +117,7 @@ builder.Services.AddScoped<IReviewsRepo, ReviewsRepo>();
 builder.Services.AddScoped<IReportedListingsRepo, ReportedListingsRepo>();
 builder.Services.AddScoped<IFeeSettingsRepo, FeeSettingsRepo>();
 builder.Services.AddScoped<INotificationsRepo, NotificationsRepo>();
-builder.Services.AddScoped<ICreditHistoryRepo, CreditHistoryRepo>(); // ✅ NEW: Credit History
+builder.Services.AddScoped<ICreditHistoryRepo, CreditHistoryRepo>(); // NEW: Credit History
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -173,7 +173,7 @@ builder.Services.AddCors(options =>
                 )
                 .AllowAnyHeader()
                 .AllowAnyMethod()
-                .AllowCredentials() // ✅ Cho phép gửi cookie/token và SignalR handshake
+                .AllowCredentials() // Cho phép gửi cookie/token và SignalR handshake
     );
 });
 
