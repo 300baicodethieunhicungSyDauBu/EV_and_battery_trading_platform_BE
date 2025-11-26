@@ -26,7 +26,7 @@ namespace BE.API.Controllers
         {
             try
             {
-                // 1️⃣ Lấy tất cả reviews từ database
+                // Lấy tất cả reviews từ database
                 var reviews = _reviewsRepo.GetAllReviews();
                 var response = reviews.Select(review => new ReviewResponse
                 {
@@ -81,7 +81,7 @@ namespace BE.API.Controllers
             }
         }
 
-        // 📊 XEM ĐÁNH GIÁ CỦA 1 USER (người được đánh giá)
+        // XEM ĐÁNH GIÁ CỦA 1 USER (người được đánh giá)
         // Input: revieweeId (userId của người được đánh giá)
         // Output: Danh sách reviews về user đó
         [HttpGet("reviewee/{revieweeId}")]

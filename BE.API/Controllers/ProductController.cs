@@ -28,17 +28,17 @@ namespace BE.API.Controllers
             _creditHistoryRepo = creditHistoryRepo;
         }
 
-        // 📦 XEM TẤT CẢ SẢN PHẨM (Public - không cần đăng nhập)
+        // XEM TẤT CẢ SẢN PHẨM (Public - không cần đăng nhập)
         // Output: Danh sách tất cả products với đầy đủ thông tin
         [HttpGet]
         public ActionResult GetAllProducts()
         {
             try
             {
-                // 1️⃣ Lấy tất cả products từ database
+                // Lấy tất cả products từ database
                 var products = _productRepo.GetAllProducts();
 
-                // 2️⃣ Map sang ProductResponse (bao gồm images)
+                // Map sang ProductResponse (bao gồm images)
                 var response = products.Select(p => new ProductResponse
                 {
                     ProductId = p.ProductId,
@@ -79,7 +79,7 @@ namespace BE.API.Controllers
             }
         }
 
-        // 🔍 XEM CHI TIẾT SẢN PHẨM (Public)
+        // XEM CHI TIẾT SẢN PHẨM (Public)
         // Input: productId
         // Output: Product detail với đầy đủ thông tin + images
         [HttpGet("{id}")]
@@ -87,7 +87,7 @@ namespace BE.API.Controllers
         {
             try
             {
-                // 1️⃣ Lấy product by ID
+                // Lấy product by ID
                 var product = _productRepo.GetProductById(id);
                 if (product == null)
                     return NotFound();
@@ -132,31 +132,31 @@ namespace BE.API.Controllers
             }
         }
 
-        // ➕ ĐĂNG SẢN PHẨM MỚI (Member only)
+        // ĐĂNG SẢN PHẨM MỚI (Member only)
         // Input: Product info (title, price, brand, model, etc.)
         // Output: Product info + remaining credits
-        // ⚠️ TRỪ 1 CREDIT NGAY KHI ĐĂNG (không phải khi approve)
+        // TRỪ 1 CREDIT NGAY KHI ĐĂNG (không phải khi approve)
         [HttpPost]
 [Authorize(Policy = "MemberOnly")]
 public ActionResult CreateProduct([FromBody] ProductRequest request)
 {
     try
     {
-        // 1️⃣ Lấy userId từ JWT token
+        // Lấy userId từ JWT token
         var userId = int.TryParse(User.FindFirst("UserId")?.Value, out var uid) ? uid : 0;
         if (userId <= 0) return Unauthorized("Invalid user");
 
-        // 2️⃣ Lấy thông tin user để check credits
+        // Lấy thông tin user để check credits
         var user = _userRepo.GetUserById(userId);
         if (user == null) return Unauthorized("User not found");
 
-        // 3️⃣ KIỂM TRA CREDIT (phải có ít nhất 1 credit)
+        // KIỂM TRA CREDIT (phải có ít nhất 1 credit)
         if (user.PostCredits <= 0)
         {
             return BadRequest("You do not have enough post credits. Please purchase more credits to post.");
         }
 
-        // 4️⃣ Validate license plate format (nếu là xe)
+        // Validate license plate format (nếu là xe)
         if (!string.IsNullOrEmpty(request.LicensePlate) &&
             (request.ProductType?.ToLower().Contains("vehicle") == true ||
              request.ProductType?.ToLower().Contains("xe") == true))
@@ -168,7 +168,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
             }
         }
 
-        // 5️⃣ Tạo product mới với status = "Draft"
+        // Tạo product mới với status = "Draft"
         var product = new Product
         {
             SellerId = userId,
@@ -202,12 +202,12 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
 
         var createdProduct = _productRepo.CreateProduct(product);
 
-        // 6️⃣ TRỪ 1 CREDIT NGAY LẬP TỨC (không đợi approve)
+        // TRỪ 1 CREDIT NGAY LẬP TỨC (không đợi approve)
         var creditsBefore = user.PostCredits;
         user.PostCredits -= 1;
         _userRepo.UpdateUser(user);
 
-        // 7️⃣ LOG CREDIT USAGE vào CreditHistory
+        // LOG CREDIT USAGE vào CreditHistory
         _creditHistoryRepo.LogCreditChange(new CreditHistory
         {
             UserId = user.UserId,
@@ -241,21 +241,21 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
 }
 
 
-        // ✏️ CẬP NHẬT SẢN PHẨM (Member only - chỉ owner)
+        // CẬP NHẬT SẢN PHẨM (Member only - chỉ owner)
         // Input: productId + updated product info
         // Output: Updated product + credit info
-        // ⚠️ Nếu resubmit sau khi bị reject → TRỪ 1 CREDIT
+        // Nếu resubmit sau khi bị reject → TRỪ 1 CREDIT
         [HttpPut("{id}")]
         [Authorize(Policy = "MemberOnly")]
         public async Task<ActionResult> UpdateProduct(int id, [FromBody] ProductRequest request)
         {
             try
             {
-                // 1️⃣ Lấy userId từ JWT token
+                // Lấy userId từ JWT token
                 var userId = int.TryParse(User.FindFirst("UserId")?.Value, out var uid) ? uid : 0;
                 if (userId <= 0) return Unauthorized("Invalid user");
 
-                // 2️⃣ Validate license plate format
+                // Validate license plate format
                 if (!string.IsNullOrEmpty(request.LicensePlate) &&
                     (request.ProductType?.ToLower().Contains("vehicle") == true ||
                      request.ProductType?.ToLower().Contains("xe") == true))
@@ -267,23 +267,23 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     }
                 }
 
-                // 3️⃣ Lấy product hiện tại
+                // Lấy product hiện tại
                 var existingProduct = _productRepo.GetProductById(id);
                 if (existingProduct == null)
                 {
                     return NotFound("Product not found");
                 }
 
-                // 4️⃣ Kiểm tra ownership (chỉ owner mới update được)
+                // Kiểm tra ownership (chỉ owner mới update được)
                 if (existingProduct.SellerId != userId)
                 {
                     return Forbid("You can only update your own products");
                 }
 
-                // 5️⃣ Kiểm tra xem có phải RESUBMIT sau khi bị reject không
+                // Kiểm tra xem có phải RESUBMIT sau khi bị reject không
                 bool isResubmit = existingProduct.Status == "Rejected";
 
-                // 6️⃣ Nếu resubmit → phải trả thêm 1 credit
+                // Nếu resubmit → phải trả thêm 1 credit
                 if (isResubmit)
                 {
                     var user = _userRepo.GetUserById(userId);
@@ -337,7 +337,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                 existingProduct.LicensePlate = request.LicensePlate;
                 existingProduct.WarrantyPeriod = request.WarrantyPeriod;
 
-                // ✅ Reset trạng thái để admin duyệt lại
+                // Reset trạng thái để admin duyệt lại
                 existingProduct.Status = "Re-submit";
                 existingProduct.VerificationStatus = "NotRequested";
                 existingProduct.RejectionReason = null;
@@ -398,7 +398,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                 var products = _productRepo.GetProductsBySellerId(sellerId);
 
                 var response = products
-                    .OrderByDescending(p => p.CreatedDate) // ✅ Sort by CreatedDate descending (newest first)
+                    .OrderByDescending(p => p.CreatedDate) // Sort by CreatedDate descending (newest first)
                     .Select(p => new
                     {
                         p.ProductId,
@@ -626,7 +626,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
         }
 
         [HttpGet("drafts")]
-        [Authorize(Policy = "AdminOnly")] // ✅ Có thể tùy bạn, hoặc để mở nếu cần
+        [Authorize(Policy = "AdminOnly")] // Có thể tùy bạn, hoặc để mở nếu cần
         public ActionResult GetDraftProducts()
         {
             try
@@ -652,24 +652,24 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
             }
         }
 
-        // ✅ ADMIN: DUYỆT SẢN PHẨM (Admin only)
+        // ADMIN: DUYỆT SẢN PHẨM (Admin only)
         // Input: productId
         // Output: Approved product info
-        // ⚠️ KHÔNG hoàn credit (vì đã approve)
+        // KHÔNG hoàn credit (vì đã approve)
         [HttpPut("approve/{id}")]
         [Authorize(Policy = "AdminOnly")]
         public ActionResult ApproveProduct(int id)
         {
             try
             {
-                // 1️⃣ Lấy product by ID
+                // Lấy product by ID
                 var product = _productRepo.GetProductById(id);
                 if (product == null)
                 {
                     return NotFound("Product not found.");
                 }
 
-                // 2️⃣ Approve product (set Status = "Active", VerificationStatus = "Approved")
+                // Approve product (set Status = "Active", VerificationStatus = "Approved")
                 // Credit đã bị trừ khi đăng bài rồi, KHÔNG hoàn lại
                 var approved = _productRepo.ApproveProduct(id);
                 if (approved == null)
@@ -677,7 +677,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     return StatusCode(500, "Failed to approve product.");
                 }
 
-                // 3️⃣ Trả về thông tin product đã approve
+                // Trả về thông tin product đã approve
                 return Ok(new
                 {
                     approved.ProductId,
@@ -693,24 +693,24 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
             }
         }
 
-        // ❌ ADMIN: TỪ CHỐI SẢN PHẨM (Admin only)
+        // ADMIN: TỪ CHỐI SẢN PHẨM (Admin only)
         // Input: productId + rejectionReason
         // Output: Rejected product info + seller credits after refund
-        // ⚠️ HOÀN LẠI 1 CREDIT cho seller
+        // HOÀN LẠI 1 CREDIT cho seller
         [HttpPut("reject/{id}")]
         [Authorize(Policy = "AdminOnly")]
         public async Task<ActionResult> RejectProduct(int id, [FromBody] RejectProductRequest? request = null)
         {
             try
             {
-                // 1️⃣ Lấy product by ID
+                //  Lấy product by ID
                 var product = _productRepo.GetProductById(id);
                 if (product == null)
                 {
                     return NotFound("Product not found.");
                 }
 
-                // 2️⃣ Lấy thông tin seller để hoàn credit
+                //  Lấy thông tin seller để hoàn credit
                 if (!product.SellerId.HasValue)
                 {
                     return BadRequest("Product has no seller.");
@@ -722,19 +722,19 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     return BadRequest("Seller not found.");
                 }
 
-                // 3️⃣ Reject product (set Status = "Rejected", lưu rejection reason)
+                //  Reject product (set Status = "Rejected", lưu rejection reason)
                 var rejected = _productRepo.RejectProduct(id, request?.RejectionReason);
                 if (rejected == null)
                 {
                     return StatusCode(500, "Failed to reject product.");
                 }
 
-                // 4️⃣ HOÀN LẠI 1 CREDIT cho seller (vì bị reject)
+                //  HOÀN LẠI 1 CREDIT cho seller (vì bị reject)
                 var creditsBefore = seller.PostCredits;
                 seller.PostCredits += 1;
                 _userRepo.UpdateUser(seller);
 
-                // 5️⃣ LOG CREDIT REFUND vào CreditHistory
+                //  LOG CREDIT REFUND vào CreditHistory
                 await _creditHistoryRepo.LogCreditChange(new CreditHistory
                 {
                     UserId = seller.UserId,
@@ -1566,7 +1566,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
             {
                 var products = _productRepo.GetAllProducts().AsQueryable();
 
-                // 🔍 1️⃣ Keyword search (case-insensitive)
+                // Keyword search (case-insensitive)
                 if (!string.IsNullOrWhiteSpace(request.Keyword))
                 {
                     var keyword = request.Keyword.ToLower();
@@ -1577,14 +1577,14 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     );
                 }
 
-                // 🔍 2️⃣ ProductType (Vehicle / Battery)
+                // ProductType (Vehicle / Battery)
                 if (!string.IsNullOrEmpty(request.ProductType))
                 {
                     var type = request.ProductType.ToLower();
                     products = products.Where(p => p.ProductType.ToLower() == type);
                 }
 
-                // 🔍 3️⃣ Brand, Model, Condition (case-insensitive)
+                // Brand, Model, Condition (case-insensitive)
                 if (!string.IsNullOrEmpty(request.Brand))
                 {
                     var brand = request.Brand.ToLower();
@@ -1603,13 +1603,13 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     products = products.Where(p => p.Condition != null && p.Condition.ToLower().Contains(condition));
                 }
 
-                // 💰 4️⃣ Price Range
+                // Price Range
                 if (request.MinPrice.HasValue)
                     products = products.Where(p => p.Price >= request.MinPrice.Value);
                 if (request.MaxPrice.HasValue)
                     products = products.Where(p => p.Price <= request.MaxPrice.Value);
 
-                // 🚗 5️⃣ Vehicle-specific filters
+                // Vehicle-specific filters
                 if (!string.IsNullOrEmpty(request.VehicleType))
                 {
                     var vtype = request.VehicleType.ToLower();
@@ -1634,7 +1634,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                 if (request.SeatCount.HasValue)
                     products = products.Where(p => p.SeatCount == request.SeatCount.Value);
 
-                // 🔋 6️⃣ Battery-specific filters
+                // Battery-specific filters
                 if (!string.IsNullOrEmpty(request.BatteryType))
                 {
                     var btype = request.BatteryType.ToLower();
@@ -1663,7 +1663,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                     products = products.Where(p => p.BMS != null && p.BMS.ToLower().Contains(bms));
                 }
 
-                // ⚙️ 7️⃣ Status filters
+                // Status filters
                 if (!string.IsNullOrEmpty(request.Status))
                 {
                     var status = request.Status.ToLower();
@@ -1677,7 +1677,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                         p.VerificationStatus != null && p.VerificationStatus.ToLower() == verStatus);
                 }
 
-                // ✅ 8️⃣ Map sang Response
+                // Map sang Response
                 var result = products.Select(p => new ProductResponse
                 {
                     ProductId = p.ProductId,
@@ -1722,11 +1722,11 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                 if (existingProduct == null)
                     return NotFound("Product not found.");
 
-                // ✅ Lưu lại trạng thái hiện tại
+                // Lưu lại trạng thái hiện tại
                 var currentStatus = existingProduct.Status;
                 var currentVerification = existingProduct.VerificationStatus;
 
-                // ✅ Cập nhật các trường được phép chỉnh sửa
+                // Cập nhật các trường được phép chỉnh sửa
                 existingProduct.Title = request.Title ?? existingProduct.Title;
                 existingProduct.Description = request.Description ?? existingProduct.Description;
                 existingProduct.Price = request.Price != 0 ? request.Price : existingProduct.Price;
@@ -1751,7 +1751,7 @@ public ActionResult CreateProduct([FromBody] ProductRequest request)
                 existingProduct.CellType = request.CellType ?? existingProduct.CellType;
                 existingProduct.CycleCount = request.CycleCount ?? existingProduct.CycleCount;
 
-                // ✅ Giữ nguyên trạng thái
+                // Giữ nguyên trạng thái
                 existingProduct.Status = currentStatus;
                 existingProduct.VerificationStatus = currentVerification;
 

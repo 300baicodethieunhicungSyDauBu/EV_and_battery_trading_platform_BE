@@ -76,7 +76,7 @@ namespace BE.API.Controllers
             }
         }
 
-        // 🔔 XEM THÔNG BÁO CỦA USER (Member/Admin)
+        // XEM THÔNG BÁO CỦA USER (Member/Admin)
         // Input: userId
         // Output: Danh sách notifications của user đó
         // Auth: Chỉ xem được notifications của mình (trừ admin)
@@ -86,21 +86,21 @@ namespace BE.API.Controllers
         {
             try
             {
-                // 1️⃣ Lấy userId từ token
+                // Lấy userId từ token
                 var currentUserIdStr = User.FindFirst("UserId")?.Value;
                 if (string.IsNullOrEmpty(currentUserIdStr) || !int.TryParse(currentUserIdStr, out var currentUserId))
                 {
                     return Unauthorized("Invalid user token");
                 }
 
-                // 2️⃣ Kiểm tra quyền (chỉ xem được notifications của mình, trừ admin)
+                // Kiểm tra quyền (chỉ xem được notifications của mình, trừ admin)
                 var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
                 if (currentUserId != userId && userRole != "1")
                 {
                     return Forbid("You can only view your own notifications");
                 }
 
-                // 3️⃣ Lấy danh sách notifications
+                // Lấy danh sách notifications
                 var notifications = _notificationsRepo.GetNotificationsByUserId(userId);
                 var response = notifications.Select(notification => new NotificationResponse
                 {
@@ -333,7 +333,7 @@ namespace BE.API.Controllers
                     return NotFound("Notification not found");
                 }
 
-                // ✅ User chỉ xóa được notification của mình, Admin xóa được tất cả
+                // User chỉ xóa được notification của mình, Admin xóa được tất cả
                 var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
                 if (notification.UserId != userId && userRole != "1")
                 {

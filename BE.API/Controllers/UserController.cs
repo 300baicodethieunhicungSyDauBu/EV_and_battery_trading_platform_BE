@@ -104,20 +104,20 @@ namespace BE.API.Controllers
             return statusUpper == "ACTIVE";
         }
 
-        // 🔐 API ĐĂNG NHẬP
+        // API ĐĂNG NHẬP
         // Input: Email + Password
         // Output: JWT Token + Role + AccountId
         [HttpPost("login")]
         public ActionResult<LoginResponse> Login([FromBody] LoginRequest request)
         {
-            // 1️⃣ Kiểm tra email và password
+            // Kiểm tra email và password
             var user = _userRepo.GetAccountByEmailAndPassword(request.Email, request.Password);
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 return Unauthorized("Invalid email or password.");
             }
 
-            // 2️⃣ Reload user từ database để có AccountStatus mới nhất
+            // Reload user từ database để có AccountStatus mới nhất
             using var context = new EvandBatteryTradingPlatformContext();
             var freshUser = context.Users.FirstOrDefault(u => u.UserId == user.UserId);
             if (freshUser == null)
@@ -125,7 +125,7 @@ namespace BE.API.Controllers
                 return Unauthorized("User not found.");
             }
 
-            // 3️⃣ Kiểm tra trạng thái tài khoản (Active/Suspended/Deleted)
+            // Kiểm tra trạng thái tài khoản (Active/Suspended/Deleted)
             if (!IsAccountActive(freshUser))
             {
                 var status = NormalizeDbStatusToUi(freshUser.AccountStatus);
@@ -138,10 +138,10 @@ namespace BE.API.Controllers
                 return Unauthorized(new { message = message, status = status });
             }
 
-            // 4️⃣ Tạo JWT Token (expires sau 100 năm)
+            // Tạo JWT Token (expires sau 100 năm)
             var token = GenerateJwtToken(freshUser);
             
-            // 5️⃣ Trả về token + thông tin user
+            // Trả về token + thông tin user
             return Ok(new LoginResponse
             {
                 Role = freshUser.RoleId?.ToString() ?? "Member",
@@ -167,7 +167,7 @@ namespace BE.API.Controllers
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            // 🔥 Token sống 100 năm (cơ bản là “vĩnh viễn”)
+            // Token sống 100 năm (cơ bản là “vĩnh viễn”)
             var preparedToken = new JwtSecurityToken(
                 issuer: _configuration["JWT:Issuer"],
                 audience: _configuration["JWT:Audience"],
@@ -385,19 +385,19 @@ namespace BE.API.Controllers
         {
             // CHECK AUTHORIZATION
             if (!IsAdminOrSubAdminFromClaims()) return Forbid();
-            // 2️⃣ GET USER
+            // GET USER
             var user = _userRepo.GetUserById(id);
             if (user == null) return NotFound();
-            // 3️⃣ UPDATE FIELDS
+            // UPDATE FIELDS
             if (!string.IsNullOrEmpty(request.Email)) user.Email = request.Email;
             user.FullName = request.FullName;
             user.Phone = request.Phone;
             user.Avatar = request.Avatar;
-            // 4️⃣ SAVE TO DATABASE
+            // SAVE TO DATABASE
             var updated = _userRepo.UpdateUser(user);
-            // 5️⃣ RELOAD USER
+            // RELOAD USER
             updated = _userRepo.GetUserById(updated.UserId);
-            // 6️⃣ RETURN RESPONSE
+            // RETURN RESPONSE
             return Ok(new AdminUserDetailResponse
             {
                 Id = updated.UserId,
@@ -421,21 +421,21 @@ namespace BE.API.Controllers
         [Authorize]
         public ActionResult<AdminUserDetailResponse> AdminUpdateRole([FromRoute] int id, [FromBody] AdminUserRoleRequest request)
         {
-            // 1️⃣ CHECK AUTHORIZATION
+            // CHECK AUTHORIZATION
             if (!IsAdminOrSubAdminFromClaims()) return Forbid();
-            // 2️⃣ GET USER
+            // GET USER
             using var context = new EvandBatteryTradingPlatformContext();
             var user = context.Users.Include(u => u.Role).FirstOrDefault(u => u.UserId == id);
             if (user == null) return NotFound();
-            // 3️⃣ MAP UI ROLE TO DB ROLE
+            // MAP UI ROLE TO DB ROLE
             var targetRoleName = MapUiRoleToRoleName(request.Role);
-            // 4️⃣ GET ROLE FROM DATABASE
+            // GET ROLE FROM DATABASE
             var role = context.UserRoles.FirstOrDefault(r => r.RoleName == targetRoleName);
             if (role == null)
             {
                 return UnprocessableEntity(new { error = new { code = "INVALID_ROLE", message = "Role does not exist" } });
             }
-            // 5️⃣ VALIDATION: PREVENT DOWNGRADE LAST ADMIN
+            // VALIDATION: PREVENT DOWNGRADE LAST ADMIN
             var isCurrentAdmin = user.Role != null && user.Role.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase);
             var isDowngradeFromAdmin = isCurrentAdmin && !targetRoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase);
             if (isDowngradeFromAdmin)
@@ -446,13 +446,13 @@ namespace BE.API.Controllers
                     return Conflict(new { error = new { code = "LAST_ADMIN_DOWNGRADE_FORBIDDEN", message = "Cannot downgrade the last admin" } });
                 }
             }
-            // 6️⃣ UPDATE ROLE
+            // UPDATE ROLE
             user.RoleId = role.RoleId;
             context.Users.Update(user);
             context.SaveChanges();
-            // 7️⃣ RELOAD USER
+            // RELOAD USER
             user = context.Users.Include(u => u.Role).First(u => u.UserId == id);
-            // 8️⃣ RETURN RESPONSE
+            // RETURN RESPONSE
             return Ok(new AdminUserDetailResponse
             {
                 Id = user.UserId,
@@ -476,23 +476,23 @@ namespace BE.API.Controllers
         [Authorize]
         public ActionResult<AdminUserDetailResponse> AdminUpdateStatus([FromRoute] int id, [FromBody] AdminUserStatusRequest request)
         {
-            // 1️⃣ CHECK AUTHORIZATION
+            // CHECK AUTHORIZATION
             if (!IsAdminOrSubAdminFromClaims()) return Forbid();
-            // 2️⃣ GET USER
+            // GET USER
             using var context = new EvandBatteryTradingPlatformContext();
             var user = context.Users.Include(u => u.Role).FirstOrDefault(u => u.UserId == id);
             if (user == null) return NotFound();
-            // 3️⃣ MAP UI STATUS TO DB STATUS
+            // MAP UI STATUS TO DB STATUS
             var newStatus = MapUiStatusToDb(request.Status);
-            // 4️⃣ UPDATE STATUS
+            // UPDATE STATUS
             user.AccountStatus = newStatus;
             user.AccountStatusReason = request.Reason;
             user.StatusChangedDate = DateTime.Now;
             context.Users.Update(user);
             context.SaveChanges();
-            // 5️⃣ RELOAD USER
+            // RELOAD USER
             user = context.Users.Include(u => u.Role).First(u => u.UserId == id);
-            // 6️⃣ RETURN RESPONSE
+            // RETURN RESPONSE
             return Ok(new AdminUserDetailResponse
             {
                 Id = user.UserId,

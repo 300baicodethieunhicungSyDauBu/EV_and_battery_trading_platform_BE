@@ -204,7 +204,7 @@ public class MessageController : ControllerBase
             if (chat == null || (chat.User1Id != userId && chat.User2Id != userId))
                 return Forbid("You can only send messages to chats you're part of.");
 
-            // ✅ Lưu message
+            // Lưu message
             var message = _messageRepo.CreateMessage(request.ChatId, request.SenderId, request.Content);
 
             var messageResponse = new MessageResponse
@@ -217,7 +217,7 @@ public class MessageController : ControllerBase
                 CreatedDate = message.CreatedDate
             };
 
-            // ✅ Notify đến tất cả client trong group (chatId)
+            // Notify đến tất cả client trong group (chatId)
             await _hubContext.Clients.Group(request.ChatId.ToString())
                 .SendAsync("ReceiveMessage", messageResponse);
 

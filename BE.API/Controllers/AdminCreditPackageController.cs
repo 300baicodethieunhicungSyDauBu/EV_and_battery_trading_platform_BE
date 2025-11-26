@@ -30,7 +30,7 @@ namespace BE.API.Controllers
             _context = context;
         }
 
-        // 📦 ADMIN: XEM TẤT CẢ GÓI CREDIT
+        // ADMIN: XEM TẤT CẢ GÓI CREDIT
         // GET /api/admin/credit-packages?isActive=true
         // Query: isActive (optional) - lọc theo trạng thái
         [HttpGet]
@@ -38,17 +38,17 @@ namespace BE.API.Controllers
         {
             try
             {
-                // 1️⃣ Lấy tất cả FeeSettings có FeeType bắt đầu bằng "PostCredit_"
+                // Lấy tất cả FeeSettings có FeeType bắt đầu bằng "PostCredit_"
                 var feeSettings = _feeSettingsRepo.GetAllFeeSettings()
                     .Where(f => f.FeeType != null && f.FeeType.StartsWith("PostCredit_"));
 
-                // 2️⃣ Filter theo isActive nếu có
+                // Filter theo isActive nếu có
                 if (isActive.HasValue)
                 {
                     feeSettings = feeSettings.Where(f => f.IsActive == isActive.Value);
                 }
 
-                // 3️⃣ Map sang response và tính toán thống kê
+                // Map sang response và tính toán thống kê
                 var packages = feeSettings.Select(f =>
                 {
                     // Extract số credits từ FeeType (ví dụ: "PostCredit_10" → 10)
@@ -59,14 +59,14 @@ namespace BE.API.Controllers
                     // Tính giá mỗi credit
                     var pricePerCredit = credits > 0 ? f.FeeValue / credits : 0;
 
-                    // 4️⃣ Thống kê số lượng đã bán
+                    // Thống kê số lượng đã bán
                     var totalSold = _context.Payments
                         .Where(p => p.PaymentType == "PostCredit" 
                                  && p.PostCredits == credits 
                                  && p.Status == "Success")
                         .Count();
 
-                    // 5️⃣ Tính tổng doanh thu từ gói này
+                    // Tính tổng doanh thu từ gói này
                     var totalRevenue = _context.Payments
                         .Where(p => p.PaymentType == "PostCredit" 
                                  && p.PostCredits == credits 
@@ -163,38 +163,38 @@ namespace BE.API.Controllers
 
 
 
-        // ✏️ ADMIN: CẬP NHẬT GÓI CREDIT
+        // ADMIN: CẬP NHẬT GÓI CREDIT
         // PUT /api/admin/credit-packages/{feeId}
         // Body: { "packageName": "Gói Hot", "description": "Ưu đãi đặc biệt", "isActive": true }
-        // ⚠️ CHỈ CHO PHÉP SỬA: Tên, Mô tả, Trạng thái
-        // ⚠️ KHÔNG CHO PHÉP SỬA: Giá, Số credits (để đảm bảo công bằng)
+        // CHỈ CHO PHÉP SỬA: Tên, Mô tả, Trạng thái
+        // KHÔNG CHO PHÉP SỬA: Giá, Số credits (để đảm bảo công bằng)
         [HttpPut("{feeId}")]
         public ActionResult<CreditPackageResponse> UpdatePackage(int feeId, [FromBody] UpdateCreditPackageRequest request)
         {
             try
             {
-                // 1️⃣ Lấy gói credit hiện tại
+                // Lấy gói credit hiện tại
                 var feeSetting = _feeSettingsRepo.GetFeeSettingById(feeId);
                 
                 if (feeSetting == null || !feeSetting.FeeType.StartsWith("PostCredit_"))
                     return NotFound("Không tìm thấy gói credit");
 
-                // 2️⃣ Extract số credits từ FeeType (không cho phép thay đổi)
+                // Extract số credits từ FeeType (không cho phép thay đổi)
                 var creditsStr = feeSetting.FeeType.Replace("PostCredit_", "");
                 if (!int.TryParse(creditsStr, out var credits))
                     return BadRequest("Định dạng gói không hợp lệ");
 
-                // 3️⃣ CHỈ CHO PHÉP SỬA 3 FIELDS NÀY:
+                // CHỈ CHO PHÉP SỬA 3 FIELDS NÀY:
                 feeSetting.PackageName = request.PackageName;    // Tên gói
                 feeSetting.Description = request.Description;    // Mô tả
                 feeSetting.IsActive = request.IsActive;          // Trạng thái
 
-                // ⚠️ KHÔNG CHO PHÉP SỬA:
+                // KHÔNG CHO PHÉP SỬA:
                 // - feeSetting.FeeValue (giá gói)
                 // - feeSetting.FeeType (số credits)
                 // Lý do: Đảm bảo công bằng cho người đã mua, tránh sai số liệu
 
-                // 4️⃣ Lưu thay đổi vào database
+                // Lưu thay đổi vào database
                 var updated = _feeSettingsRepo.UpdateFeeSetting(feeSetting);
                 var pricePerCredit = credits > 0 ? updated.FeeValue / credits : 0;
 

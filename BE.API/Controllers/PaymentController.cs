@@ -89,7 +89,7 @@ public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request
             });
         }
         
-        // ✅ GHI ĐÈ giá từ database (bảo mật)
+        // GHI ĐÈ giá từ database (bảo mật)
         request.Amount = package.FeeValue;
     }
 

@@ -73,7 +73,7 @@ namespace BE.API.Controllers
             }
         }
 
-        // ❤️ THÊM SẢN PHẨM VÀO YÊU THÍCH (Member only)
+        // THÊM SẢN PHẨM VÀO YÊU THÍCH (Member only)
         // Input: { userId, productId }
         // Output: Favorite info
         [HttpPost]
@@ -149,7 +149,7 @@ namespace BE.API.Controllers
             }
         }
 
-        // 🗑️ XÓA SẢN PHẨM KHỎI YÊU THÍCH (Member only)
+        // XÓA SẢN PHẨM KHỎI YÊU THÍCH (Member only)
         // Input: favoriteId
         // Output: Success/NotFound
         [HttpDelete("{id}")]
@@ -172,7 +172,7 @@ namespace BE.API.Controllers
             }
         }
 
-        // 📋 XEM DANH SÁCH YÊU THÍCH CỦA USER (Member only)
+        // XEM DANH SÁCH YÊU THÍCH CỦA USER (Member only)
         // Input: userId
         // Output: Danh sách favorites của user đó
         // Auth: Chỉ xem được favorites của chính mình (trừ admin)

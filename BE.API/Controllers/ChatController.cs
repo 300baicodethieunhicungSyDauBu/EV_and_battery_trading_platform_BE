@@ -21,7 +21,7 @@ public class ChatController : ControllerBase
         _messageRepo = messageRepo;
     }
 
-    // 💬 XEM TẤT CẢ CHAT CỦA USER (Member only)
+    // XEM TẤT CẢ CHAT CỦA USER (Member only)
     // Output: Danh sách chats với last message và unread count
     [HttpGet]
     [Authorize(Policy = "MemberOnly")]
@@ -29,10 +29,10 @@ public class ChatController : ControllerBase
     {
         try
         {
-            // 1️⃣ Lấy userId từ token
+            // Lấy userId từ token
             var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
             
-            // 2️⃣ Lấy tất cả chats của user này
+            // Lấy tất cả chats của user này
             var chats = _chatRepo.GetChatsByUserId(userId);
             
             var chatResponses = chats.Select(chat => new ChatResponse
@@ -78,7 +78,7 @@ public class ChatController : ControllerBase
         }
     }
 
-    // 🔍 XEM CHI TIẾT 1 CHAT (Member only)
+    // XEM CHI TIẾT 1 CHAT (Member only)
     // Input: chatId
     // Output: Chat detail với messages
     // Auth: Chỉ 2 người trong chat mới xem được
@@ -88,10 +88,10 @@ public class ChatController : ControllerBase
     {
         try
         {
-            // 1️⃣ Lấy userId từ token
+            // Lấy userId từ token
             var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
             
-            // 2️⃣ Lấy chat by ID
+            // Lấy chat by ID
             var chat = _chatRepo.GetChatById(id);
             
             if (chat == null)

@@ -30,7 +30,7 @@ namespace BE.API.Controllers
             _paymentRepo = paymentRepo;
         }
 
-        // 📋 XEM TẤT CẢ ĐỚN HÀNG (Admin/Staff)
+        // XEM TẤT CẢ ĐỚN HÀNG (Admin/Staff)
         // Output: Danh sách tất cả orders với thông tin buyer, seller, product
         [HttpGet]
         //[Authorize(Policy = "AdminOnly")]
@@ -80,7 +80,7 @@ namespace BE.API.Controllers
             }
         }
 
-        // 🔍 XEM CHI TIẾT ĐƠN HÀNG (Buyer/Seller/Admin)
+        // XEM CHI TIẾT ĐƠN HÀNG (Buyer/Seller/Admin)
         // Input: orderId
         // Output: Order detail với payments, buyer, seller, product info
         // Auth: Chỉ buyer, seller hoặc admin mới xem được
@@ -89,14 +89,14 @@ namespace BE.API.Controllers
         {
             try
             {
-                // 1️⃣ Lấy order by ID
+                // Lấy order by ID
                 var order = _orderRepo.GetOrderById(id);
                 if (order == null)
                 {
                     return NotFound();
                 }
 
-                // 2️⃣ Kiểm tra quyền truy cập (chỉ buyer, seller hoặc admin)
+                // Kiểm tra quyền truy cập (chỉ buyer, seller hoặc admin)
                 var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
                 if (order.BuyerId != userId && order.SellerId != userId && !User.IsInRole("1"))
                 {
@@ -194,7 +194,7 @@ namespace BE.API.Controllers
             }
         }
 
-        // ➕ TẠO ĐƠN HÀNG MỚI (Member only - Buyer)
+        // TẠO ĐƠN HÀNG MỚI (Member only - Buyer)
         // Input: { sellerId, productId, totalAmount, depositAmount }
         // Output: Order info
         // Flow: Tạo order → Product status = "Reserved" → Buyer thanh toán deposit
@@ -204,7 +204,7 @@ namespace BE.API.Controllers
         {
             try
             {
-                // 1️⃣ Validation input
+                // Validation input
                 if (request.SellerId <= 0)
                     return BadRequest("Valid SellerId is required.");
                 if (request.ProductId <= 0)
@@ -395,7 +395,7 @@ namespace BE.API.Controllers
                 var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
                 var orders = _orderRepo.GetOrdersByBuyerId(userId);
 
-                // ✅ FIX: Group by ProductId and keep only the most recent order for each product
+                // FIX: Group by ProductId and keep only the most recent order for each product
                 // Priority: Completed orders first, then by CreatedDate descending
                 var uniqueOrders = orders
                     .GroupBy(o => o.ProductId)
@@ -420,7 +420,7 @@ namespace BE.API.Controllers
                     o.CompletedDate,
                     o.CancellationReason,
                     o.CancelledDate,
-                    o.ContractUrl, // ✅ thêm
+                    o.ContractUrl, // thêm
                     PurchaseDate = o.CompletedDate ?? o.CreatedDate,
                     SellerName = o.Seller?.FullName ?? "N/A",
                     SellerId = o.SellerId,
@@ -492,7 +492,7 @@ namespace BE.API.Controllers
                     o.CompletedDate,
                     o.CancellationReason,
                     o.CancelledDate,
-                    o.ContractUrl, // ✅ thêm
+                    o.ContractUrl, // thêm
                     BuyerName = o.Buyer?.FullName,
                     BuyerId = o.BuyerId,
                     Product = o.Product != null ? new
@@ -675,30 +675,30 @@ namespace BE.API.Controllers
 		{
 			try
 			{
-				// ✅ Validate request
+				// Validate request
 				if (request == null || string.IsNullOrWhiteSpace(request.Reason) || request.Reason.Trim().Length < 3)
 					return BadRequest("Reason is required (min 3 characters).");
 
-				// ✅ Get current user
+				// Get current user
 				var userIdStr = User.FindFirst("UserId")?.Value;
 				if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
 					return Unauthorized("Invalid user token");
 
-				// ✅ Verify user is Staff or Admin
+				// Verify user is Staff or Admin
 				var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
 				if (userRole != "3" && userRole != "1") // 3 = Staff, 1 = Admin
 					return Forbid("Only Staff and Admin can reject orders");
 
-				// ✅ Get order
+				// Get order
 				var order = _orderRepo.GetOrderById(id);
 				if (order == null) 
 					return NotFound("Order not found.");
 
-				// ✅ Check if order can be rejected - CHỈ cho phép reject "Deposited"
+				// Check if order can be rejected - CHỈ cho phép reject "Deposited"
 				if (!string.Equals(order.Status, "Deposited", StringComparison.OrdinalIgnoreCase))
 					return BadRequest($"Cannot reject order with status: {order.Status}. Only orders with status 'Deposited' can be rejected.");
 
-				// ✅ Update order status
+				// Update order status
 				order.Status = "Cancelled";
 				order.CompletedDate = null;
                 string refundNote = request.RefundOption == "refund"
@@ -709,7 +709,7 @@ namespace BE.API.Controllers
 
 				var updated = _orderRepo.UpdateOrder(order);
 
-				// ✅ Update product status back to Active if it was Reserved
+				// Update product status back to Active if it was Reserved
 				bool productStatusUpdated = false;
 				if (order.ProductId.HasValue)
 				{
@@ -722,14 +722,14 @@ namespace BE.API.Controllers
 					}
 				}
 
-				// ✅ Calculate refund amount (xử lý ngoài hệ thống, chỉ trả về thông tin)
+				// Calculate refund amount (xử lý ngoài hệ thống, chỉ trả về thông tin)
 				decimal refundAmount = 0;
 				if (request.RefundOption == "refund" && order.DepositAmount > 0)
 				{
 					refundAmount = order.DepositAmount;
 				}
 
-				// ✅ Send notifications to Buyer and Seller
+				// Send notifications to Buyer and Seller
 				try
 				{
 					// Notification cho Buyer

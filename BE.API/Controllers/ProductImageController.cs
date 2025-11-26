@@ -80,13 +80,13 @@ namespace BE.API.Controllers
         {
             try
             {
-                // ✅ Kiểm tra sản phẩm có tồn tại không
+                // Kiểm tra sản phẩm có tồn tại không
                 var product = _productRepo.GetProductById(request.ProductId ?? 0);
                 if (product == null)
                     return NotFound("Product not found");
                 
 
-                // ✅ Kiểm tra tên loại ảnh
+                // Kiểm tra tên loại ảnh
                 if (string.IsNullOrWhiteSpace(request.Name) ||
                     !new[] { "Vehicle", "Battery", "Document" }.Contains(request.Name,
                         StringComparer.OrdinalIgnoreCase))
@@ -94,10 +94,10 @@ namespace BE.API.Controllers
                     return BadRequest("Name must be one of: Vehicle, Battery, or Document.");
                 }
 
-                // ✅ Upload ảnh lên Cloudinary
+                // Upload ảnh lên Cloudinary
                 string imageUrl = await _cloudinaryService.UploadImageAsync(request.ImageFile);
 
-                // ✅ Tạo record ProductImage mới
+                // Tạo record ProductImage mới
                 var productImage = new ProductImage
                 {
                     ProductId = request.ProductId,
@@ -108,7 +108,7 @@ namespace BE.API.Controllers
 
                 var createdImage = _productImageRepo.CreateProductImage(productImage);
 
-                // ✅ Tạo response trả về
+                // Tạo response trả về
                 var response = new ProductImageResponse
                 {
                     ImageId = createdImage.ImageId,
@@ -134,20 +134,20 @@ namespace BE.API.Controllers
         {
             try
             {
-                // ✅ Kiểm tra sản phẩm tồn tại
+                // Kiểm tra sản phẩm tồn tại
                 var product = _productRepo.GetProductById(productId);
                 if (product == null)
                     return NotFound("Product not found");
                 
 
-                // ✅ Validate loại ảnh (Vehicle/Battery/Document)
+                // Validate loại ảnh (Vehicle/Battery/Document)
                 if (string.IsNullOrWhiteSpace(name) ||
                     !new[] { "Vehicle", "Battery", "Document" }.Contains(name, StringComparer.OrdinalIgnoreCase))
                 {
                     return BadRequest("Name must be one of: Vehicle, Battery, or Document.");
                 }
 
-                // ✅ Validate danh sách ảnh
+                // Validate danh sách ảnh
                 if (images == null || !images.Any())
                     return BadRequest("At least one image is required.");
 
@@ -199,7 +199,7 @@ namespace BE.API.Controllers
                 }
 
                 
-                // ✅ Upload ảnh mới lên Cloudinary nếu có
+                // Upload ảnh mới lên Cloudinary nếu có
                 string? newImageUrl = null;
                 if (request.ImageFile != null)
                 {
@@ -207,7 +207,7 @@ namespace BE.API.Controllers
                     existingImage.ImageData = newImageUrl;
                 }
 
-                // ✅ Cập nhật thời gian chỉnh sửa
+                // Cập nhật thời gian chỉnh sửa
                 existingImage.CreatedDate = DateTime.Now;
 
                 var updatedImage = _productImageRepo.UpdateProductImage(existingImage);
@@ -253,21 +253,21 @@ namespace BE.API.Controllers
         {
             try
             {
-                // ✅ Validate input
+                // Validate input
                 if (string.IsNullOrWhiteSpace(name))
                     return BadRequest("Image name (Vehicle, Battery, or Document) is required.");
 
-                // ✅ Validate name
+                // Validate name
                 var allowedNames = new[] { "Vehicle", "Battery", "Document" };
                 if (!allowedNames.Contains(name, StringComparer.OrdinalIgnoreCase))
                     return BadRequest("Invalid name. Must be one of: Vehicle, Battery, Document.");
 
-                // ✅ Kiểm tra sản phẩm tồn tại
+                // Kiểm tra sản phẩm tồn tại
                 var product = _productRepo.GetProductById(productId);
                 if (product == null)
                     return NotFound("Product not found.");
 
-                // ✅ Lấy danh sách ảnh theo ProductId + Name
+                // Lấy danh sách ảnh theo ProductId + Name
                 var images = _productImageRepo
                     .GetImagesByProductId(productId)
                     .Where(i => i.Name != null && i.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
@@ -276,7 +276,7 @@ namespace BE.API.Controllers
                 if (!images.Any())
                     return NotFound($"No images found for product {productId} with name '{name}'.");
 
-                // ✅ Map sang DTO response
+                // Map sang DTO response
                 var response = images.Select(img => new ProductImageResponse
                 {
                     ImageId = img.ImageId,
